@@ -1,1 +1,0 @@
-trigger.action.outTextForCoalition(coalition.side.BLUE, "Hello, World!", 1)

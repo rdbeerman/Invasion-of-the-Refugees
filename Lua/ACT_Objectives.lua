@@ -112,7 +112,7 @@ function genSecObjective(secObjectiveId)
             }
             mist.teleportToPoint{
                 groupName = ewrList[math.random(#ewrList)],
-                point = mist.vec.add(vec3, vec3off), --fix added vector
+                point = mist.vec.add(vec3, vec3off),
                 action = "clone", 
             }
             objectiveCounter = objectiveCounter + 1
