@@ -3,11 +3,18 @@ secObjectiveCount = 6
 enableDebug = true
 markerScatter = 500
 
--- Set template objectives --
+-- Set templates --
 primObjectiveList = {"primObjective #001", "primObjective #002", "primObjective #002"}
-secObjectiveList = {"secObjective #001", "secObjective #002", "secObjective #003", "secObjective #004"}
+secObjectiveList = {"secObjective #001", "secObjective #002", "secObjective #003", "secObjective #004", "secObjective #005", "secObjective #006"}
 samList = {"SAM #001", "SAM #002", "SAM #003"}
 ewrList = {"EWR #001", "EWR #002", "EWR #003"}
+blueGround = {"blueGround #001"}
+
+-- Set secObjective names, must match secObjectiveList --
+secObjectiveNames = {"Scud site", "Silkworm site", "Artillery battery", "Early Warning Radar", "FOB", "FOB"}
+
+-- Set Special objectives, must match names in secObjectiveList --
+groundBattles = {"secObjective #005", "secObjective #006"}
 
 -- Set templates that need a EWR --
 ewrTemplates = {"secObjective #004"}
@@ -23,13 +30,17 @@ objectiveLocList = {"zone #001", "zone #002", "zone #003", "zone #004"}
     -- Consider second vec3Offset for 'supporting' secObjectives
     -- Function to decrease A2A Dispatcher after EWR/factory destroyed
     -- Add sams to A2A Dispatcher
-    -- Objective Naming
-    -- Convoys
+    -- Convoys/patrols
     -- Helicopter missions
-    -- Completion
+    -- Checkcompleted
+    -- JTAC
+    -- Mission flow (messages)
+
 -- Do not change --
 
 secObjective = {}
+primCompletion = false
+secCompletion = {}
 objectiveCounter = 0
 IADS = SkynetIADS:create('IADS-Network')
 
@@ -84,15 +95,22 @@ function genPrimObjective()
     local ewrUnit = ewrGroup:getUnit(1):getName()
     IADS:addEarlyWarningRadar(ewrUnit)
 
+    mist.flagFunc.group_alive_less_than {
+        groupName = 'IRAN gnd '..tostring(objectiveCounter),
+        flag = 100,
+        percent = 40,
+    }
+
     if enableDebug == true then
         notify(primObjective.."@"..objectiveLoc, 1)
     end 
 end
 
 function genSecObjective(secObjectiveId)
-    secObjective[secObjectiveId] = secObjectiveList[math.random(#secObjectiveList)]
+    local randomNo = math.random(#secObjectiveList)
+    secObjective[secObjectiveId] = secObjectiveList[randomNo]
     vec3Sec = mist.vec.add(vec3Prim, vec3Offset)
-    
+     
     mist.teleportToPoint {
         groupName = secObjective[secObjectiveId],
         point = vec3Sec,
@@ -101,7 +119,10 @@ function genSecObjective(secObjectiveId)
         radius = 12000,
         innerRadius = 0,
     }
+    
     objectiveCounter = objectiveCounter + 1
+    markObjective(secObjectiveNames[randomNo] , 'IRAN gnd '..tostring(objectiveCounter), objectiveCounter)
+
     for i = 1,#ewrTemplates,1 do
         if secObjective[secObjectiveId] == ewrTemplates[i] then
             local vec3 = mist.getLeadPos("IRAN gnd "..tostring(objectiveCounter))
@@ -119,10 +140,53 @@ function genSecObjective(secObjectiveId)
             local ewrGroup = Group.getByName('IRAN gnd '..tostring(objectiveCounter))
             local ewrUnit = ewrGroup:getUnit(1):getName()
             IADS:addEarlyWarningRadar(ewrUnit)
+
+            mist.flagFunc.group_alive_less_than {
+                groupName = 'IRAN gnd '..tostring(objectiveCounter),
+                flag = 100 + secObjectiveId,
+                percent = 40,
+            }
+        else
+            mist.flagFunc.group_alive_less_than {
+                groupName = 'IRAN gnd '..tostring(objectiveCounter),
+                flag = 100 + secObjectiveId,
+                percent = 40,
+            }
         end
     end
     
-    markObjective("Secondary Objective" , 'IRAN gnd '..tostring(objectiveCounter), objectiveCounter)
+    for i = 1,#groundBattles,1 do
+        if secObjective[secObjectiveId] == groundBattles[i] then
+            local vec3 = mist.getLeadPos("IRAN gnd "..tostring(objectiveCounter))
+            local vec3off = {
+                x = 700,
+                y = 700,
+                z = 0
+            }
+            mist.teleportToPoint{
+                groupName = blueGround[math.random(#blueGround)],
+                point = mist.vec.add(vec3, vec3off),
+                action = "clone", 
+            }
+            objectiveCounter = objectiveCounter + 1
+            
+            local SetImmortal = { 
+                id = 'SetImmortal', 
+                params = { 
+                  value = true 
+                } 
+            }
+
+            local controller = Group.getByName("USA gnd "..objectiveCounter):getController()
+            controller:setCommand(SetImmortal)
+
+            mist.flagFunc.group_alive_less_than {
+                groupName = 'IRAN gnd '..tostring(objectiveCounter),
+                flag = 100 + secObjectiveId,
+                percent = 40,
+            }
+        end
+    end
 end
 
 function genSam()
@@ -138,6 +202,12 @@ function genSam()
     objectiveCounter = objectiveCounter + 1
     IADS:addSAMSite('IRAN gnd '..tostring(objectiveCounter))
     markObjective("SAM Site", 'IRAN gnd '..tostring(objectiveCounter), objectiveCounter)
+
+    mist.flagFunc.group_alive_less_than {
+        groupName = 'IRAN gnd '..tostring(objectiveCounter),
+        flag = 200,
+        percent = 40,
+    }
 end
 
 function genStatics(vec3, amount)
@@ -156,10 +226,6 @@ function genStatics(vec3, amount)
     end
 end
 
-function notify(message, displayFor)
-    trigger.action.outTextForCoalition(coalition.side.BLUE, message, displayFor)
-end
-
 function markObjective(markerName, groupName, objectiveCounter)
     local vec3Random = {
         x = math.random(-markerScatter,markerScatter),
@@ -168,6 +234,10 @@ function markObjective(markerName, groupName, objectiveCounter)
     }
     local vec3 = mist.vec.add(mist.getLeadPos(groupName), vec3Random)
     trigger.action.markToAll(objectiveCounter, markerName, vec3, true)
+end
+
+function notify(message, displayFor)
+    trigger.action.outTextForCoalition(coalition.side.BLUE, message, displayFor)
 end
 
 -- MAIN SETUP --

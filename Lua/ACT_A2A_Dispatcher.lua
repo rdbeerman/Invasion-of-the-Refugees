@@ -20,7 +20,6 @@ A2ADispatcherRED:SetEngageRadius( 150000 )
 A2ADispatcherRED:SetSquadron( "CAP_RED_1", AIRBASE.PersianGulf.Kerman_Airport, {"CAP Red #001", "CAP Red #002", "CAP Red #003", "CAP Red #004", "CAP Red #005", "CAP Red #006", "CAP Red #007", "CAP Red #008", "CAP Red #009", "CAP Red #010"} )
 A2ADispatcherRED:SetSquadron( "CAP_RED_2", AIRBASE.PersianGulf.Shiraz_International_Airport, {"CAP Red #001", "CAP Red #002", "CAP Red #003", "CAP Red #004", "CAP Red #005", "CAP Red #006", "CAP Red #007", "CAP Red #008", "CAP Red #009", "CAP Red #010"} )
 
-
 --Define Squadron properties
 A2ADispatcherRED:SetSquadronOverhead( "CAP_RED_1", 1 )
 A2ADispatcherRED:SetSquadronGrouping( "CAP_RED_1", 2 )
@@ -28,19 +27,12 @@ A2ADispatcherRED:SetSquadronGrouping( "CAP_RED_1", 2 )
 A2ADispatcherRED:SetSquadronOverhead( "CAP_RED_2", 1 )
 A2ADispatcherRED:SetSquadronGrouping( "CAP_RED_2", 2 )
 
---Define tankers
---A2ADispatcherRED:SetDefaultTanker( "TANKER Red #001" )
-
 --Define CAP Squadron execution
 A2ADispatcherRED:SetSquadronCap( "CAP_RED_1", BorderRED,  6000, 8000, 600, 900, 600, 900, "BARO")
 A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_1", 2, 500, 600, 1)
 
 A2ADispatcherRED:SetSquadronCap( "CAP_RED_2", BorderRED,  3000, 9000, 400, 800, 600, 900, "BARO")
 A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_2", 1, 500, 600, 1)
-
-
---Define CGI Squadron
---A2ADispatcherRED:SetSquadronGci( "CAP_RED_1" , 900 , 3600 )
 
 --Debug
 A2ADispatcherRED:SetTacticalDisplay( true )
