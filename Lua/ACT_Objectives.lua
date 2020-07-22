@@ -25,9 +25,8 @@ staticList = {"Workshop A", "Farm A", "Farm B", "Comms tower M", "Command Center
 objectiveLocList = {"zone #001", "zone #002", "zone #003", "zone #004"}
 
 -- TODO --
-    -- Build prim/secObjectiveList by filtering form prim/secObjective (using MOOSE filterbyprefix?)
+    -- Airports as potential primary objectives
     -- Concequences of secObjectives
-    -- Consider second vec3Offset for 'supporting' secObjectives
     -- Function to decrease A2A Dispatcher after EWR/factory destroyed
     -- Add sams to A2A Dispatcher
     -- Convoys/patrols
