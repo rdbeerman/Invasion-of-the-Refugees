@@ -35,6 +35,10 @@ airbaseEWR = {"EWR Base #001", "EWR Base #002"}
     -- Helicopter missions
     -- JTAC
     -- Mission flow (messages)
+    -- Dispatcher takeofffromparking
+    
+    -- Briefing kneeboard 
+    -- Statics
 
 -- Do not change --
 
