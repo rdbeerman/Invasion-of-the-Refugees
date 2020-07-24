@@ -35,10 +35,9 @@ airbaseEWR = {"EWR Base #001", "EWR Base #002"}
     -- Helicopter missions
     -- JTAC
     -- Mission flow (messages)
-    -- Dispatcher takeofffromparking
     
     -- Briefing kneeboard 
-    -- Statics
+    -- Statics bandar abbas
 
 -- Do not change --
 
@@ -134,7 +133,7 @@ function genSecObjective(secObjectiveId)
     }
     
     objectiveCounter = objectiveCounter + 1
-    markObjective(secObjectiveNames[randomNo] , 'IRAN gnd '..tostring(objectiveCounter), objectiveCounter)
+    markObjective(secObjectiveNames[randomNo] , 'IRAN gnd '..tostring(objectiveCounter), secObjectiveId)
 
     for i = 1,#ewrTemplates,1 do
         if secObjective[secObjectiveId] == ewrTemplates[i] then
@@ -193,12 +192,6 @@ function genSecObjective(secObjectiveId)
 
             local controller = Group.getByName("USA gnd "..objectiveCounter):getController()
             controller:setCommand(SetImmortal)
-
-            mist.flagFunc.group_alive_less_than {
-                groupName = 'IRAN gnd '..tostring(objectiveCounter),
-                flag = 100 + secObjectiveId,
-                percent = 40,
-            }
         end
     end
 end
@@ -215,7 +208,7 @@ function genSam()
     }
     objectiveCounter = objectiveCounter + 1
     IADS:addSAMSite('IRAN gnd '..tostring(objectiveCounter))
-    markObjective("SAM Site", 'IRAN gnd '..tostring(objectiveCounter), objectiveCounter)
+    markObjective("SAM Site", 'IRAN gnd '..tostring(objectiveCounter), 100)
 
     mist.flagFunc.group_alive_less_than {
         groupName = 'IRAN gnd '..tostring(objectiveCounter),
@@ -254,16 +247,20 @@ function checkPrimCompleted() --Needs work
     if trigger.misc.getUserFlag(primCompletedFlag) == 1 and primCompletion == false then
         notify("Primary objective has been completed!", 5)
         trigger.action.removeMark(primMarker)
+        primCompletion = true
     end
+    timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
 end
 
 function checkSecCompleted()
     for i = 1,secObjectiveCount,1 do
         if trigger.misc.getUserFlag(100+i) == 1 and secCompletion[i] == false then
-            notify("Secondary objective has been completed!"..tostring(i), 5) --add support for naming, problems here
+            notify("Secondary objective has been completed!", 5) --add support for naming, problems here
             trigger.action.removeMark(i)
+            secCompletion[i] = true
         end
     end
+    timer.scheduleFunction(checkSecCompleted, {}, timer.getTime() + 1)
 end
 
 function notify(message, displayFor)
@@ -313,7 +310,7 @@ function A2A_DISPATCHER()
     A2ADispatcherRED:SetTacticalDisplay( true )
 
     --Define Defaults
-    A2ADispatcherRED:SetDefaultTakeOffInAir()
+    A2ADispatcherRED:SetDefaultTakeoffFromParkingHot()
     A2ADispatcherRED:SetDefaultLandingAtRunway()
 end
 
@@ -329,12 +326,12 @@ do
     end
     
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
-    --timer.scheduleFunction(checkSecCompleted, {}, timer.getTime() + 1)
+    timer.scheduleFunction(checkSecCompleted, {}, timer.getTime() + 1)
+
+    notify("Completed init", 1)
 
     IADS:activate()
     A2A_DISPATCHER()
-
-    notify("Completed init", 1)
 end
 
 
