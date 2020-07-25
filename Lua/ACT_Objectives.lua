@@ -4,8 +4,9 @@ enableDebug = true
 markerScatter = 500
 
 -- Set templates --
-primObjectiveList = {"primObjective #001", "primObjective #002", "primObjective #002"}
+primObjectiveList = {"primObjective #001", "primObjective #002", "primObjective #002", "airbase #001", "airbase #002"}
 airbaseList = {"airbase #001", "airbase #002"}
+
 secObjectiveList = {"secObjective #001", "secObjective #002", "secObjective #003", "secObjective #004", "secObjective #005", "secObjective #006"}
 samList = {"SAM #001", "SAM #002", "SAM #003"}
 ewrList = {"EWR #001", "EWR #002", "EWR #003"}
@@ -28,13 +29,16 @@ objectiveLocList = {"zone #001", "zone #002", "zone #003", "zone #004"}
 -- Set IADS airbase EWR --
 airbaseEWR = {"EWR Base #001", "EWR Base #002"}
 
+-- Set airbase Zones, unmarker SAM sites will be places here --
+airbaseZones = {"airbaseZone #001", "airbaseZone #002"}
+
 -- TODO --
-    -- Airports as potential primary objectives
     -- Function to decrease A2A Dispatcher after EWR/factory destroyed
     -- Convoys/patrols
     -- Helicopter missions
     -- JTAC
     -- Mission flow (messages)
+    -- SAM at airbases
     
     -- Briefing kneeboard 
     -- Statics bandar abbas
@@ -48,6 +52,7 @@ secCompletion = {}
 objectiveCounter = 0
 IADS = SkynetIADS:create('IADS-Network')
 ewrGroups = {}
+isAirfield = false
 
 vec3Offset = {
     x = -13000,
@@ -83,33 +88,54 @@ function genPrimObjective()
     primObjective = primObjectiveList[math.random(#primObjectiveList)]
     objectiveLoc = objectiveLocList[math.random(#objectiveLocList)]
 
-    primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false)
-    objectiveCounter = objectiveCounter + 1
-    vec3Prim = mist.getLeadPos('IRAN gnd '..tostring(objectiveCounter))
-    markObjective("Primary Objective" , 'IRAN gnd '..tostring(objectiveCounter), primMarker)
+    for i = 1,#airbaseList,1 do
+        if primObjective == airbaseList[i] then
+            isAirfield = true
 
-    mist.teleportToPoint {
-        groupName = ewrList[math.random(#ewrList)],
-        point = vec3Prim,
-        action = "clone",
-        disperse = false,
-        radius = 700,
-        innerRadius = 200
-    }
+            local airbase = Group.getByName(primObjective)
+            trigger.action.activateGroup(airbase)
 
-    genStatics(vec3Prim, 2)
+            vec3Prim = mist.getLeadPos(primObjective)
+            markObjective("Primary Objective", primObjective, primMarker)
 
-    objectiveCounter = objectiveCounter + 1
-    local ewrGroup = Group.getByName('IRAN gnd '..tostring(objectiveCounter))
-    ewrGroups[#ewrGroups + 1] = ewrGroup
-    local ewrUnit = ewrGroup:getUnit(1):getName()
-    IADS:addEarlyWarningRadar(ewrUnit)
+            mist.flagFunc.group_alive_less_than {
+                groupName = primObjective,
+                flag = primCompletedFlag,
+                percent = 40,
+            }
+        end
+    end
+    
+    if isAirfield == false then
+        primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false)
+        objectiveCounter = objectiveCounter + 1
+        vec3Prim = mist.getLeadPos('IRAN gnd '..tostring(objectiveCounter))
+        markObjective("Primary Objective" , 'IRAN gnd '..tostring(objectiveCounter), primMarker)
 
-    mist.flagFunc.group_alive_less_than {
-        groupName = 'IRAN gnd '..tostring(objectiveCounter),
-        flag = primCompletedFlag,
-        percent = 40,
-    }
+        mist.teleportToPoint {
+            groupName = ewrList[math.random(#ewrList)],
+            point = vec3Prim,
+            action = "clone",
+            disperse = false,
+            radius = 700,
+            innerRadius = 200
+        }
+
+        genStatics(vec3Prim, 2)
+        genSam(vec3Prim, true)
+
+        objectiveCounter = objectiveCounter + 1
+        local ewrGroup = Group.getByName('IRAN gnd '..tostring(objectiveCounter))
+        ewrGroups[#ewrGroups + 1] = ewrGroup
+        local ewrUnit = ewrGroup:getUnit(1):getName()
+        IADS:addEarlyWarningRadar(ewrUnit)
+        
+        mist.flagFunc.group_alive_less_than {
+            groupName = 'IRAN gnd '..tostring(objectiveCounter),
+            flag = primCompletedFlag,
+            percent = 40,
+        }
+    end
 
     if enableDebug == true then
         notify(primObjective.."@"..objectiveLoc, 1)
@@ -159,7 +185,7 @@ function genSecObjective(secObjectiveId)
                 flag = 100 + secObjectiveId,
                 percent = 40,
             }
-        else
+        else -- this only works with one ewr template
             mist.flagFunc.group_alive_less_than {
                 groupName = 'IRAN gnd '..tostring(objectiveCounter),
                 flag = 100 + secObjectiveId,
@@ -196,11 +222,11 @@ function genSecObjective(secObjectiveId)
     end
 end
 
-function genSam()
+function genSam(vec3, mark)
     sam = samList[math.random(#samList)]
     mist.teleportToPoint {
         groupName = sam,
-        point = vec3Prim,
+        point = vec3,
         action = "clone",
         disperse = false,
         radius = 3000,
@@ -208,7 +234,10 @@ function genSam()
     }
     objectiveCounter = objectiveCounter + 1
     IADS:addSAMSite('IRAN gnd '..tostring(objectiveCounter))
-    markObjective("SAM Site", 'IRAN gnd '..tostring(objectiveCounter), 100)
+    
+    if mark == true then
+        markObjective("SAM Site", 'IRAN gnd '..tostring(objectiveCounter), 100)
+    end
 
     mist.flagFunc.group_alive_less_than {
         groupName = 'IRAN gnd '..tostring(objectiveCounter),
@@ -318,8 +347,12 @@ end
 do
     notify("Starting init", 1)
     _SETTINGS:SetPlayerMenuOff()
+    
+    for i = 1,#airbaseZones,1 do
+        genSam(mist.utils.zoneToVec3(airbaseZones[i]), false)
+    end
+    
     genPrimObjective()
-    genSam()
     
     for i = 1,secObjectiveCount,1 do
         genSecObjective(i)
