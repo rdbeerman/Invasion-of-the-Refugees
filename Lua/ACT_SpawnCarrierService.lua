@@ -9,14 +9,3 @@ tankerCVN:Start()
 -- SAR Helo
 SARHelo=RESCUEHELO:New(UNIT:FindByName("CVN-71 Theodore Roosevelt"), "SARHelo")
 SARHelo:Start()
-
--- AWACS settings
-local awacsCVN=RECOVERYTANKER:New("CVN-71 Theodore Roosevelt", "AWACS Blue")
-awacsCVN:SetAWACS()
-awacsCVN:SetCallsign(CALLSIGN.AWACS.Overlord, 1)
-awacsCVN:SetAltitude(30000)
-awacsCVN:SetRadio(240)
-awacsCVN:SetTACAN(2, "OVR")
-
--- Start AWACS
-awacsCVN:Start()

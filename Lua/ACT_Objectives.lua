@@ -2,7 +2,7 @@
 secObjectiveCount = 2
 enableDebug = false
 markerScatter = 1500
-compThres = 70
+compThres = 45
 
 -- Set templates --
 primObjectiveList = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004", "airbase #001", "airbase #002"}
@@ -339,7 +339,7 @@ end
 function notifyObjective()
     local message = "The primary objective is a Iranian "..primName.." that has been located in the area near: \n"
     message = message..notifyCoords(vec3Prim, 1).." N, "..notifyCoords(vec3Prim, 2).." E, "..notifyCoords(vec3Prim, 3).." ft."
-    notify(message, 20)
+    notify(message, 45)
 end
 
 function notify(message, displayFor)
