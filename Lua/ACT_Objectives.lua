@@ -1,18 +1,20 @@
 -- General Settings --
-secObjectiveCount = 6
-enableDebug = true
-markerScatter = 500
+secObjectiveCount = 2
+enableDebug = false
+markerScatter = 1500
+compThres = 70
 
 -- Set templates --
-primObjectiveList = {"primObjective #001", "primObjective #002", "primObjective #002", "airbase #001", "airbase #002"}
+primObjectiveList = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004", "airbase #001", "airbase #002"}
 airbaseList = {"airbase #001", "airbase #002"}
 
 secObjectiveList = {"secObjective #001", "secObjective #002", "secObjective #003", "secObjective #004", "secObjective #005", "secObjective #006"}
-samList = {"SAM #001", "SAM #002", "SAM #003"}
+samList = {"SAM #001", "SAM #002", "SAM #003", "SAM #004", "SAM #005" }
 ewrList = {"EWR #001", "EWR #002", "EWR #003"}
 blueGround = {"blueGround #001"}
 
--- Set secObjective names, must match secObjectiveList --
+-- Set secObjective names, secObjectiveNames must match secObjectiveList --
+primNames = {"Headquarters", "Warehouse", "Fuel Depot", "Compound", "Presidio", "Armory"}
 secObjectiveNames = {"Scud site", "Silkworm site", "Artillery battery", "Early Warning Radar", "FOB", "FOB"}
 
 -- Set Special objectives, must match names in secObjectiveList --
@@ -21,7 +23,7 @@ groundBattles = {"secObjective #005", "secObjective #006"}
 -- Set templates that need a EWR --
 ewrTemplates = {"secObjective #004"}
 -- Set Statics
-staticList = {"Workshop A", "Farm A", "Farm B", "Comms tower M", "Command Center", "Chemical tank A"}
+staticList = {"Workshop A", "Farm A", "Farm B", "Comms tower M", "Chemical tank A", "Pump station", "Oil derrick"}
 
 -- Set zones for possible spawning of objectives --
 objectiveLocList = {"zone #001", "zone #002", "zone #003", "zone #004"}
@@ -37,11 +39,8 @@ airbaseZones = {"airbaseZone #001", "airbaseZone #002"}
     -- Convoys/patrols
     -- Helicopter missions
     -- JTAC
-    -- Mission flow (messages)
-    -- SAM at airbases
-    
-    -- Briefing kneeboard 
-    -- Statics bandar abbas
+    -- FARP as objective
+    -- Combined Arms 
 
 -- Do not change --
 
@@ -52,6 +51,7 @@ secCompletion = {}
 objectiveCounter = 0
 IADS = SkynetIADS:create('IADS-Network')
 ewrGroups = {}
+statics = {}
 isAirfield = false
 
 vec3Offset = {
@@ -95,13 +95,14 @@ function genPrimObjective()
             local airbase = Group.getByName(primObjective)
             trigger.action.activateGroup(airbase)
 
+            primName = "Airbase"
             vec3Prim = mist.getLeadPos(primObjective)
-            markObjective("Primary Objective", primObjective, primMarker)
+            markObjective("Objective: Airbase", primObjective, primMarker)
 
             mist.flagFunc.group_alive_less_than {
                 groupName = primObjective,
                 flag = primCompletedFlag,
-                percent = 40,
+                percent = compThres,
             }
         end
     end
@@ -110,7 +111,6 @@ function genPrimObjective()
         primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false)
         objectiveCounter = objectiveCounter + 1
         vec3Prim = mist.getLeadPos('IRAN gnd '..tostring(objectiveCounter))
-        markObjective("Primary Objective" , 'IRAN gnd '..tostring(objectiveCounter), primMarker)
 
         mist.teleportToPoint {
             groupName = ewrList[math.random(#ewrList)],
@@ -122,7 +122,11 @@ function genPrimObjective()
         }
 
         genStatics(vec3Prim, 2)
-        genSam(vec3Prim, true)
+        genSam(vec3Prim, false)
+        primNaming()
+        local markerName = "Objective: "..tostring(primName)
+        markObjective(markerName , 'IRAN gnd '..tostring(objectiveCounter), primMarker)
+        
 
         objectiveCounter = objectiveCounter + 1
         local ewrGroup = Group.getByName('IRAN gnd '..tostring(objectiveCounter))
@@ -133,7 +137,7 @@ function genPrimObjective()
         mist.flagFunc.group_alive_less_than {
             groupName = 'IRAN gnd '..tostring(objectiveCounter),
             flag = primCompletedFlag,
-            percent = 40,
+            percent = compThres,
         }
     end
 
@@ -142,7 +146,7 @@ function genPrimObjective()
     end 
 end
 
-function genSecObjective(secObjectiveId)
+function genSecObjective(secObjectiveId, mark)
     secCompletion[secObjectiveId] = false
     
     local randomNo = math.random(#secObjectiveList)
@@ -154,13 +158,15 @@ function genSecObjective(secObjectiveId)
         point = vec3Sec,
         action = "clone",
         disperse = false,
-        radius = 12000,
+        radius = 18000,
         innerRadius = 0,
     }
     
     objectiveCounter = objectiveCounter + 1
-    markObjective(secObjectiveNames[randomNo] , 'IRAN gnd '..tostring(objectiveCounter), secObjectiveId)
-
+    if mark == true then
+        markObjective(secObjectiveNames[randomNo] , 'IRAN gnd '..tostring(objectiveCounter), secObjectiveId)
+    end
+    
     for i = 1,#ewrTemplates,1 do
         if secObjective[secObjectiveId] == ewrTemplates[i] then
             local vec3 = mist.getLeadPos("IRAN gnd "..tostring(objectiveCounter))
@@ -183,13 +189,13 @@ function genSecObjective(secObjectiveId)
             mist.flagFunc.group_alive_less_than {
                 groupName = 'IRAN gnd '..tostring(objectiveCounter),
                 flag = 100 + secObjectiveId,
-                percent = 40,
+                percent = compThres,
             }
         else -- this only works with one ewr template
             mist.flagFunc.group_alive_less_than {
                 groupName = 'IRAN gnd '..tostring(objectiveCounter),
                 flag = 100 + secObjectiveId,
-                percent = 40,
+                percent = compThres,
             }
         end
     end
@@ -236,21 +242,26 @@ function genSam(vec3, mark)
     IADS:addSAMSite('IRAN gnd '..tostring(objectiveCounter))
     
     if mark == true then
-        markObjective("SAM Site", 'IRAN gnd '..tostring(objectiveCounter), 100)
+        markObjective("SAM Site", 'IRAN gnd '..tostring(objectiveCounter), 100 + objectiveCounter)
     end
 
     mist.flagFunc.group_alive_less_than {
         groupName = 'IRAN gnd '..tostring(objectiveCounter),
         flag = 200,
-        percent = 40,
+        percent = compThres,
     }
 end
 
 function genStatics(vec3, amount)
     local vec2 = mist.utils.makeVec2(vec3) 
     for amount = 1, 3, 1 do
+        local building = staticList[math.random(#staticList)]
+        statics[#statics+1] = building
+        if enableDebug == true then
+            notify("Staticbuilder: "..tostring(building), 10)
+        end
         mist.dynAddStatic {
-            type = staticList[math.random(#staticList)], 
+            type = building, 
             country = "Iran", 
             category = "Fortifications", 
             x = vec2.x + 50 * amount, 
@@ -259,6 +270,18 @@ function genStatics(vec3, amount)
             --groupId = number groupId,  
             heading = 0,
         }
+    end
+end
+
+function primNaming() 
+    for i = 1,6,1 do
+        if statics[i] == "Workshop A" then
+            local names = {"Factory", "Power plant"}
+            primName = names[math.random(#names)]
+            return
+        else 
+            primName = primNames[math.random(#primNames)]
+        end
     end
 end
 
@@ -272,7 +295,28 @@ function markObjective(markerName, groupName, secObjectiveId)
     trigger.action.markToAll(secObjectiveId, markerName, vec3, true)
 end
 
-function checkPrimCompleted() --Needs work
+function notifyCoords(vec3, axis)
+    local lat, lon, alt = coord.LOtoLL(vec3)
+
+    local latDeg = math.floor(lat)
+	local latMin = roundNumber((lat - latDeg)*60, 2)
+	
+	local lonDeg = math.floor(lon)
+	local lonMin = roundNumber((lon - lonDeg)*60, 2)
+
+    local altFeet = alt * 3.28
+    local altRound = roundNumber(altFeet)
+
+    latString = tostring(latDeg).." "..tostring(latMin)
+    lonString = tostring(lonDeg).." "..tostring(lonMin)
+    altString = tostring(alt)
+
+    local ll = { latString, lonString, altRound }
+
+    return ll[axis]
+end
+
+function checkPrimCompleted() -- Add support for statics
     if trigger.misc.getUserFlag(primCompletedFlag) == 1 and primCompletion == false then
         notify("Primary objective has been completed!", 5)
         trigger.action.removeMark(primMarker)
@@ -292,8 +336,19 @@ function checkSecCompleted()
     timer.scheduleFunction(checkSecCompleted, {}, timer.getTime() + 1)
 end
 
+function notifyObjective()
+    local message = "The primary objective is a Iranian "..primName.." that has been located in the area near: \n"
+    message = message..notifyCoords(vec3Prim, 1).." N, "..notifyCoords(vec3Prim, 2).." E, "..notifyCoords(vec3Prim, 3).." ft."
+    notify(message, 20)
+end
+
 function notify(message, displayFor)
     trigger.action.outTextForCoalition(coalition.side.BLUE, message, displayFor)
+end
+
+function roundNumber(num, idp)                                              -- From http://lua-users.org/wiki/SimpleRound
+    local mult = 10^(idp or 0)
+    return math.floor(num * mult + 0.5) / mult
 end
 
 function A2A_DISPATCHER()
@@ -314,7 +369,7 @@ function A2A_DISPATCHER()
     A2ADispatcherRED:SetBorderZone( BorderRED )
 
     --Define EngageRadius
-    A2ADispatcherRED:SetEngageRadius( 150000 )
+    A2ADispatcherRED:SetEngageRadius( 180000 )
 
     --Define Squadrons
 
@@ -330,13 +385,13 @@ function A2A_DISPATCHER()
 
     --Define CAP Squadron execution
     A2ADispatcherRED:SetSquadronCap( "CAP_RED_1", BorderRED,  6000, 8000, 600, 900, 600, 900, "BARO")
-    A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_1", 2, 500, 600, 1)
+    A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_1", 1, 500, 600, 1)
 
     A2ADispatcherRED:SetSquadronCap( "CAP_RED_2", BorderRED,  3000, 9000, 400, 800, 600, 900, "BARO")
     A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_2", 1, 500, 600, 1)
 
     --Debug
-    A2ADispatcherRED:SetTacticalDisplay( true )
+    A2ADispatcherRED:SetTacticalDisplay( enableDebug )
 
     --Define Defaults
     A2ADispatcherRED:SetDefaultTakeoffFromParkingHot()
@@ -347,15 +402,16 @@ end
 do
     notify("Starting init", 1)
     _SETTINGS:SetPlayerMenuOff()
-    
+    missionCommands.addCommand("Objective info", nil, notifyObjective)
+
     for i = 1,#airbaseZones,1 do
-        genSam(mist.utils.zoneToVec3(airbaseZones[i]), false)
+        genSam(mist.utils.zoneToVec3(airbaseZones[i]), true)
     end
     
     genPrimObjective()
     
     for i = 1,secObjectiveCount,1 do
-        genSecObjective(i)
+        genSecObjective(i, false)
     end
     
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)

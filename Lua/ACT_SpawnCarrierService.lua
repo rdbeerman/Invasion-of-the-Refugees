@@ -14,7 +14,7 @@ SARHelo:Start()
 local awacsCVN=RECOVERYTANKER:New("CVN-71 Theodore Roosevelt", "AWACS Blue")
 awacsCVN:SetAWACS()
 awacsCVN:SetCallsign(CALLSIGN.AWACS.Overlord, 1)
-awacsCVN:SetAltitude(20000)
+awacsCVN:SetAltitude(30000)
 awacsCVN:SetRadio(240)
 awacsCVN:SetTACAN(2, "OVR")
 
