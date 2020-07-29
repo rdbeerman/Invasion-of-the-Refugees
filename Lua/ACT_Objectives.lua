@@ -1,8 +1,8 @@
 -- General Settings --
 secObjectiveCount = 2
 enableDebug = false
-markerScatter = 1500
-compThres = 45
+markerScatter = 1000
+compThres = 60
 
 -- Set templates --
 primObjectiveList = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004", "airbase #001", "airbase #002"}
@@ -14,7 +14,7 @@ ewrList = {"EWR #001", "EWR #002", "EWR #003"}
 blueGround = {"blueGround #001"}
 
 -- Set secObjective names, secObjectiveNames must match secObjectiveList --
-primNames = {"Headquarters", "Warehouse", "Fuel Depot", "Compound", "Presidio", "Armory"}
+primNames = {"Headquarters", "Outpost", "Fuel Depot", "Compound", "Presidio", "Armory"}
 secObjectiveNames = {"Scud site", "Silkworm site", "Artillery battery", "Early Warning Radar", "FOB", "FOB"}
 
 -- Set Special objectives, must match names in secObjectiveList --
@@ -40,7 +40,8 @@ airbaseZones = {"airbaseZone #001", "airbaseZone #002"}
     -- Helicopter missions
     -- JTAC
     -- FARP as objective
-    -- Combined Arms 
+    -- Combined Arms
+    -- Escort objectives 
 
 -- Do not change --
 
@@ -52,6 +53,7 @@ objectiveCounter = 0
 IADS = SkynetIADS:create('IADS-Network')
 ewrGroups = {}
 statics = {}
+vec3Sam = {}
 isAirfield = false
 
 vec3Offset = {
@@ -245,6 +247,8 @@ function genSam(vec3, mark)
         markObjective("SAM Site", 'IRAN gnd '..tostring(objectiveCounter), 100 + objectiveCounter)
     end
 
+    vec3Sam[#vec3Sam + 1] = mist.getLeadPos('IRAN gnd '..tostring(objectiveCounter))
+
     mist.flagFunc.group_alive_less_than {
         groupName = 'IRAN gnd '..tostring(objectiveCounter),
         flag = 200,
@@ -337,9 +341,19 @@ function checkSecCompleted()
 end
 
 function notifyObjective()
-    local message = "The primary objective is a Iranian "..primName.." that has been located in the area near: \n"
-    message = message..notifyCoords(vec3Prim, 1).." N, "..notifyCoords(vec3Prim, 2).." E, "..notifyCoords(vec3Prim, 3).." ft."
-    notify(message, 45)
+    if primCompletion == false then
+        local message = "The primary objective is a Iranian "..primName.." that has been located in the area near: \n"
+        message = message..notifyCoords(vec3Prim, 1).." N, "..notifyCoords(vec3Prim, 2).." E, "..notifyCoords(vec3Prim, 3).." ft.\n"
+        message = message.."\n Beware, SAM sites have been spotted near: \n"
+
+        for i = 1,#vec3Sam,1 do
+            message = message.."- "..notifyCoords(vec3Sam[i], 1).." N, "..notifyCoords(vec3Sam[i], 2).."E, "..notifyCoords(vec3Sam[i],3).." ft.\n"
+        end
+        
+        notify(message, 45)
+    else
+        notify("Primary objective has been completed, RTB.", 45)
+    end
 end
 
 function notify(message, displayFor)
@@ -385,10 +399,10 @@ function A2A_DISPATCHER()
 
     --Define CAP Squadron execution
     A2ADispatcherRED:SetSquadronCap( "CAP_RED_1", BorderRED,  6000, 8000, 600, 900, 600, 900, "BARO")
-    A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_1", 1, 500, 600, 1)
+    A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_1", 1, 450, 550, 1)
 
     A2ADispatcherRED:SetSquadronCap( "CAP_RED_2", BorderRED,  3000, 9000, 400, 800, 600, 900, "BARO")
-    A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_2", 1, 500, 600, 1)
+    A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_2", 1, 450, 550, 1)
 
     --Debug
     A2ADispatcherRED:SetTacticalDisplay( enableDebug )
