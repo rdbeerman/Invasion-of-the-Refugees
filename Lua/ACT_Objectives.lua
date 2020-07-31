@@ -13,6 +13,8 @@ samList = {"SAM #001", "SAM #002", "SAM #003", "SAM #004", "SAM #005" }
 ewrList = {"EWR #001", "EWR #002", "EWR #003"}
 blueGround = {"blueGround #001"}
 
+escortList = {"escort #001"}
+
 -- Set secObjective names, secObjectiveNames must match secObjectiveList --
 primNames = {"Headquarters", "Outpost", "Fuel Depot", "Compound", "Presidio", "Armory"}
 secObjectiveNames = {"Scud site", "Silkworm site", "Artillery battery", "Early Warning Radar", "FOB", "FOB"}
@@ -50,6 +52,7 @@ primCompletedFlag = 99
 primMarker = 98
 secCompletion = {}
 objectiveCounter = 0
+samId = 0
 IADS = SkynetIADS:create('IADS-Network')
 ewrGroups = {}
 statics = {}
@@ -232,6 +235,7 @@ end
 
 function genSam(vec3, mark)
     sam = samList[math.random(#samList)]
+    samId = samId + 1
     mist.teleportToPoint {
         groupName = sam,
         point = vec3,
@@ -244,16 +248,16 @@ function genSam(vec3, mark)
     IADS:addSAMSite('IRAN gnd '..tostring(objectiveCounter))
     
     if mark == true then
-        markObjective("SAM Site", 'IRAN gnd '..tostring(objectiveCounter), 100 + objectiveCounter)
+        markObjective("SAM Site", 'IRAN gnd '..tostring(objectiveCounter), 200 + samId)
+
+        mist.flagFunc.group_alive_less_than {
+            groupName = 'IRAN gnd '..tostring(objectiveCounter),
+            flag = 200 + samId,
+            percent = compThres,
+        }
     end
 
-    vec3Sam[#vec3Sam + 1] = mist.getLeadPos('IRAN gnd '..tostring(objectiveCounter))
-
-    mist.flagFunc.group_alive_less_than {
-        groupName = 'IRAN gnd '..tostring(objectiveCounter),
-        flag = 200,
-        percent = compThres,
-    }
+    vec3Sam[#vec3Sam + 1] = mist.getLeadPos('IRAN gnd '..tostring(objectiveCounter))    
 end
 
 function genStatics(vec3, amount)
@@ -275,6 +279,13 @@ function genStatics(vec3, amount)
             heading = 0,
         }
     end
+end
+
+function genEscort()
+    local escortName = escortList[math.random(#escortList)]
+    local escort = Group.getByName(escortName)
+    trigger.action.activateGroup(escort)
+    notify("A flight of Tornados is preparing for takeoff from Bandar Abbas Intl to perform a SEAD Strike on the primary objective.",5)
 end
 
 function primNaming() 
@@ -338,6 +349,17 @@ function checkSecCompleted()
         end
     end
     timer.scheduleFunction(checkSecCompleted, {}, timer.getTime() + 1)
+end
+
+function checkSamCompleted()
+    for i = 1,samId,1 do
+        if trigger.misc.getUserFlag(200+i) == 1 and secCompletion[i] == false then
+            notify("SAM has been destroyed!", 5) --add support for naming, problems here
+            trigger.action.removeMark(200+i)
+            secCompletion[i] = true
+        end
+    end
+    timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
 end
 
 function notifyObjective()
@@ -417,6 +439,7 @@ do
     notify("Starting init", 1)
     _SETTINGS:SetPlayerMenuOff()
     missionCommands.addCommand("Objective info", nil, notifyObjective)
+    missionCommands.addCommand("Spawn Escort mission", nil, genEscort)
 
     for i = 1,#airbaseZones,1 do
         genSam(mist.utils.zoneToVec3(airbaseZones[i]), true)
@@ -430,6 +453,7 @@ do
     
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
     timer.scheduleFunction(checkSecCompleted, {}, timer.getTime() + 1)
+    timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
 
     notify("Completed init", 1)
 
