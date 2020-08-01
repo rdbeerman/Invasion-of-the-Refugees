@@ -285,7 +285,7 @@ function genEscort()
     local escortName = escortList[math.random(#escortList)]
     local escort = Group.getByName(escortName)
     trigger.action.activateGroup(escort)
-    notify("A flight of Tornados is preparing for takeoff from Bandar Abbas Intl to perform a SEAD Strike on the primary objective.",5)
+    notify("A B52H is preparing for takeoff from Bandar Abbas Intl to perform a runway attack on Kerman Airport.", 5)
 end
 
 function primNaming() 
