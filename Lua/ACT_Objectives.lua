@@ -19,8 +19,12 @@ escortList = {"escort #001"}
 primNames = {"Headquarters", "Outpost", "Fuel Depot", "Compound", "Presidio", "Armory"}
 secObjectiveNames = {"Scud site", "Silkworm site", "Artillery battery", "Early Warning Radar", "FOB", "FOB"}
 
+-- Set Helo objectives
+heloObjectives = {"heloMission #001"}
+heloObjectiveNames = {"Search and Rescue"}
+
 -- Set Special objectives, must match names in secObjectiveList --
-groundBattles = {"secObjective #005", "secObjective #006"}
+groundBattles = {}
 
 -- Set templates that need a EWR --
 ewrTemplates = {"secObjective #004"}
@@ -281,6 +285,38 @@ function genStatics(vec3, amount)
     end
 end
 
+function genHeloObjective()
+    local vec3FARP = mist.getLeadPos("FARP AA")
+    local random = math.random(#heloObjectives)
+    local objective = heloObjectives[random]
+    mist.teleportToPoint {
+        groupName = objective,
+        point = vec3FARP,
+        action = "clone",
+        disperse = false,
+        radius = 55000,
+        innerRadius = 2000
+    }
+    objectiveCounter = objectiveCounter + 1
+    local objectiveVec3 = mist.getLeadPos('USA gnd '..tostring(objectiveCounter))
+
+    if heloObjectiveNames[random] == "Search and Rescue" then
+        local vec2 = mist.utils.makeVec2(objectiveVec3)
+        notify("Search and Rescue mission available", 5)
+        mist.dynAddStatic {
+            type = "CH-47D", 
+            country = "USA", 
+            category = "Helicopters", 
+            x = vec2.x + 20, 
+            y = vec2.y  , 
+            heading = 0,
+        }
+    end
+
+    markObjective(heloObjectiveNames[random], 'USA gnd '..tostring(objectiveCounter), 300)
+    --completion
+end
+
 function genEscort()
     local escortName = escortList[math.random(#escortList)]
     local escort = Group.getByName(escortName)
@@ -450,6 +486,8 @@ do
     for i = 1,secObjectiveCount,1 do
         genSecObjective(i, false)
     end
+
+    genHeloObjective()
     
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
     timer.scheduleFunction(checkSecCompleted, {}, timer.getTime() + 1)
