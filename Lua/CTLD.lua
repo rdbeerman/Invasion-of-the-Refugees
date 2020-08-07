@@ -41,9 +41,9 @@ ctld.slingLoad = true -- if false, crates can be used WITHOUT slingloading, by h
 ctld.enableSmokeDrop = true -- if false, helis and c-130 will not be able to drop smoke
 
 ctld.maxExtractDistance = 125 -- max distance from vehicle to troops to allow a group extraction
-ctld.maximumDistanceLogistic = 1000 -- max distance from vehicle to logistics to allow a loading or spawning operation
-ctld.maximumSearchDistance = 4000 -- max distance for troops to search for enemy
-ctld.maximumMoveDistance = 4000 -- max distance for troops to move from drop point if no enemy is nearby
+ctld.maximumDistanceLogistic = 5000 -- max distance from vehicle to logistics to allow a loading or spawning operation
+ctld.maximumSearchDistance = 500 -- max distance for troops to search for enemy
+ctld.maximumMoveDistance = 0 -- max distance for troops to move from drop point if no enemy is nearby
 
 ctld.minimumDeployDistance = 10 -- minimum distance from a friendly pickup zone where you can deploy a crate
 
@@ -124,7 +124,7 @@ ctld.JTAC_smokeOn_BLUE = false -- enables marking of target with smoke for BLUE 
 ctld.JTAC_smokeColour_RED = 4 -- RED side smoke colour -- Green = 0 , Red = 1, White = 2, Orange = 3, Blue = 4
 ctld.JTAC_smokeColour_BLUE = 1 -- BLUE side smoke colour -- Green = 0 , Red = 1, White = 2, Orange = 3, Blue = 4
 
-ctld.JTAC_jtacStatusF10 = true -- enables F10 JTAC Status menu
+ctld.JTAC_jtacStatusF10 = false -- enables F10 JTAC Status menu
 
 ctld.JTAC_location = true -- shows location of target in JTAC message
 
@@ -180,6 +180,7 @@ ctld.transportPilotNames = {
     "Pilot #112",
     "Pilot #111",
     "Pilot #031",--Mi-8s
+    "Pilot #030",
     "Pilot #071",
     "Pilot #072",
     "Pilot #073",
@@ -206,10 +207,6 @@ ctld.transportPilotNames = {
 -- Use any of the predefined names or set your own ones
 
 ctld.extractableGroups = {
-    "sarUnit1",
-    "sarUnit2",
-    "sarUnit3",
-    "sarUnit4",
 }
 
 -- ************** Logistics UNITS FOR CRATE SPAWNING ******************

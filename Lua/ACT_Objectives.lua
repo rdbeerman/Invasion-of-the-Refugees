@@ -1,5 +1,5 @@
 -- General Settings --
-secObjectiveCount = 2
+secObjectiveCount = 0
 enableDebug = false
 markerScatter = 1000
 compThres = 60
@@ -62,6 +62,7 @@ ewrGroups = {}
 statics = {}
 vec3Sam = {}
 isAirfield = false
+heloCounter = 0
 
 vec3Offset = {
     x = -13000,
@@ -245,8 +246,8 @@ function genSam(vec3, mark)
         point = vec3,
         action = "clone",
         disperse = false,
-        radius = 3000,
-        innerRadius = 500
+        radius = 5000,
+        innerRadius = 1000
     }
     objectiveCounter = objectiveCounter + 1
     IADS:addSAMSite('IRAN gnd '..tostring(objectiveCounter))
@@ -289,19 +290,11 @@ function genHeloObjective()
     local vec3FARP = mist.getLeadPos("FARP AA")
     local random = math.random(#heloObjectives)
     local objective = heloObjectives[random]
-    mist.teleportToPoint {
-        groupName = objective,
-        point = vec3FARP,
-        action = "clone",
-        disperse = false,
-        radius = 55000,
-        innerRadius = 2000
-    }
-    objectiveCounter = objectiveCounter + 1
-    local objectiveVec3 = mist.getLeadPos('USA gnd '..tostring(objectiveCounter))
+    local vec2 = mist.getRandPointInCircle(vec3FARP, 55000, 2000)
+    local vec3 = mist.utils.makeVec3(vec2)
+    -- make zone at vec3
 
     if heloObjectiveNames[random] == "Search and Rescue" then
-        local vec2 = mist.utils.makeVec2(objectiveVec3)
         notify("Search and Rescue mission available", 5)
         mist.dynAddStatic {
             type = "CH-47D", 
@@ -313,8 +306,11 @@ function genHeloObjective()
         }
     end
 
-    markObjective(heloObjectiveNames[random], 'USA gnd '..tostring(objectiveCounter), 300)
-    --completion
+    ctld.spawnGroupAtPoint("blue", 5, vec3, 0)
+
+    heloCounter = heloCounter + 1
+    trigger.action.markToAll(299+heloCounter, heloObjectiveNames[random], vec3, true)
+    --completion (count extractable groups in zone+heloCounter if = remove marker)
 end
 
 function genEscort()
@@ -472,10 +468,11 @@ end
 
 -- MAIN SETUP --
 do
-    notify("Starting init", 1)
     _SETTINGS:SetPlayerMenuOff()
+    notify("Starting init", 1)
     missionCommands.addCommand("Objective info", nil, notifyObjective)
-    missionCommands.addCommand("Spawn Escort mission", nil, genEscort)
+    missionCommands.addCommand("Start Escort mission", nil, genEscort)
+    missionCommands.addCommand("Start Helicopter mission", nil, genHeloObjective)
 
     for i = 1,#airbaseZones,1 do
         genSam(mist.utils.zoneToVec3(airbaseZones[i]), true)
@@ -486,8 +483,6 @@ do
     for i = 1,secObjectiveCount,1 do
         genSecObjective(i, false)
     end
-
-    genHeloObjective()
     
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
     timer.scheduleFunction(checkSecCompleted, {}, timer.getTime() + 1)
