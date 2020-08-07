@@ -179,8 +179,8 @@ ctld.wpZones = {
 ctld.transportPilotNames = {
     "Pilot #112",
     "Pilot #111",
-    "Pilot #031",--Mi-8s
-    "Pilot #030",
+    "Pilot #031",
+    "Pilot #030",--Mi-8s
     "Pilot #071",
     "Pilot #072",
     "Pilot #073",

@@ -2,14 +2,14 @@
 secObjectiveCount = 0
 enableDebug = false
 markerScatter = 1000
-compThres = 60
+compThres = 50
 
 -- Set templates --
-primObjectiveList = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004", "airbase #001", "airbase #002"}
-airbaseList = {"airbase #001", "airbase #002"}
+primObjectiveList = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004", "airbase #002"}
+airbaseList = {"airbase #002"}
 
 secObjectiveList = {"secObjective #001", "secObjective #002", "secObjective #003", "secObjective #004", "secObjective #005", "secObjective #006"}
-samList = {"SAM #001", "SAM #002", "SAM #003", "SAM #004", "SAM #005" }
+samList = {"SAM #001", "SAM #002", "SAM #003", "SAM #004" }
 ewrList = {"EWR #001", "EWR #002", "EWR #003"}
 blueGround = {"blueGround #001"}
 
