@@ -177,29 +177,27 @@ ctld.wpZones = {
 
 -- Use any of the predefined names or set your own ones
 ctld.transportPilotNames = {
-    "Pilot #112",
-    "Pilot #111",
+    "Pilot #030",
     "Pilot #031",
-    "Pilot #030",--Mi-8s
+    "Pilot #042",
+    "Pilot #043",--Mi-8s
     "Pilot #071",
-    "Pilot #072",
-    "Pilot #073",
-    "Pilot #074",
-    "Pilot #024",
-    "Pilot #025",--UH-1Hs
-    "Pilot #089",
-    "Pilot #090",
+    "Pilot #044",
+    "Pilot #045",
+    "Pilot #050",--UH-1Hs
     "Pilot #091",
-    "Pilot #092",
+    "Pilot #053",
+    "Pilot #089",
+    "Pilot #063",
     "Pilot #086",
-    "Pilot #087",
-    "Pilot #088",
-    "Pilot #084",
+    "Pilot #064",
+    "Pilot #065",
+    "Pilot #066",
     "Pilot #085",--Gazelles
     "Pilot #028",
     "Pilot #029",
-    "Pilot #101",
-    "Pilot #106",--Ka-50s
+    "Pilot #051",
+    "Pilot #052",--Ka-50s
 }
 
 -- *************** Optional Extractable GROUPS *****************

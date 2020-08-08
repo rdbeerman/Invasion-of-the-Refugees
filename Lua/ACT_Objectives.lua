@@ -22,6 +22,7 @@ secObjectiveNames = {"Scud site", "Silkworm site", "Artillery battery", "Early W
 -- Set Helo objectives
 heloObjectives = {"heloMission #001"}
 heloObjectiveNames = {"Search and Rescue"}
+heloStatics = {"CH-47D", "UH-60A", "Mi-8MTV2"}
 
 -- Set Special objectives, must match names in secObjectiveList --
 groundBattles = {}
@@ -295,9 +296,11 @@ function genHeloObjective()
     -- make zone at vec3
 
     if heloObjectiveNames[random] == "Search and Rescue" then
+        --Spawn mortar, use moose to add beacon
         notify("Search and Rescue mission available", 5)
+        local static = heloStatics[math.random(#heloStatics)]
         mist.dynAddStatic {
-            type = "CH-47D", 
+            type = static, 
             country = "USA", 
             category = "Helicopters", 
             x = vec2.x + 20, 
