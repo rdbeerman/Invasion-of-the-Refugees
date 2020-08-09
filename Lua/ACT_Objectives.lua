@@ -293,12 +293,15 @@ function genHeloObjective()
     local objective = heloObjectives[random]
     local vec2 = mist.getRandPointInCircle(vec3FARP, 55000, 2000)
     local vec3 = mist.utils.makeVec3(vec2)
-    -- make zone at vec3
+    heloCounter = heloCounter + 1
 
     if heloObjectiveNames[random] == "Search and Rescue" then
-        --Spawn mortar, use moose to add beacon
+        local freq = 40 + heloCounter
         notify("Search and Rescue mission available", 5)
-        local static = heloStatics[math.random(#heloStatics)]
+
+        trigger.action.radioTransmission("l10n/DEFAULT/beacon.ogg", vec3, 1, true, freq, 100 ) -- Add beacon
+        
+        local static = heloStatics[math.random(#heloStatics)] -- Pick static helicopter to spawn
         mist.dynAddStatic {
             type = static, 
             country = "USA", 
@@ -311,7 +314,6 @@ function genHeloObjective()
 
     ctld.spawnGroupAtPoint("blue", 5, vec3, 0)
 
-    heloCounter = heloCounter + 1
     trigger.action.markToAll(299+heloCounter, heloObjectiveNames[random], vec3, true)
     --completion (count extractable groups in zone+heloCounter if = remove marker)
 end
