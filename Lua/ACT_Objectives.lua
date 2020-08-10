@@ -212,7 +212,7 @@ end
 
 function genDefense(vec3)
     local offset = {
-        x = -2000,
+        x = -500, --changed from -2000 after decreasing the diameter of the template
         y = 0,
         z = 0
     }
@@ -222,8 +222,8 @@ function genDefense(vec3)
         point = mist.vec.add(vec3, offset),
         action = "clone",
         disperse = false,
-        radius = 700,
-        innerRadius = 200
+        radius = 000, --changed from 700
+        innerRadius = 000 --changed from 200
     }
 end
 
