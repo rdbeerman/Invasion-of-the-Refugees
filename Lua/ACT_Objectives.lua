@@ -1,5 +1,4 @@
 -- General Settings --
-secObjectiveCount = 0
 enableDebug = false
 markerScatter = 1000
 compThres = 50
@@ -222,8 +221,6 @@ function genDefense(vec3)
         point = mist.vec.add(vec3, offset),
         action = "clone",
         disperse = false,
-        radius = 000, --changed from 700
-        innerRadius = 000 --changed from 200
     }
 end
 
@@ -402,7 +399,7 @@ function notifyObjective()
 end
 
 function notify(message, displayFor)
-    trigger.action.outTextForCoalition(coalition.side.BLUE, message, displayFor)
+    trigger.action.outText(message, displayFor)
 end
 
 function roundNumber(num, idp)                                              -- From http://lua-users.org/wiki/SimpleRound
@@ -470,10 +467,6 @@ do
     end
     
     genPrimObjective()
-    
-    for i = 1,secObjectiveCount,1 do
-        genSecObjective(i, false)
-    end
     
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
     timer.scheduleFunction(checkSecCompleted, {}, timer.getTime() + 1)
