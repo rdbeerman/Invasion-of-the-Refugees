@@ -17,6 +17,7 @@ defenseList = {"defense #001", "defense #002", "defense #003"}
 
 blueGround = {"blueGround #001"}
 
+
 escortList = {"escort #001"}
 
 -- Set objective Names for typeStructure --
@@ -25,8 +26,8 @@ primNames = {"Headquarters", "Outpost", "Fuel Depot", "Compound", "Presidio", "A
 -- Set objective Names for typeSpecial, index must match
 specialNames = {"SCUD Site", "Artillery Battery"}
 -- Set Helo objectives
-heloObjectives = {"heloMission #001"}
-heloObjectiveNames = {"Search and Rescue"} --Add Cargo transport, troop transport, strike
+heloObjectives = {"heloMission #001", "heloMission #002", "heloMission #003"}
+heloObjectiveNames = {"Search and Rescue", "Construct SAM", "Attack camp"} --Add Cargo transport, troop transport, strike
 
 heloStatics = {"CH-47D", "UH-60A", "Mi-8MTV2"}
 
@@ -46,12 +47,8 @@ airbaseZones = {"airbaseZone #001", "airbaseZone #002"}
 
 -- TODO --
     -- Function to decrease A2A Dispatcher after EWR/factory destroyed
-    -- Convoys/patrols
-    -- Helicopter missions
-    -- JTAC
     -- FARP as objective
     -- Combined Arms
-    -- Escort objectives 
 
 -- Do not change --
 
@@ -130,36 +127,47 @@ function genPrimObjective() --separate into airbase, structure, other
         if primObjective == typeStructure[i] then
             primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false)
             objectiveCounter = objectiveCounter + 1
-            vec3Prim = mist.getLeadPos('IRAN gnd '..tostring(objectiveCounter))
+            
+            local group = Group.getByName(primObjective)
+            local countryId = group:getUnit(1):getCountry()
+            local countryName = country.name[countryId]
 
+            vec3Prim = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter))
+
+            mist.flagFunc.group_alive_less_than {
+                groupName = countryName.." gnd "..tostring(objectiveCounter),
+                flag = primCompletedFlag,
+                percent = compThres,
+            }
+
+            primNaming()
+            local markerName = "Objective: "..tostring(primName)
+            markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
+
+            local ewr = ewrList[math.random(#ewrList)]
             mist.teleportToPoint {
-                groupName = ewrList[math.random(#ewrList)],
+                groupName = ewr,
                 point = vec3Prim,
                 action = "clone",
                 disperse = false,
                 radius = 700,
                 innerRadius = 200
             }
+            
+            local group = Group.getByName(ewr)
+            local countryId = group:getUnit(1):getCountry()
+            local countryName = country.name[countryId]
 
-            genStatics(vec3Prim, 2)
-            genSam(vec3Prim, false)
-            genDefense(vec3Prim)
-            
-            primNaming()
-            local markerName = "Objective: "..tostring(primName)
-            markObjective(markerName , 'IRAN gnd '..tostring(objectiveCounter), primMarker)
-            
             objectiveCounter = objectiveCounter + 1
-            local ewrGroup = Group.getByName('IRAN gnd '..tostring(objectiveCounter))
+            local ewrGroup = Group.getByName(countryName.." gnd "..tostring(objectiveCounter))
             ewrGroups[#ewrGroups + 1] = ewrGroup
             local ewrUnit = ewrGroup:getUnit(1):getName()
             IADS:addEarlyWarningRadar(ewrUnit)
             
-            mist.flagFunc.group_alive_less_than {
-                groupName = 'IRAN gnd '..tostring(objectiveCounter),
-                flag = primCompletedFlag,
-                percent = compThres,
-            }
+            genStatics(vec3Prim, 2)
+            genSam(vec3Prim, false)
+            genDefense(vec3Prim)
+
             if enableDebug == true then
                 notify(primObjective.."@"..objectiveLoc, 1)
             end
@@ -171,10 +179,26 @@ function genPrimObjective() --separate into airbase, structure, other
         if primObjective == typeSpecial[i] then
             primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false)
             objectiveCounter = objectiveCounter + 1
-            vec3Prim = mist.getLeadPos('IRAN gnd '..tostring(objectiveCounter))
+            
+            local group = Group.getByName(primObjective)
+            local countryId = group:getUnit(1):getCountry()
+            local countryName = country.name[countryId]
+            
+            vec3Prim = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter))
 
+            mist.flagFunc.group_alive_less_than {
+                groupName = countryName.." gnd "..tostring(objectiveCounter),
+                flag = primCompletedFlag,
+                percent = compThres,
+            }
+
+            primName = specialNames[i]
+            local markerName = "Objective: "..specialNames[i]
+            markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
+
+            local ewr = ewrList[math.random(#ewrList)]
             mist.teleportToPoint {
-                groupName = ewrList[math.random(#ewrList)],
+                groupName = ewr,
                 point = vec3Prim,
                 action = "clone",
                 disperse = false,
@@ -182,24 +206,20 @@ function genPrimObjective() --separate into airbase, structure, other
                 innerRadius = 200
             }
 
-            genSam(vec3Prim, false)
-            genDefense(vec3Prim)
-            
-            primName = specialNames[i]
-            local markerName = "Objective: "..specialNames[i]
-            markObjective(markerName , 'IRAN gnd '..tostring(objectiveCounter), primMarker)
-            
             objectiveCounter = objectiveCounter + 1
-            local ewrGroup = Group.getByName('IRAN gnd '..tostring(objectiveCounter))
+            
+            local group = Group.getByName(ewr)
+            local countryId = group:getUnit(1):getCountry()
+            local countryName = country.name[countryId]
+
+            local ewrGroup = Group.getByName(countryName.." gnd "..tostring(objectiveCounter))
             ewrGroups[#ewrGroups + 1] = ewrGroup
             local ewrUnit = ewrGroup:getUnit(1):getName()
             IADS:addEarlyWarningRadar(ewrUnit)
-            
-            mist.flagFunc.group_alive_less_than {
-                groupName = 'IRAN gnd '..tostring(objectiveCounter),
-                flag = primCompletedFlag,
-                percent = compThres,
-            }
+
+            genSam(vec3Prim, false)
+            genDefense(vec3Prim)
+
             if enableDebug == true then
                 notify(primObjective.."@"..objectiveLoc, 1)
             end
@@ -235,20 +255,25 @@ function genSam(vec3, mark)
         radius = 7000,
         innerRadius = 2000
     }
+    
+    local group = Group.getByName(sam)
+    local countryId = group:getUnit(1):getCountry()
+    local countryName = country.name[countryId]
+    
     objectiveCounter = objectiveCounter + 1
-    IADS:addSAMSite('IRAN gnd '..tostring(objectiveCounter))
+    IADS:addSAMSite(countryName.." gnd "..tostring(objectiveCounter))
     
     if mark == true then
-        markObjective("SAM Site", 'IRAN gnd '..tostring(objectiveCounter), 200 + samId)
+        markObjective("SAM Site", countryName.." gnd "..tostring(objectiveCounter), 200 + samId)
 
         mist.flagFunc.group_alive_less_than {
-            groupName = 'IRAN gnd '..tostring(objectiveCounter),
+            groupName = countryName.." gnd "..tostring(objectiveCounter),
             flag = 200 + samId,
             percent = compThres,
         }
     end
 
-    vec3Sam[#vec3Sam + 1] = mist.getLeadPos('IRAN gnd '..tostring(objectiveCounter))    
+    vec3Sam[#vec3Sam + 1] = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter))    
 end
 
 function genStatics(vec3, amount)
@@ -264,9 +289,7 @@ function genStatics(vec3, amount)
             country = "Iran", 
             category = "Fortifications", 
             x = vec2.x + 50 * amount, 
-            y = vec2.y + 50 ,
-            --groupName/name = string groupName/name, 
-            --groupId = number groupId,  
+            y = vec2.y + 50 ,  
             heading = 0,
         }
     end
@@ -276,13 +299,13 @@ function genHeloObjective()
     local vec3FARP = mist.getLeadPos("FARP AA")
     local random = math.random(#heloObjectives)
     local objective = heloObjectives[random]
-    local vec2 = mist.getRandPointInCircle(vec3FARP, 55000, 2000)
+    local vec2 = mist.getRandPointInCircle(vec3FARP, 45000, 2000)
     local vec3 = mist.utils.makeVec3(vec2)
-    heloCounter = heloCounter + 1
 
     if heloObjectiveNames[random] == "Search and Rescue" then
+        heloCounter = heloCounter + 1
         local freq = 40 + heloCounter
-        trigger.action.radioTransmission("l10n/DEFAULT/beacon.ogg", vec3, radio.modulation.FM, true, freq*1000000, 1000 ) -- Add beacon
+        trigger.action.radioTransmission("l10n/DEFAULT/beacon.ogg", vec3, radio.modulation.FM, true, freq*1000000, 1000 )
         
         local static = heloStatics[math.random(#heloStatics)] -- Pick static helicopter to spawn
         mist.dynAddStatic {
@@ -293,8 +316,55 @@ function genHeloObjective()
             y = vec2.y  , 
             heading = 0,
         }
+
+        objectiveCounter = objectiveCounter + 1
         ctld.spawnGroupAtPoint("blue", 5, vec3, 0)
         notify("SAR Beacon online at "..tostring(freq).." MHz FM.", 5) -- TODO: add to obj message
+    elseif heloObjectiveNames[random] == "Construct SAM" then
+        heloCounter = heloCounter + 1
+        --local freq = 40 + heloCounter
+        --trigger.action.radioTransmission("l10n/DEFAULT/beacon.ogg", vec3, radio.modulation.FM, true, freq*1000000, 1000 )
+
+        mist.teleportToPoint {
+            groupName = heloObjectives[random],
+            point = vec3FARP,
+            action = "clone",
+            disperse = false,
+            radius = 2000,
+            innerRadius = 500
+        }
+
+        objectiveCounter = objectiveCounter + 1
+        notify("A SAM site needs to bo built at a friendly FOB with beacon "..tostring(freq).."MHz FM.", 5)
+    elseif heloObjectiveNames[random] == "Attack camp" then
+        heloCounter = heloCounter + 1
+        --local freq = 40 + heloCounter
+        --trigger.action.radioTransmission("l10n/DEFAULT/beacon.ogg", vec3, radio.modulation.FM, true, freq*1000000, 1000 )
+
+        mist.teleportToPoint {
+            groupName = heloObjectives[random],
+            point = vec3FARP,
+            action = "clone",
+            disperse = false,
+            radius = 5000,
+            innerRadius = 2000
+        }
+
+        objectiveCounter = objectiveCounter + 1
+        notify("A Iranian camp has been located, friendly troops with beacon "..tostring(freq).."MHz FM are attacking it.", 5)
+        
+        local group = Group.getByName(heloObjective[random])
+        local countryId = group:getUnit(1):getCountry()
+        local countryName = country.name[countryId]
+
+        local vec3 = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter))
+        
+        mist.teleportToPoint {
+            groupName = blueGround[math.random(#blueGround)],
+            point = vec3,
+            action = "clone",
+            disperse = false,
+        }
     end
 
     trigger.action.markToAll(299+heloCounter, heloObjectiveNames[random], vec3, true)
