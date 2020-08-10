@@ -26,7 +26,7 @@ primNames = {"Headquarters", "Outpost", "Fuel Depot", "Compound", "Presidio", "A
 -- Set objective Names for typeSpecial, index must match
 specialNames = {"SCUD Site", "Artillery Battery"}
 -- Set Helo objectives
-heloObjectives = {"heloMission #001", "heloMission #002", "heloMission #003"}
+heloObjectives = {"heloObjective #001", "heloObjective #002", "heloObjective #003"}
 heloObjectiveNames = {"Search and Rescue", "Construct SAM", "Attack camp"} --Add Cargo transport, troop transport, strike
 
 heloStatics = {"CH-47D", "UH-60A", "Mi-8MTV2"}
@@ -301,9 +301,9 @@ function genHeloObjective()
     local objective = heloObjectives[random]
     local vec2 = mist.getRandPointInCircle(vec3FARP, 45000, 2000)
     local vec3 = mist.utils.makeVec3(vec2)
+    heloCounter = heloCounter + 1
 
     if heloObjectiveNames[random] == "Search and Rescue" then
-        heloCounter = heloCounter + 1
         local freq = 40 + heloCounter
         trigger.action.radioTransmission("l10n/DEFAULT/beacon.ogg", vec3, radio.modulation.FM, true, freq*1000000, 1000 )
         
@@ -317,54 +317,48 @@ function genHeloObjective()
             heading = 0,
         }
 
-        objectiveCounter = objectiveCounter + 1
         ctld.spawnGroupAtPoint("blue", 5, vec3, 0)
         notify("SAR Beacon online at "..tostring(freq).." MHz FM.", 5) -- TODO: add to obj message
     elseif heloObjectiveNames[random] == "Construct SAM" then
-        heloCounter = heloCounter + 1
-        --local freq = 40 + heloCounter
-        --trigger.action.radioTransmission("l10n/DEFAULT/beacon.ogg", vec3, radio.modulation.FM, true, freq*1000000, 1000 )
-
-        mist.teleportToPoint {
-            groupName = heloObjectives[random],
-            point = vec3FARP,
-            action = "clone",
-            disperse = false,
-            radius = 2000,
-            innerRadius = 500
-        }
-
-        objectiveCounter = objectiveCounter + 1
+        local freq = 40 + heloCounter
+        trigger.action.radioTransmission("l10n/DEFAULT/beacon.ogg", vec3, radio.modulation.FM, true, freq*1000000, 1000 )
         notify("A SAM site needs to bo built at a friendly FOB with beacon "..tostring(freq).."MHz FM.", 5)
-    elseif heloObjectiveNames[random] == "Attack camp" then
-        heloCounter = heloCounter + 1
-        --local freq = 40 + heloCounter
-        --trigger.action.radioTransmission("l10n/DEFAULT/beacon.ogg", vec3, radio.modulation.FM, true, freq*1000000, 1000 )
 
         mist.teleportToPoint {
-            groupName = heloObjectives[random],
-            point = vec3FARP,
-            action = "clone",
-            disperse = false,
-            radius = 5000,
-            innerRadius = 2000
-        }
-
-        objectiveCounter = objectiveCounter + 1
-        notify("A Iranian camp has been located, friendly troops with beacon "..tostring(freq).."MHz FM are attacking it.", 5)
-        
-        local group = Group.getByName(heloObjective[random])
-        local countryId = group:getUnit(1):getCountry()
-        local countryName = country.name[countryId]
-
-        local vec3 = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter))
-        
-        mist.teleportToPoint {
-            groupName = blueGround[math.random(#blueGround)],
+            groupName = objective,
             point = vec3,
             action = "clone",
             disperse = false,
         }
+
+        objectiveCounter = objectiveCounter + 1
+    elseif heloObjectiveNames[random] == "Attack camp" then
+        local freq = 40 + heloCounter
+        trigger.action.radioTransmission("l10n/DEFAULT/beacon.ogg", vec3, radio.modulation.FM, true, freq*1000000, 1000 )
+        notify("A Iranian camp has been located, friendly troops with beacon "..tostring(freq).."MHz FM are attacking it.", 5)
+
+        local offset = {
+            x = 500,
+            y = 0,
+            z = 0
+        }
+
+        mist.teleportToPoint {
+            groupName = objective,
+            point = vec3,
+            action = "clone",
+            disperse = false,
+        }
+        objectiveCounter = objectiveCounter + 1
+        
+        mist.teleportToPoint {
+            groupName = blueGround[math.random(#blueGround)],
+            point = mist.vec.add(vec3, offset),
+            action = "clone",
+            disperse = false,
+        }
+        objectiveCounter = objectiveCounter + 1
+
     end
 
     trigger.action.markToAll(299+heloCounter, heloObjectiveNames[random], vec3, true)
