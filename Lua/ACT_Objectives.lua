@@ -10,7 +10,6 @@ typeAirbase = {"airbase #002"}
 typeStructure = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004"}
 typeSpecial = {"primObjective #005", "primObjective #006"}
 
-
 samList = {"SAM #001", "SAM #002", "SAM #003", "SAM #004" }
 ewrList = {"EWR #001", "EWR #002", "EWR #003"}
 defenseList = {"defense #001", "defense #002", "defense #003"}
@@ -89,16 +88,16 @@ if enableDebug == true then
 end
 
 for i = 1,#airbaseEWR,1 do
-    IADS:addEarlyWarningRadar(airbaseEWR[i]) -- rework to replace with genEWR
+    IADS:addEarlyWarningRadar(airbaseEWR[i])
 end
 
-function genPrimObjective() --separate into airbase, structure, other
+function genPrimObjective()
     primCompletion = false
 
     primObjective = primObjectiveList[math.random(#primObjectiveList)]
     objectiveLoc = objectiveLocList[math.random(#objectiveLocList)]
 
-    for i = 1,#typeAirbase,1 do
+    for i = 1,#typeAirbase,1 do                 -- check if generated objective is a airbase
         if primObjective == typeAirbase[i] then
             isAirfield = true
 
@@ -122,16 +121,16 @@ function genPrimObjective() --separate into airbase, structure, other
     end
     
     
-    for i = 1,#typeStructure,1 do
+    for i = 1,#typeStructure,1 do               -- check if generated objective is a group of buildings
         if primObjective == typeStructure[i] then
-            primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false)
+            primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false) -- spawn Objective
             objectiveCounter = objectiveCounter + 1
             
             local group = Group.getByName(primObjective)
             local countryId = group:getUnit(1):getCountry()
             local countryName = country.name[countryId]
 
-            vec3Prim = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter))
+            vec3Prim = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter)) -- get primObjective location
 
             mist.flagFunc.group_alive_less_than {
                 groupName = countryName.." gnd "..tostring(objectiveCounter),
@@ -139,12 +138,13 @@ function genPrimObjective() --separate into airbase, structure, other
                 percent = compThres,
             }
 
-            primNaming()
+            genStatics(vec3Prim, 2)             -- generates and spawns random statics
+            primNaming()                        -- names objective based on spawned statics
             local markerName = "Objective: "..tostring(primName)
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
 
-            local ewr = ewrList[math.random(#ewrList)]
-            mist.teleportToPoint {
+            local ewr = ewrList[math.random(#ewrList)] --pick a random EWR type
+            mist.teleportToPoint {              -- spawn EWR
                 groupName = ewr,
                 point = vec3Prim,
                 action = "clone",
@@ -161,11 +161,10 @@ function genPrimObjective() --separate into airbase, structure, other
             local ewrGroup = Group.getByName(countryName.." gnd "..tostring(objectiveCounter))
             ewrGroups[#ewrGroups + 1] = ewrGroup
             local ewrUnit = ewrGroup:getUnit(1):getName()
-            IADS:addEarlyWarningRadar(ewrUnit)
+            IADS:addEarlyWarningRadar(ewrUnit) -- Add EWR to IADS
             
-            genStatics(vec3Prim, 2)
-            genSam(vec3Prim, false)
-            genDefense(vec3Prim)
+            genSam(vec3Prim, false)             -- generate SAM site without marker near primObjective
+            genDefense(vec3Prim)                -- generate defenses around primObjective
 
             if enableDebug == true then
                 notify(primObjective.."@"..objectiveLoc, 1)
@@ -174,16 +173,16 @@ function genPrimObjective() --separate into airbase, structure, other
         end
     end
 
-    for i = 1,#typeSpecial,1 do
+    for i = 1,#typeSpecial,1 do -- check if generated objective is a special objective with custom name
         if primObjective == typeSpecial[i] then
-            primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false)
+            primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false) -- spawn objective
             objectiveCounter = objectiveCounter + 1
             
             local group = Group.getByName(primObjective)
             local countryId = group:getUnit(1):getCountry()
             local countryName = country.name[countryId]
             
-            vec3Prim = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter))
+            vec3Prim = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter)) -- get primObjective location
 
             mist.flagFunc.group_alive_less_than {
                 groupName = countryName.." gnd "..tostring(objectiveCounter),
@@ -191,11 +190,11 @@ function genPrimObjective() --separate into airbase, structure, other
                 percent = compThres,
             }
 
-            primName = specialNames[i]
+            primName = specialNames[i] -- get objective name by using index in specialNames
             local markerName = "Objective: "..specialNames[i]
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
 
-            local ewr = ewrList[math.random(#ewrList)]
+            local ewr = ewrList[math.random(#ewrList)] -- generate random EWR
             mist.teleportToPoint {
                 groupName = ewr,
                 point = vec3Prim,
@@ -214,7 +213,7 @@ function genPrimObjective() --separate into airbase, structure, other
             local ewrGroup = Group.getByName(countryName.." gnd "..tostring(objectiveCounter))
             ewrGroups[#ewrGroups + 1] = ewrGroup
             local ewrUnit = ewrGroup:getUnit(1):getName()
-            IADS:addEarlyWarningRadar(ewrUnit)
+            IADS:addEarlyWarningRadar(ewrUnit) -- add EWR to IADS
 
             genSam(vec3Prim, false)
             genDefense(vec3Prim)
@@ -228,7 +227,7 @@ function genPrimObjective() --separate into airbase, structure, other
     
 end
 
-function genDefense(vec3)
+function genDefense(vec3) -- generates a defense group at point vec3 with set offset
     local offset = {
         x = -500, --changed from -2000 after decreasing the diameter of the template
         y = 0,
@@ -243,7 +242,7 @@ function genDefense(vec3)
     }
 end
 
-function genSam(vec3, mark)
+function genSam(vec3, mark) -- generates SAM site in random location around point vec3, boolean mark sets f10 marker
     sam = samList[math.random(#samList)]
     samId = samId + 1
     mist.teleportToPoint {
@@ -275,7 +274,7 @@ function genSam(vec3, mark)
     vec3Sam[#vec3Sam + 1] = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter))    
 end
 
-function genStatics(vec3, amount)
+function genStatics(vec3, amount) -- generates statics around point vec3
     local vec2 = mist.utils.makeVec2(vec3) 
     for amount = 1, 3, 1 do
         local building = staticList[math.random(#staticList)]
@@ -294,7 +293,7 @@ function genStatics(vec3, amount)
     end
 end
 
-function genHeloObjective()
+function genHeloObjective() -- function for generating random helo mission using F10 Menu
     local vec3FARP = mist.getLeadPos("FARP AA")
     local random = math.random(#heloObjectives)
     local objective = heloObjectives[random]
@@ -364,18 +363,18 @@ function genHeloObjective()
     --completion (count extractable groups in zone+heloCounter if = remove marker)
 end
 
-function genEscort()
+function genEscort() -- function for spawning escort group using F10 Menu
     local escortName = escortList[math.random(#escortList)]
     local escort = Group.getByName(escortName)
     trigger.action.activateGroup(escort)
     notify("A B52H is preparing for takeoff from Bandar Abbas Intl to perform a runway attack on Kerman Airport.", 5)
 end
 
-function primNaming() 
+function primNaming() -- names primObjective based on spawned statics
     for i = 1,6,1 do
-        if statics[i] == "Workshop A" then
+        if statics[i] == "Workshop A" then  -- if the statics include a factory building..
             local names = {"Factory", "Power plant"}
-            primName = names[math.random(#names)]
+            primName = names[math.random(#names)]   -- name primObjective either "Factory" or "Power plant"
             return
         else 
             primName = primNames[math.random(#primNames)]
@@ -383,14 +382,14 @@ function primNaming()
     end
 end
 
-function markObjective(markerName, groupName, secObjectiveId)
+function markObjective(markerName, groupName, markerFlag) -- marks objective on F10 map, each markerFlag must be unique
     local vec3Random = {
         x = math.random(-markerScatter,markerScatter),
         y = math.random(-markerScatter,markerScatter),
         z = math.random(-markerScatter,markerScatter)
     }
     local vec3 = mist.vec.add(mist.getLeadPos(groupName), vec3Random)
-    trigger.action.markToAll(secObjectiveId, markerName, vec3, true)
+    trigger.action.markToAll(markerFlag, markerName, vec3, true)
 end
 
 function notifyCoords(vec3, axis)
@@ -414,7 +413,7 @@ function notifyCoords(vec3, axis)
     return ll[axis]
 end
 
-function checkPrimCompleted() -- Add support for statics
+function checkPrimCompleted() -- TODO: Add support for statics
     if trigger.misc.getUserFlag(primCompletedFlag) == 1 and primCompletion == false then
         notify("Primary objective has been completed!", 5)
         trigger.action.removeMark(primMarker)
