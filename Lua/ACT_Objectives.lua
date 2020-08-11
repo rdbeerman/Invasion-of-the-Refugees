@@ -17,7 +17,6 @@ defenseList = {"defense #001", "defense #002", "defense #003"}
 
 blueGround = {"blueGround #001"}
 
-
 escortList = {"escort #001"}
 
 -- Set objective Names for typeStructure --
