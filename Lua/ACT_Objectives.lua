@@ -144,31 +144,6 @@ function genPrimObjective()
             primNaming()                        -- names objective based on spawned statics
             local markerName = "Objective: "..tostring(primName)
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
-
-            --[[
-
-            --old EWR spawning
-            local ewr = ewrList[math.random(#ewrList)] --pick a random EWR type
-            mist.teleportToPoint {              -- spawn EWR
-                groupName = ewr,
-                point = vec3Prim,
-                action = "clone",
-                disperse = false,
-                radius = 700,
-                innerRadius = 200
-            }
-            
-            local group = Group.getByName(ewr)
-            local countryId = group:getUnit(1):getCountry()
-            local countryName = country.name[countryId]
-
-            objectiveCounter = objectiveCounter + 1
-            local ewrGroup = Group.getByName(countryName.." gnd "..tostring(objectiveCounter))
-            ewrGroups[#ewrGroups + 1] = ewrGroup
-            local ewrUnit = ewrGroup:getUnit(1):getName()
-            IADS:addEarlyWarningRadar(ewrUnit) -- Add EWR to IADS
-
-            ]]
             
             genSam(vec3Prim, false)             -- generate SAM site without marker near primObjective
             genEwr ( vec3Prim , math.random(2) )                 --generates EWR radars, second number is the amount of EWRs
@@ -201,31 +176,6 @@ function genPrimObjective()
             primName = specialNames[i] -- get objective name by using index in specialNames
             local markerName = "Objective: "..specialNames[i]
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
-            
-            --[[ 
-            --old EWR spawning
-            local ewr = ewrList[math.random(#ewrList)] -- generate random EWR
-            mist.teleportToPoint {
-                groupName = ewr,
-                point = vec3Prim,
-                action = "clone",
-                disperse = false,
-                radius = 700,
-                innerRadius = 200
-            }
-
-            objectiveCounter = objectiveCounter + 1
-            
-            local group = Group.getByName(ewr)
-            local countryId = group:getUnit(1):getCountry()
-            local countryName = country.name[countryId]
-
-            local ewrGroup = Group.getByName(countryName.." gnd "..tostring(objectiveCounter))
-            ewrGroups[#ewrGroups + 1] = ewrGroup
-            local ewrUnit = ewrGroup:getUnit(1):getName()
-            IADS:addEarlyWarningRadar(ewrUnit) -- add EWR to IADS
-
-            ]]
 
             genSam(vec3Prim, false)
             genEwr ( vec3Prim , math.random(2) )
