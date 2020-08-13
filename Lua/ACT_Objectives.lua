@@ -4,15 +4,16 @@ markerScatter = 1000
 compThres = 50
 
 -- Set templates --
-primObjectiveList = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004", "airbase #002", "primObjective #005", "primObjective #006"}
+primObjectiveList = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004", "airbase #002", "primObjective #005", "primObjective #006", "primObjective #007"}
 
 typeAirbase = {"airbase #002"}
 typeStructure = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004"}
-typeSpecial = {"primObjective #005", "primObjective #006"}
+typeSpecial = {"primObjective #005", "primObjective #006", "primObjective #007" }
 
 samList = {"SAM #001", "SAM #002", "SAM #003", "SAM #004" }
 ewrList = {"EWR #001", "EWR #002", "EWR #003"}
-defenseList = {"defense #001", "defense #002", "defense #003"}
+defenseList = {"defense #001", "defense #002", "defense #003", "defense #004", "defense #005"}
+defenseListSmall = { "defenseSmall #001", "defenseSmall #002" } --small defense for EWRs (APC, Manpad, AAA, Truck)
 
 blueGround = {"blueGround #001"}
 
@@ -113,6 +114,7 @@ function genPrimObjective()
                 flag = primCompletedFlag,
                 percent = compThres,
             }
+
             if enableDebug == true then
                 notify(primObjective.."@"..objectiveLoc, 1)
             end
@@ -143,6 +145,9 @@ function genPrimObjective()
             local markerName = "Objective: "..tostring(primName)
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
 
+            --[[
+
+            --old EWR spawning
             local ewr = ewrList[math.random(#ewrList)] --pick a random EWR type
             mist.teleportToPoint {              -- spawn EWR
                 groupName = ewr,
@@ -162,8 +167,11 @@ function genPrimObjective()
             ewrGroups[#ewrGroups + 1] = ewrGroup
             local ewrUnit = ewrGroup:getUnit(1):getName()
             IADS:addEarlyWarningRadar(ewrUnit) -- Add EWR to IADS
+
+            ]]
             
             genSam(vec3Prim, false)             -- generate SAM site without marker near primObjective
+            genEwr ( vec3Prim , math.random(2) )                 --generates EWR radars, second number is the amount of EWRs
             genDefense(vec3Prim)                -- generate defenses around primObjective
 
             if enableDebug == true then
@@ -193,7 +201,9 @@ function genPrimObjective()
             primName = specialNames[i] -- get objective name by using index in specialNames
             local markerName = "Objective: "..specialNames[i]
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
-
+            
+            --[[ 
+            --old EWR spawning
             local ewr = ewrList[math.random(#ewrList)] -- generate random EWR
             mist.teleportToPoint {
                 groupName = ewr,
@@ -215,8 +225,12 @@ function genPrimObjective()
             local ewrUnit = ewrGroup:getUnit(1):getName()
             IADS:addEarlyWarningRadar(ewrUnit) -- add EWR to IADS
 
+            ]]
+
             genSam(vec3Prim, false)
+            genEwr ( vec3Prim , math.random(2) )
             genDefense(vec3Prim)
+            
 
             if enableDebug == true then
                 notify(primObjective.."@"..objectiveLoc, 1)
@@ -240,6 +254,60 @@ function genDefense(vec3) -- generates a defense group at point vec3 with set of
         action = "clone",
         disperse = false,
     }
+
+    objectiveCounter = objectiveCounter + 1
+end
+
+function genDefenseSmall(vec3) -- generates a defense group at point vec3 with set offset
+    local offset = {
+        x = -30, --changed from -2000 after decreasing the diameter of the template
+        y = 0,
+        z = 0
+    }
+
+    mist.teleportToPoint {
+        groupName = defenseListSmall[math.random(#defenseListSmall)],
+        point = mist.vec.add(vec3, offset),
+        action = "clone",
+        disperse = false,
+    }
+
+    objectiveCounter = objectiveCounter + 1
+end
+
+function genEwr(vec3, quantity ) --generate N EWR sites away from the main objective and adds a bit of protection to them
+
+    for i = 1 , quantity  , 1 do
+
+        local offset = {
+            x = 0, 
+            y = 0,
+            z = 0
+        }
+
+        local ewrExternal = ewrList[math.random(#ewrList)]
+        mist.teleportToPoint {
+            groupName = ewrExternal,
+            point = vec3,
+            action = "clone",
+            disperse = false,
+            radius = 35000,
+            innerRadius = 20000
+        }
+        objectiveCounter = objectiveCounter + 1
+
+        local group = Group.getByName(ewrExternal) 
+        local countryId = group:getUnit(1):getCountry()
+        local countryName = country.name[countryId]
+
+        ewrExternalGroup = Group.getByName(countryName.." gnd "..tostring(objectiveCounter))
+        ewrExternalUnit = ewrExternalGroup:getUnit(1):getName()
+
+        IADS:addEarlyWarningRadar(ewrExternalUnit) -- add EWR to IADS
+        genDefenseSmall( mist.getLeadPos(ewrExternalGroup) )
+
+    end
+
 end
 
 function genSam(vec3, mark) -- generates SAM site in random location around point vec3, boolean mark sets f10 marker
