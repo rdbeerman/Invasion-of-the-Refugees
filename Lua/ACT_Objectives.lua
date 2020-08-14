@@ -2,6 +2,7 @@
 enableDebug = false
 markerScatter = 1000
 compThres = 50
+seadDetectionChance = 100 --default chance that a SAM site detects an SEAD missile
 
 -- Set templates --
 primObjectiveList = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004", "airbase #002", "primObjective #005", "primObjective #006", "primObjective #007"}
@@ -144,10 +145,8 @@ function genPrimObjective()
             primNaming()                        -- names objective based on spawned statics
             local markerName = "Objective: "..tostring(primName)
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
-            
-            genSam(vec3Prim, false)             -- generate SAM site without marker near primObjective
-            genEwr ( vec3Prim , math.random(2) )                 --generates EWR radars, second number is the amount of EWRs
-            genDefense(vec3Prim)                -- generate defenses around primObjective
+
+            genSurroundings( vec3Prim, true, true, true ) --moved defenses to an extra function (postion, sam, ewr, short range defenses)
 
             if enableDebug == true then
                 notify(primObjective.."@"..objectiveLoc, 1)
@@ -176,12 +175,8 @@ function genPrimObjective()
             primName = specialNames[i] -- get objective name by using index in specialNames
             local markerName = "Objective: "..specialNames[i]
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
-
-            genSam(vec3Prim, false)
-            genEwr ( vec3Prim , math.random(2) )
-            genDefense(vec3Prim)
             
-
+            genSurroundings( vec3Prim, true, true, true ) --position, sam, ewr, defenses
             if enableDebug == true then
                 notify(primObjective.."@"..objectiveLoc, 1)
             end
@@ -189,6 +184,22 @@ function genPrimObjective()
         end
     end
     
+end
+
+function genSurroundings ( vec3, sam, ewr, defenses ) --generates SAMs, EWRs and defenses
+
+    if sam == true then
+        genSam(vec3Prim, false, seadDetectionChance) --generates a SAM site with a chance to detect SEAD missiles
+    end
+
+    if ewr == true then
+        genEwr ( vec3Prim , math.random(2) ) --generates 1-2 EWRs within 20-30km
+    end
+
+    if defenses == true then
+        genDefense(vec3Prim) --generates the short range defenses of an objective
+    end
+
 end
 
 function genDefense(vec3) -- generates a defense group at point vec3 with set offset
@@ -260,7 +271,7 @@ function genEwr(vec3, quantity ) --generate N EWR sites away from the main objec
 
 end
 
-function genSam(vec3, mark) -- generates SAM site in random location around point vec3, boolean mark sets f10 marker
+function genSam(vec3, mark, detectionChance) -- generates SAM site in random location around point vec3, boolean mark sets f10 marker
     sam = samList[math.random(#samList)]
     samId = samId + 1
     mist.teleportToPoint {
@@ -278,6 +289,10 @@ function genSam(vec3, mark) -- generates SAM site in random location around poin
     
     objectiveCounter = objectiveCounter + 1
     IADS:addSAMSite(countryName.." gnd "..tostring(objectiveCounter))
+
+    if DetectionChance == not nil then --chance that a SAM site detects an anti radiation missile and turns the radar off
+        IADS:getSAMSiteByGroupName(countryName.." gnd "..tostring(objectiveCounter)):setHARMDetectionChance(detectionChance) 
+    end
     
     if mark == true then
         markObjective("SAM Site", countryName.." gnd "..tostring(objectiveCounter), 200 + samId)
@@ -543,7 +558,7 @@ do
     missionCommands.addCommand("Start Helicopter mission", nil, genHeloObjective)
 
     for i = 1,#airbaseZones,1 do
-        genSam(mist.utils.zoneToVec3(airbaseZones[i]), true)
+        genSam(mist.utils.zoneToVec3(airbaseZones[i]), true, seadDetectionChance)
     end
     
     genPrimObjective()
