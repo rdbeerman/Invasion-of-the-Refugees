@@ -180,7 +180,11 @@ ctld.transportPilotNames = {
     "Pilot #030",
     "Pilot #031",
     "Pilot #042",
-    "Pilot #043",--Mi-8s
+    "Pilot #043",
+    "Pilot #076",
+    "Pilot #077",
+    "Pilot #078",
+    "Pilot #079",--Mi-8s
     "Pilot #071",
     "Pilot #044",
     "Pilot #045",
