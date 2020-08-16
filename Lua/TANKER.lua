@@ -5,12 +5,14 @@ do
   -- Get the tanker down
   function tankerShellActionsLow()
   trigger.action.pushAITask(_shell, 1)
-  trigger.action.outText("Shell1-1 going to 18 angels", 5)
+  trigger.action.pushAITask(_shell, 3)
+  trigger.action.outText("Shell1-1 going to 20 angels", 5)
   end
 
   function tankerShellActionsHigh()
   trigger.action.pushAITask(_shell, 2)
-  trigger.action.outText("Shell1-1 going to 25 angels", 5)
+  trigger.action.pushAITask(_shell, 3)
+  trigger.action.outText("Shell1-1 going to 31 angels", 5)
   end
 
   -- ADD SUB RADIO MENUs
