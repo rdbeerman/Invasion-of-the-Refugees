@@ -31,13 +31,11 @@ heloObjectiveNames = {"Search and Rescue", "Construct SAM", "Attack camp"} --Add
 
 heloStatics = {"CH-47D", "UH-60A", "Mi-8MTV2"}
 
--- Set templates that need a EWR --
-ewrTemplates = {"secObjective #004"}
 -- Set Statics
 staticList = {"Workshop A", "Farm A", "Farm B", "Comms tower M", "Chemical tank A", "Pump station", "Oil derrick"}
 
 -- Set zones for possible spawning of objectives --
-objectiveLocList = {"zone #001", "zone #002", "zone #003", "zone #004"}
+objectiveLocList = act.getZones()
 
 -- Set IADS airbase EWR --
 airbaseEWR = {"EWR Base #001", "EWR Base #002"}
@@ -52,7 +50,6 @@ airbaseZones = {"airbaseZone #001", "airbaseZone #002"}
 
 -- Do not change --
 
-secObjective = {} -- index is secObjectiveId, value name (use for mission flow)
 primCompletedFlag = 99
 primMarker = 98
 secCompletion = {}
@@ -455,17 +452,6 @@ function checkPrimCompleted() -- TODO: Add support for statics
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
 end
 
-function checkSecCompleted()
-    for i = 1,secObjectiveCount,1 do
-        if trigger.misc.getUserFlag(100+i) == 1 and secCompletion[i] == false then
-            notify("Secondary objective has been completed!", 5) --add support for naming, problems here
-            trigger.action.removeMark(i)
-            secCompletion[i] = true
-        end
-    end
-    timer.scheduleFunction(checkSecCompleted, {}, timer.getTime() + 1)
-end
-
 function checkSamCompleted()
     for i = 1,samId,1 do
         if trigger.misc.getUserFlag(200+i) == 1 and secCompletion[i] == false then
@@ -524,8 +510,8 @@ function A2A_DISPATCHER()
 
     --Define Squadrons
 
-    A2ADispatcherRED:SetSquadron( "CAP_RED_1", AIRBASE.PersianGulf.Kerman_Airport, {"CAP Red #001", "CAP Red #002", "CAP Red #003", "CAP Red #004", "CAP Red #005", "CAP Red #006", "CAP Red #007", "CAP Red #008", "CAP Red #009", "CAP Red #010"} )
-    A2ADispatcherRED:SetSquadron( "CAP_RED_2", AIRBASE.PersianGulf.Shiraz_International_Airport, {"CAP Red #001", "CAP Red #002", "CAP Red #003", "CAP Red #004", "CAP Red #005", "CAP Red #006", "CAP Red #007", "CAP Red #008", "CAP Red #009", "CAP Red #010"} )
+    A2ADispatcherRED:SetSquadron( "CAP_RED_1", act.capAirbases[1], {"CAP Red #001", "CAP Red #002", "CAP Red #003", "CAP Red #004", "CAP Red #005", "CAP Red #006", "CAP Red #007", "CAP Red #008", "CAP Red #009", "CAP Red #010"} )
+    A2ADispatcherRED:SetSquadron( "CAP_RED_2", act.capAirbases[2], {"CAP Red #001", "CAP Red #002", "CAP Red #003", "CAP Red #004", "CAP Red #005", "CAP Red #006", "CAP Red #007", "CAP Red #008", "CAP Red #009", "CAP Red #010"} )
 
     --Define Squadron properties
     A2ADispatcherRED:SetSquadronOverhead( "CAP_RED_1", 1 )
@@ -564,7 +550,6 @@ do
     genPrimObjective()
     
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
-    timer.scheduleFunction(checkSecCompleted, {}, timer.getTime() + 1)
     timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
 
     notify("Completed init", 1)
