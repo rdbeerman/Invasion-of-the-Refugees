@@ -220,7 +220,7 @@ end
 
 function genDefenseSmall(vec3) -- generates a defense group at point vec3 with set offset
     local offset = {
-        x = -30, --changed from -2000 after decreasing the diameter of the template
+        x = -30,
         y = 0,
         z = 0
     }
