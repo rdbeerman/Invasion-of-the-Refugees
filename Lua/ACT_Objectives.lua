@@ -2,7 +2,6 @@
 enableDebug = false
 markerScatter = 1000
 compThres = 50
-seadDetectionChance = 100 --default chance that a SAM site detects an SEAD missile
 
 -- Set templates --
 primObjectiveList = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004", "airbase #002", "primObjective #005", "primObjective #006", "primObjective #007"}
@@ -186,7 +185,7 @@ end
 function genSurroundings ( vec3, sam, ewr, defenses ) --generates SAMs, EWRs and defenses
 
     if sam == true then
-        genSam(vec3Prim, false, seadDetectionChance) --generates a SAM site with a chance to detect SEAD missiles
+        genSam(vec3Prim, false ) --generates a SAM site with a chance to detect SEAD missiles
     end
 
     if ewr == true then
@@ -218,7 +217,7 @@ end
 
 function genDefenseSmall(vec3) -- generates a defense group at point vec3 with set offset
     local offset = {
-        x = -30, --changed from -2000 after decreasing the diameter of the template
+        x = -30,
         y = 0,
         z = 0
     }
@@ -268,7 +267,7 @@ function genEwr(vec3, quantity ) --generate N EWR sites away from the main objec
 
 end
 
-function genSam(vec3, mark, detectionChance) -- generates SAM site in random location around point vec3, boolean mark sets f10 marker
+function genSam(vec3, mark ) -- generates SAM site in random location around point vec3, boolean mark sets f10 marker
     sam = samList[math.random(#samList)]
     samId = samId + 1
     mist.teleportToPoint {
@@ -285,11 +284,9 @@ function genSam(vec3, mark, detectionChance) -- generates SAM site in random loc
     local countryName = country.name[countryId]
     
     objectiveCounter = objectiveCounter + 1
-    IADS:addSAMSite(countryName.." gnd "..tostring(objectiveCounter))
+    IADS:addSAMSite(countryName.." gnd "..tostring(objectiveCounter)) --group name
 
-    if DetectionChance == not nil then --chance that a SAM site detects an anti radiation missile and turns the radar off
-        IADS:getSAMSiteByGroupName(countryName.." gnd "..tostring(objectiveCounter)):setHARMDetectionChance(detectionChance) 
-    end
+    improveSamAuto ( countryName.." gnd "..tostring(objectiveCounter) )
     
     if mark == true then
         markObjective("SAM Site", countryName.." gnd "..tostring(objectiveCounter), 200 + samId)
@@ -302,6 +299,36 @@ function genSam(vec3, mark, detectionChance) -- generates SAM site in random loc
     end
 
     vec3Sam[#vec3Sam + 1] = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter))    
+end
+
+function improveSamAuto (groupName) --inputs group name and tunes it automatically according to its type
+
+    local group = Group.getByName(groupName)
+    local unitType = group:getUnit(1):getTypeName() --outputs unit type name
+    trigger.action.outText(unitType, 300)
+
+    if string.find(unitType, "Kub") then --SA-6
+        IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 40 )
+        IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(90)
+
+    else if string.find(unitType, "rapier") then --Rapier
+        IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 20 )
+        IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(100)
+
+    else if string.find(unitType, "Hawk") then --Hawk
+        IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 40 )
+        IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(85)
+
+    else if string.find(unitType, "Buk") then --SA-11
+        IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 60 )
+        IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(90)
+
+    else
+
+    end
+    end
+    end
+    end
 end
 
 function genStatics(vec3, amount) -- generates statics around point vec3
@@ -544,7 +571,7 @@ do
     missionCommands.addCommand("Start Helicopter mission", nil, genHeloObjective)
 
     for i = 1,#airbaseZones,1 do
-        genSam(mist.utils.zoneToVec3(airbaseZones[i]), true, seadDetectionChance)
+        genSam(mist.utils.zoneToVec3(airbaseZones[i]), true )
     end
     
     genPrimObjective()
@@ -557,5 +584,3 @@ do
     IADS:activate()
     A2A_DISPATCHER()
 end
-
-
