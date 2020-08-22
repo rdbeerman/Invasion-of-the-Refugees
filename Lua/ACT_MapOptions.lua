@@ -9,7 +9,7 @@ function act.caucasus()
         AIRBASE.Caucasus.Anapa_Vityazevo
     }
 
-    act.Zones = {"zone #001", "zone #002", "zone #003", "zone #004", "zone #005", "zone #006", "zone #007", "zone #008"}
+    act.Zones = {"zone #001", "zone #002", "zone #003", "zone #004", "zone #005", "zone #006", "zone #007", "zone #008", "zone #009", "zone #010", "zone #011"}
 end
 
 function act.persianGulf()
