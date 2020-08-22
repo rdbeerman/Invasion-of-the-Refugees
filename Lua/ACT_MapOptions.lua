@@ -17,8 +17,8 @@ function act.persianGulf()
     map = "persianGulf"
     
     act.capAirbases = {
-        AIRBASE.Caucasus.Krasnodar_Center,
-        AIRBASE.Caucasus.Anapa_Vityazevo
+        AIRBASE.PersianGulf.Shiraz_International_Airport,
+        AIRBASE.PersianGulf.Kerman_Airport
     }
 
     act.Zones = {"zone #001", "zone #002", "zone #003", "zone #004"}
