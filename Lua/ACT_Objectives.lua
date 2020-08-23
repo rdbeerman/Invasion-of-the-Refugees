@@ -1,5 +1,9 @@
+--[[
+    assert(loadfile("C:\\Users\\frueg\\Documents\\GitHub\\Invasion-of-the-Refugees\\Lua\\ACT_Objectives.lua"))() 
+]]
+
 -- General Settings --
-enableDebug = false
+enableDebug = true
 markerScatter = 1000
 compThres = 50
 
