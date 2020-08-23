@@ -4,20 +4,33 @@ markerScatter = 1000
 compThres = 50
 
 -- Set templates --
-primObjectiveList = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004", "airbase #002", "primObjective #005", "primObjective #006", "primObjective #007"}
+-- Set zones for possible spawning of objectives --
+objectiveLocList = act.getZones()
 
-typeAirbase = {"airbase #002"}
-typeStructure = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004"}
-typeSpecial = {"primObjective #005", "primObjective #006", "primObjective #007" }
+primObjectiveList = act.getPrimObjectives()
 
-samList = {"SAM #001", "SAM #002", "SAM #003", "SAM #004" }
-ewrList = {"EWR #001", "EWR #002", "EWR #003"}
-defenseList = {"defense #001", "defense #002", "defense #003", "defense #004", "defense #005"}
-defenseListSmall = { "defenseSmall #001", "defenseSmall #002" } --small defense for EWRs (APC, Manpad, AAA, Truck)
+typeStructure = act.getStructures()
+typeSpecial = act.getTypeSpecial()
 
-blueGround = {"blueGround #001"}
+samList = act.getSams()
+ewrList = act.getEwrs()
+defenseList = act.getDefenses()
+defenseListSmall = act.getSmallDefenses()
 
-escortList = {"escort #001"}
+capRed = act.getRedCap ()
+
+--helo stuff
+blueGround = act.getBlueGround()
+heloObjectives = act.getHeloObjectives()
+
+escortList = act.getEscort()
+
+--airbase stuff
+airbaseZones = act.getAirbaseZones()
+typeAirbase = act.getAirbaseStructures()
+airbaseEWR = act.getAirbaseEwr()
+
+-- Set airbase Zones, unmarker SAM sites will be places here --
 
 -- Set objective Names for typeStructure --
 primNames = {"Headquarters", "Outpost", "Fuel Depot", "Compound", "Presidio", "Armory"}
@@ -25,22 +38,13 @@ primNames = {"Headquarters", "Outpost", "Fuel Depot", "Compound", "Presidio", "A
 -- Set objective Names for typeSpecial, index must match
 specialNames = {"SCUD Site", "Artillery Battery"}
 -- Set Helo objectives
-heloObjectives = {"heloObjective #001", "heloObjective #002", "heloObjective #003"}
+
 heloObjectiveNames = {"Search and Rescue", "Construct SAM", "Attack camp"} --Add Cargo transport, troop transport, strike
 
 heloStatics = {"CH-47D", "UH-60A", "Mi-8MTV2"}
 
 -- Set Statics
 staticList = {"Workshop A", "Farm A", "Farm B", "Comms tower M", "Chemical tank A", "Pump station", "Oil derrick"}
-
--- Set zones for possible spawning of objectives --
-objectiveLocList = act.getZones()
-
--- Set IADS airbase EWR --
-airbaseEWR = {"EWR Base #001", "EWR Base #002"}
-
--- Set airbase Zones, unmarker SAM sites will be places here --
-airbaseZones = {"airbaseZone #001", "airbaseZone #002"}
 
 -- TODO --
     -- Function to decrease A2A Dispatcher after EWR/factory destroyed
@@ -305,7 +309,10 @@ function improveSamAuto (groupName) --inputs group name and tunes it automatical
 
     local group = Group.getByName(groupName)
     local unitType = group:getUnit(1):getTypeName() --outputs unit type name
-    trigger.action.outText(unitType, 300)
+
+    if enableDebug == true then
+        trigger.action.outText(unitType, 300)
+    end
 
     if string.find(unitType, "Kub") then --SA-6
         IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 40 )
@@ -323,7 +330,9 @@ function improveSamAuto (groupName) --inputs group name and tunes it automatical
         IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 60 )
         IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(90)
 
-    else
+    else --not found
+        IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 50 )
+        IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent( 100 )
 
     end
     end
@@ -537,8 +546,8 @@ function A2A_DISPATCHER()
 
     --Define Squadrons
 
-    A2ADispatcherRED:SetSquadron( "CAP_RED_1", act.capAirbases[1], {"CAP Red #001", "CAP Red #002", "CAP Red #003", "CAP Red #004", "CAP Red #005", "CAP Red #006", "CAP Red #007", "CAP Red #008", "CAP Red #009", "CAP Red #010"} )
-    A2ADispatcherRED:SetSquadron( "CAP_RED_2", act.capAirbases[2], {"CAP Red #001", "CAP Red #002", "CAP Red #003", "CAP Red #004", "CAP Red #005", "CAP Red #006", "CAP Red #007", "CAP Red #008", "CAP Red #009", "CAP Red #010"} )
+    A2ADispatcherRED:SetSquadron( "CAP_RED_1", act.capAirbases[1], capRed )
+    A2ADispatcherRED:SetSquadron( "CAP_RED_2", act.capAirbases[2], capRed )
 
     --Define Squadron properties
     A2ADispatcherRED:SetSquadronOverhead( "CAP_RED_1", 1 )
