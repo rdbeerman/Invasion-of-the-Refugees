@@ -8,7 +8,7 @@ function act.caucasus()
         AIRBASE.Caucasus.Krasnodar_Center,
         AIRBASE.Caucasus.Anapa_Vityazevo
     }
-    act.zones = {"zone #001", "zone #002", "zone #003", "zone #004", "zone #005", "zone #006", "zone #007", "zone #008"}
+    act.zones = {"zone #001", "zone #002", "zone #003", "zone #004", "zone #005", "zone #006", "zone #007", "zone #008", "zone #009", "zone #010", "zone #011"}
 
     act.primObjectives = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004", "airbase #002", "primObjective #005", "primObjective #006", "primObjective #007"}
 
@@ -30,7 +30,7 @@ function act.caucasus()
     act.airbaseStructures = { "airbase #002" }
     act.airbaseZones = { "airbaseZone #001", "airbaseZone #002" }
     act.airbaseEwr = { "EWR Base #001", "EWR Base #002" }
-    act.Zones = {"zone #001", "zone #002", "zone #003", "zone #004", "zone #005", "zone #006", "zone #007", "zone #008", "zone #009", "zone #010", "zone #011"}
+    
 end
 
 function act.persianGulf()
