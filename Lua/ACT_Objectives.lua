@@ -1,7 +1,3 @@
---[[
-    assert(loadfile("C:\\Users\\frueg\\Documents\\GitHub\\Invasion-of-the-Refugees\\Lua\\ACT_Objectives.lua"))() 
-]]
-
 -- General Settings --
 enableDebug = true
 markerScatter = 1000
@@ -34,19 +30,14 @@ airbaseZones = act.getAirbaseZones()
 typeAirbase = act.getAirbaseStructures()
 airbaseEWR = act.getAirbaseEwr()
 
--- Set airbase Zones, unmarker SAM sites will be places here --
-
+--custom names & statics
 -- Set objective Names for typeStructure --
 primNames = {"Headquarters", "Outpost", "Fuel Depot", "Compound", "Presidio", "Armory"}
-
 -- Set objective Names for typeSpecial, index must match
 specialNames = {"SCUD Site", "Artillery Battery"}
 -- Set Helo objectives
-
 heloObjectiveNames = {"Search and Rescue", "Construct SAM", "Attack camp"} --Add Cargo transport, troop transport, strike
-
 heloStatics = {"CH-47D", "UH-60A", "Mi-8MTV2"}
-
 -- Set Statics
 staticList = {"Workshop A", "Farm A", "Farm B", "Comms tower M", "Chemical tank A", "Pump station", "Oil derrick"}
 

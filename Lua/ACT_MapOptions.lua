@@ -65,11 +65,9 @@ function act.persianGulf()
     act.airbaseZones = { "airbaseZone #001", "airbaseZone #002" }
     act.airbaseEwr = { "EWR Base #001", "EWR Base #002" }
 end
-
---[[
     
-    --Syria, not working anyway right now, needs a new moose version
 function act.syria()
+    
     trigger.action.outText("Hello Syria", 10)
     map = "syria"
     
@@ -101,10 +99,7 @@ function act.syria()
     act.airbaseZones = { "airbaseZone #001", "airbaseZone #002" }
     act.airbaseEwr = { "EWR Base #001", "EWR Base #002" }
 
-    --trigger.action.outText("Hello Syria Gulf again", 10) --debug
 end
-
-]]--
 
 function act.getZones()
     return act.zones
