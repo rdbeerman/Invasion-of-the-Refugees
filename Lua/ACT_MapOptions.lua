@@ -1,20 +1,16 @@
---[[
-    assert(loadfile("C:\\Users\\frueg\\Documents\\GitHub\\Invasion-of-the-Refugees\\Lua\\ACT_MapOptions.lua"))() 
-]]
-
 act = {}
 
 function act.caucasus()
-    trigger.action.outText("Hello Caucasus", 10)
+    trigger.action.outText("Hello Caucasus", 5)
     map = "caucasus"
 
     act.capAirbases = {
         AIRBASE.Caucasus.Krasnodar_Center,
         AIRBASE.Caucasus.Anapa_Vityazevo
     }
-    act.zones = {"zone #001", "zone #002", "zone #003", "zone #004"}
+    act.zones = {"zone #001", "zone #002", "zone #003", "zone #004", "zone #005", "zone #006", "zone #007", "zone #008", "zone #009", "zone #010", "zone #011"}
 
-    act.primObjectives = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004", "airbase #002", "primObjective #005", "primObjective #006", "primObjective #007"}
+    act.primObjectives = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004", "airbase #002", "primObjective #005", "primObjective #006" }
 
     act.structures = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004"}
     act.typeSpecial = { "primObjective #005", "primObjective #006", "primObjective #007" }
@@ -34,11 +30,11 @@ function act.caucasus()
     act.airbaseStructures = { "airbase #002" }
     act.airbaseZones = { "airbaseZone #001", "airbaseZone #002" }
     act.airbaseEwr = { "EWR Base #001", "EWR Base #002" }
-
+    
 end
 
 function act.persianGulf()
-    trigger.action.outText("Hello Persian Gulf", 10)
+    trigger.action.outText("Hello Persian Gulf", 5)
     map = "persianGulf"
     
     act.capAirbases = {
@@ -68,9 +64,10 @@ function act.persianGulf()
     act.airbaseStructures = { "airbase #002" }
     act.airbaseZones = { "airbaseZone #001", "airbaseZone #002" }
     act.airbaseEwr = { "EWR Base #001", "EWR Base #002" }
-    
 end
 
+--[[
+    
     --Syria, not working anyway right now, needs a new moose version
 function act.syria()
     trigger.action.outText("Hello Syria", 10)
@@ -107,6 +104,7 @@ function act.syria()
     --trigger.action.outText("Hello Syria Gulf again", 10) --debug
 end
 
+]]--
 
 function act.getZones()
     return act.zones
