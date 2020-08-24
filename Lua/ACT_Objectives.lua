@@ -112,7 +112,7 @@ function genPrimObjective()
             }
 
             if enableDebug == true then
-                notify(primObjective.."@"..objectiveLoc, 1)
+                notify(primObjective.."@"..objectiveLoc, 60)
             end
             return
         end
@@ -144,7 +144,7 @@ function genPrimObjective()
             genSurroundings( vec3Prim, true, true, true ) --moved defenses to an extra function (postion, sam, ewr, short range defenses)
 
             if enableDebug == true then
-                notify(primObjective.."@"..objectiveLoc, 1)
+                notify(primObjective.."@"..objectiveLoc, 60)
             end
             return
         end
@@ -172,8 +172,9 @@ function genPrimObjective()
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
             
             genSurroundings( vec3Prim, true, true, true ) --position, sam, ewr, defenses
+
             if enableDebug == true then
-                notify(primObjective.."@"..objectiveLoc, 1)
+                notify(primObjective.."@"..objectiveLoc, 60)
             end
             return
         end
@@ -306,7 +307,7 @@ function improveSamAuto (groupName) --inputs group name and tunes it automatical
     local unitType = group:getUnit(1):getTypeName() --outputs unit type name
 
     if enableDebug == true then
-        trigger.action.outText(unitType, 300)
+        trigger.action.outText(unitType, 60)
     end
 
     if string.find(unitType, "Kub") then --SA-6
