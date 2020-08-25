@@ -1,6 +1,6 @@
 -- General Settings --
-enableDebug = false
-enableMathDebug = false
+enableDebug = true
+enableMathDebug = true
 markerScatter = 1000
 compThres = 50
 
@@ -60,6 +60,12 @@ statics = {}
 vec3Sam = {}
 isAirfield = false
 heloCounter = 0
+
+
+--spawn variables move to map options another time
+ewrNumber = 2
+samNumber = 1
+shoradNumber = 4
 
 vec3Offset = {
     x = -13000,
@@ -142,7 +148,7 @@ function genPrimObjective()
             local markerName = "Objective: "..tostring(primName)
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
 
-            genSurroundings( vec3Prim , 1, 2, 5 , true ) --moved defenses to an extra function (postion, sam, ewr, short range defenses)
+            genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber , true ) --moved defenses to an extra function (postion, sam, ewr, short range defenses)
 
             if enableDebug == true then
                 notify(primObjective.."@"..objectiveLoc, 60)
@@ -172,7 +178,7 @@ function genPrimObjective()
             local markerName = "Objective: "..specialNames[i]
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
             
-            genSurroundings( vec3Prim , 1, 2, 5 ,  true ) --position, sam, ewr, defenses
+            genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  true ) --position, sam, ewr, defenses
 
             if enableDebug == true then
                 notify(primObjective.."@"..objectiveLoc, 60)
@@ -197,8 +203,9 @@ function genSurroundings ( vec3, samQuantity, ewrQuantity, satellitesQuantity, d
         genDefense( vec3 ) --generates the short range defenses of an objective
     end
     
-    genShorad ( vec3 , satellitesQuantity )
-
+    if satellitesQuantity ~= 0 then
+        genShorad ( vec3 , satellitesQuantity )
+    end
 end
 
 function genDefense(vec3) -- generates a defense group at point vec3 with set offset
