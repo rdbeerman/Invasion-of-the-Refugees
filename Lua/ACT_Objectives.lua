@@ -1,6 +1,6 @@
 -- General Settings --
-enableDebug = true
-enableMathDebug = true
+enableDebug = false
+enableMathDebug = false
 markerScatter = 1000
 compThres = 50
 
@@ -66,12 +66,6 @@ heloCounter = 0
 ewrNumber = 2
 samNumber = 1
 shoradNumber = 4
-
-vec3Offset = {
-    x = -13000,
-    y = 0,
-    z = 0
-}
 
 if enableDebug == true then
     local iadsDebug = IADS:getDebugSettings()
