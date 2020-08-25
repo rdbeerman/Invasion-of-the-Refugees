@@ -85,6 +85,7 @@ function act.syria()
 
     act.sams = {"SAM-1", "SAM-2", "SAM-4" } --sam-3 removed for now
     act.ewrs = {"EWR-1", "EWR-2", "EWR-3"}
+    act.shorad = {"shorad-1", "shorad-2"}
     act.defenses = {"defense-1", "defense-2", "defense-3", "defense-4", "defense-5"}
 	act.smallDefenses = { "defenseSmall-1", "defenseSmall-2" }
 
@@ -123,6 +124,10 @@ end
 
 function act.getEwrs()
     return act.ewrs
+end
+
+function act.getShorad()
+    return act.shorad
 end
 
 function act.getDefenses()

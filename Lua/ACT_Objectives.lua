@@ -1,12 +1,12 @@
 -- General Settings --
-enableDebug = true
+enableDebug = false
+enableMathDebug = false
 markerScatter = 1000
 compThres = 50
 
 -- Set templates --
--- Set zones for possible spawning of objectives --
+-- Import map specific templates
 objectiveLocList = act.getZones()
-
 primObjectiveList = act.getPrimObjectives()
 
 typeStructure = act.getStructures()
@@ -14,6 +14,7 @@ typeSpecial = act.getTypeSpecial()
 
 samList = act.getSams()
 ewrList = act.getEwrs()
+shoradList = act.getShorad()
 defenseList = act.getDefenses()
 defenseListSmall = act.getSmallDefenses()
 
@@ -141,7 +142,7 @@ function genPrimObjective()
             local markerName = "Objective: "..tostring(primName)
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
 
-            genSurroundings( vec3Prim, true, true, true ) --moved defenses to an extra function (postion, sam, ewr, short range defenses)
+            genSurroundings( vec3Prim , 1, 2, 5 , true ) --moved defenses to an extra function (postion, sam, ewr, short range defenses)
 
             if enableDebug == true then
                 notify(primObjective.."@"..objectiveLoc, 60)
@@ -171,7 +172,7 @@ function genPrimObjective()
             local markerName = "Objective: "..specialNames[i]
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
             
-            genSurroundings( vec3Prim, true, true, true ) --position, sam, ewr, defenses
+            genSurroundings( vec3Prim , 1, 2, 5 ,  true ) --position, sam, ewr, defenses
 
             if enableDebug == true then
                 notify(primObjective.."@"..objectiveLoc, 60)
@@ -182,19 +183,21 @@ function genPrimObjective()
     
 end
 
-function genSurroundings ( vec3, sam, ewr, defenses ) --generates SAMs, EWRs and defenses
+function genSurroundings ( vec3, samQuantity, ewrQuantity, satellitesQuantity, defenses ) --generates SAMs, EWRs and defenses
 
-    if sam == true then
-        genSam(vec3Prim, false ) --generates a SAM site with a chance to detect SEAD missiles
+    for i = 1 , samQuantity, 1 do
+        genSam ( vec3 , false ) --generates a SAM site with a chance to detect SEAD missiles
     end
 
-    if ewr == true then
-        genEwr ( vec3Prim , math.random(2) ) --generates 1-2 EWRs within 20-30km
+    for i = 1 , ewrQuantity , 1 do
+        genEwr ( vec3 )
     end
 
     if defenses == true then
-        genDefense(vec3Prim) --generates the short range defenses of an objective
+        genDefense( vec3 ) --generates the short range defenses of an objective
     end
+    
+    genShorad ( vec3 , satellitesQuantity )
 
 end
 
@@ -232,38 +235,34 @@ function genDefenseSmall(vec3) -- generates a defense group at point vec3 with s
     objectiveCounter = objectiveCounter + 1
 end
 
-function genEwr(vec3, quantity ) --generate N EWR sites away from the main objective and adds a bit of protection to them
+function genEwr( vec3 ) --generate N EWR sites away from the main objective and adds a bit of protection to them
 
-    for i = 1 , quantity  , 1 do
+    local offset = {
+        x = 0, 
+        y = 0,
+        z = 0
+    }
 
-        local offset = {
-            x = 0, 
-            y = 0,
-            z = 0
-        }
+    local ewrExternal = ewrList[math.random(#ewrList)]
+    mist.teleportToPoint {
+        groupName = ewrExternal,
+        point = vec3,
+        action = "clone",
+        disperse = false,
+        radius = 35000,
+        innerRadius = 20000
+    }
+    objectiveCounter = objectiveCounter + 1
 
-        local ewrExternal = ewrList[math.random(#ewrList)]
-        mist.teleportToPoint {
-            groupName = ewrExternal,
-            point = vec3,
-            action = "clone",
-            disperse = false,
-            radius = 35000,
-            innerRadius = 20000
-        }
-        objectiveCounter = objectiveCounter + 1
+    local group = Group.getByName(ewrExternal) 
+    local countryId = group:getUnit(1):getCountry()
+    local countryName = country.name[countryId]
 
-        local group = Group.getByName(ewrExternal) 
-        local countryId = group:getUnit(1):getCountry()
-        local countryName = country.name[countryId]
+    ewrExternalGroup = Group.getByName(countryName.." gnd "..tostring(objectiveCounter))
+    ewrExternalUnit = ewrExternalGroup:getUnit(1):getName()
 
-        ewrExternalGroup = Group.getByName(countryName.." gnd "..tostring(objectiveCounter))
-        ewrExternalUnit = ewrExternalGroup:getUnit(1):getName()
-
-        IADS:addEarlyWarningRadar(ewrExternalUnit) -- add EWR to IADS
-        genDefenseSmall( mist.getLeadPos(ewrExternalGroup) )
-
-    end
+    IADS:addEarlyWarningRadar(ewrExternalUnit) -- add EWR to IADS
+    genDefenseSmall( mist.getLeadPos(ewrExternalGroup) )
 
 end
 
@@ -299,6 +298,51 @@ function genSam(vec3, mark ) -- generates SAM site in random location around poi
     end
 
     vec3Sam[#vec3Sam + 1] = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter))    
+end
+
+function genShorad ( vec3 , amount ) --works. todo: integrate it into Skynet
+
+    local theta = 360 / amount
+    local offset = 10000
+    
+    for i = 1 , amount , 1 do
+
+        local shoradPosition = mist.vec.add(vec3, rotateVector( theta*i, offset ))
+
+        local shoradExternal = shoradList[math.random(#shoradList)]
+        mist.teleportToPoint {
+            groupName = shoradExternal,
+            point = shoradPosition,
+            action = "clone",
+            disperse = false,
+            radius = 2500,
+            innerRadius = 250
+        }
+
+        objectiveCounter = objectiveCounter + 1
+
+        local group = Group.getByName(shoradExternal) 
+        local countryId = group:getUnit(1):getCountry()
+        local countryName = country.name[countryId]
+        local shoradName = countryName.." gnd "..tostring(objectiveCounter)
+
+        local shoradExternalGroup = Group.getByName(shoradName)
+
+        IADS:addSAMSite(shoradName)
+        genDefenseSmall( mist.getLeadPos(shoradExternalGroup) )
+
+
+    end
+
+end
+
+function rotateVector ( degree, radius ) --input degree and radius, rotates the vector and returns a vec3 offset
+    local offset = {
+        x = radius,
+        y = 0
+    }
+    local returnOffset = mist.utils.makeVec3( mist.vec.rotateVec2 ( offset, math.rad(degree) ) )
+    return returnOffset
 end
 
 function improveSamAuto (groupName) --inputs group name and tunes it automatically according to its type
