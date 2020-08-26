@@ -608,7 +608,7 @@ function A2A_DISPATCHER()
     A2ADispatcherRED:SetTacticalDisplay( enableDebug )
 
     --Define Defaults
-    A2ADispatcherRED:SetDefaultTakeOffFromRunway()
+    --A2ADispatcherRED:SetDefaultTakeOffFromRunway()
     A2ADispatcherRED:SetDefaultLandingAtRunway()
 end
 
