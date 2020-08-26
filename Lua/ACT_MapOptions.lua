@@ -89,7 +89,7 @@ function act.syria()
     act.defenses = {"defense-1", "defense-2", "defense-3", "defense-4", "defense-5"}
 	act.smallDefenses = { "defenseSmall-1", "defenseSmall-2" }
 
-    act.capRed = { "CAP Red-1", "CAP Red-2", "CAP Red-3", "CAP Red-4" }
+    act.capRed = { "CAP Red-1", "CAP Red-2", "CAP Red-3", "CAP Red-4", "CAP Red-5", "CAP Red-6", "CAP Red-7" }
 
     act.blueground = { "blueGround-1" }
     act.heloObjectives = { "heloObjective #001", "heloObjective #002", "heloObjective #003" }
