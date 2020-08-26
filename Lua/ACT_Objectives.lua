@@ -599,16 +599,16 @@ function A2A_DISPATCHER()
 
     --Define CAP Squadron execution
     A2ADispatcherRED:SetSquadronCap( "CAP_RED_1", BorderRED,  6000, 8000, 600, 900, 600, 900, "BARO")
-    A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_1", 2, 450, 550, 1)
+    A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_1", 2, 200, 400, 1) --old settings were 450, 550
 
     A2ADispatcherRED:SetSquadronCap( "CAP_RED_2", BorderRED,  3000, 9000, 400, 800, 600, 900, "BARO")
-    A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_2", 1, 450, 550, 1)
+    A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_2", 1, 200, 400, 1) --old settings were 450, 550
 
     --Debug
     A2ADispatcherRED:SetTacticalDisplay( enableDebug )
 
     --Define Defaults
-    A2ADispatcherRED:SetDefaultTakeoffFromParkingHot()
+    A2ADispatcherRED:SetDefaultTakeOffFromRunway()
     A2ADispatcherRED:SetDefaultLandingAtRunway()
 end
 

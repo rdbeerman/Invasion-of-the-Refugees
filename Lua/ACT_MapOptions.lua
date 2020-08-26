@@ -17,6 +17,7 @@ function act.caucasus()
 
     act.sams = {"SAM #001", "SAM #002", "SAM #003", "SAM #004" }
     act.ewrs = {"EWR #001", "EWR #002", "EWR #003"}
+    act.shorad = {"shorad-1", "shorad-2"}
     act.defenses = {"defense #001", "defense #002", "defense #003", "defense #004", "defense #005"}
 	act.smallDefenses = { "defenseSmall #001", "defenseSmall #002" }
 
@@ -51,6 +52,7 @@ function act.persianGulf()
 
     act.sams = {"SAM #001", "SAM #002", "SAM #003", "SAM #004" }
     act.ewrs = {"EWR #001", "EWR #002", "EWR #003"}
+    act.shorad = {"shorad-1", "shorad-2"}
     act.defenses = {"defense #001", "defense #002", "defense #003", "defense #004", "defense #005"}
 	act.smallDefenses = { "defenseSmall #001", "defenseSmall #002" }
 
