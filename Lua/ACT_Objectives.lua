@@ -346,6 +346,10 @@ function rotateVector ( degree, radius ) --input degree and radius, rotates the 
     return returnOffset
 end
 
+function getVector ()
+
+end
+
 function improveSamAuto (groupName) --inputs group name and tunes it automatically according to its type
 
     local group = Group.getByName(groupName)
@@ -619,6 +623,7 @@ do
     missionCommands.addCommand("Objective info", nil, notifyObjective)
     missionCommands.addCommand("Start Escort mission", nil, genEscort)
     missionCommands.addCommand("Start Helicopter mission", nil, genHeloObjective)
+    missionCommands.addCommand("Debug: Get objective bearring", nil, getVector)
 
     for i = 1,#airbaseZones,1 do
         genSam(mist.utils.zoneToVec3(airbaseZones[i]), true )
