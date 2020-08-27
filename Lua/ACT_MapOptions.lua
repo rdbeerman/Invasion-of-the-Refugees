@@ -15,6 +15,8 @@ function act.caucasus()
     act.structures = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004"}
     act.typeSpecial = { "primObjective #005", "primObjective #006", "primObjective #007" }
 
+    act.specialNames = {"SCUD Site", "Artillery Battery", "Smerch Battery"}
+
     act.sams = {"SAM #001", "SAM #002", "SAM #003", "SAM #004" }
     act.ewrs = {"EWR #001", "EWR #002", "EWR #003"}
     act.shorad = {"shorad-1", "shorad-2"}
@@ -50,6 +52,8 @@ function act.persianGulf()
     act.structures = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004"}
     act.typeSpecial = { "primObjective #005", "primObjective #006", "primObjective #007" }
 
+    act.specialNames = {"SCUD Site", "Artillery Battery", "Smerch Battery"}
+
     act.sams = {"SAM #001", "SAM #002", "SAM #003", "SAM #004" }
     act.ewrs = {"EWR #001", "EWR #002", "EWR #003"}
     act.shorad = {"shorad-1", "shorad-2"}
@@ -84,6 +88,8 @@ function act.syria()
 
     act.structures = {"primObjective-1", "primObjective-2", "primObjective-3", "primObjective-4"}
     act.typeSpecial = { "primObjective-5", "primObjective-6", "primObjective-7" }
+
+    act.specialNames = {"SCUD Site", "Artillery Battery", "Smerch Battery"}
 
     act.sams = {"SAM-1", "SAM-2", "SAM-4" } --sam-3 removed for now
     act.ewrs = {"EWR-1", "EWR-2", "EWR-3"}
@@ -166,4 +172,8 @@ end
 
 function act.getAirbaseEwr()
     return act.airbaseEwr
+end
+
+function act.getSpecialNames()
+    return act.specialNames
 end

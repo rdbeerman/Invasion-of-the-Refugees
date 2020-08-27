@@ -34,8 +34,6 @@ airbaseEWR = act.getAirbaseEwr()
 --custom names & statics
 -- Set objective Names for typeStructure --
 primNames = {"Headquarters", "Outpost", "Fuel Depot", "Compound", "Presidio", "Armory"}
--- Set objective Names for typeSpecial, index must match
-specialNames = {"SCUD Site", "Artillery Battery"}
 -- Set Helo objectives
 heloObjectiveNames = {"Search and Rescue", "Construct SAM", "Attack camp"} --Add Cargo transport, troop transport, strike
 heloStatics = {"CH-47D", "UH-60A", "Mi-8MTV2"}
@@ -167,6 +165,8 @@ function genPrimObjective()
                 flag = primCompletedFlag,
                 percent = compThres,
             }
+
+            local specialNames = act.getSpecialNames()
 
             primName = specialNames[i] -- get objective name by using index in specialNames
             local markerName = "Objective: "..specialNames[i]
@@ -612,7 +612,7 @@ function A2A_DISPATCHER()
     A2ADispatcherRED:SetTacticalDisplay( enableDebug )
 
     --Define Defaults
-    A2ADispatcherRED:SetDefaultTakeOffFromRunway()
+    --A2ADispatcherRED:SetDefaultTakeOffFromRunway()
     A2ADispatcherRED:SetDefaultLandingAtRunway()
 end
 
