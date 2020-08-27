@@ -301,6 +301,44 @@ function genSam(vec3, mark ) -- generates SAM site in random location around poi
     vec3Sam[#vec3Sam + 1] = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter))    
 end
 
+function genAirbaseSam( zone, mark )
+    sam = samList[math.random(#samList)]
+    samId = samId + 1
+    local getZone = trigger.misc.getZone(zone)
+    local vec3 = mist.getRandomPointInZone(zone)
+    local size = getZone[2]
+    
+    mist.teleportToPoint {
+        groupName = sam,
+        point = vec3,
+        action = "clone",
+        disperse = false,
+        radius = size,
+        innerRadius = 2000
+    }
+    
+    local group = Group.getByName(sam)
+    local countryId = group:getUnit(1):getCountry()
+    local countryName = country.name[countryId]
+    
+    objectiveCounter = objectiveCounter + 1
+    IADS:addSAMSite(countryName.." gnd "..tostring(objectiveCounter)) --group name
+
+    improveSamAuto ( countryName.." gnd "..tostring(objectiveCounter) )
+    
+    if mark == true then
+        markObjective("SAM Site", countryName.." gnd "..tostring(objectiveCounter), 200 + samId)
+
+        mist.flagFunc.group_alive_less_than {
+            groupName = countryName.." gnd "..tostring(objectiveCounter),
+            flag = 200 + samId,
+            percent = compThres,
+        }
+    end
+
+    vec3Sam[#vec3Sam + 1] = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter)) 
+end
+
 function genShorad ( vec3 , amount ) --works. todo: integrate it into Skynet
 
     local theta = 360 / amount
@@ -621,7 +659,7 @@ do
     missionCommands.addCommand("Start Helicopter mission", nil, genHeloObjective)
 
     for i = 1,#airbaseZones,1 do
-        genSam(mist.utils.zoneToVec3(airbaseZones[i]), true )
+        genAirbaseSam(airbaseZones[i], true )
     end
     
     genPrimObjective()
