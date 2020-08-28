@@ -78,11 +78,11 @@ function act.syria()
     map = "syria"
     
     act.capAirbases = {
-        AIRBASE.Syria.An_Nasiriyah,
-        AIRBASE.Syria.Hama
+        AIRBASE.Syria.Palmyra,
+        AIRBASE.Syria.Tabqa
     }
 
-    act.zones = { "zone-1", "zone-2", "zone-3", "zone-4", "zone-5" }
+    act.zones = { "zone-1", "zone-2", "zone-3", "zone-4", "zone-5", "zone-6", "zone-7", "zone-8", "zone-9", "zone-10", "zone-11", "zone-12" }
 
     act.primObjectives = { "airbase-1", "airbase-2", "primObjective-1", "primObjective-2", "primObjective-3", "primObjective-4", "primObjective-5", "primObjective-6", "primObjective-7"}
 
