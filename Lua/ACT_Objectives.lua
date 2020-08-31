@@ -1,6 +1,6 @@
 -- General Settings --
 enableDebug = false
-enableMathDebug = false
+enableMathDebug = true
 markerScatter = 1000
 compThres = 50
 
@@ -305,10 +305,20 @@ function genShorad ( vec3 , amount ) --works. todo: integrate it into Skynet
 
     local theta = 360 / amount
     local offset = 10000
-    
+
+    local angularOffset = 90
+    local spawnDirection = getVector()
+    local spawnArea = angularOffset*2 + spawnDirection
+    local tempSpawnAngularSeperation = spawnArea / amount
+
+    if enableMathDebug == true then 
+        notify ( "spawnArea: " .. spawnArea, 60)
+        notify ( "tempSpawnAngularSeperation: " .. tempSpawnAngularSeperation, 60)
+    end
+
     for i = 1 , amount , 1 do
 
-        local shoradPosition = mist.vec.add(vec3, rotateVector( theta*i, offset ))
+        local shoradPosition = mist.vec.add(vec3, rotateVector( tempSpawnAngularSeperation, offset ))
 
         local shoradExternal = shoradList[math.random(#shoradList)]
         mist.teleportToPoint {
@@ -337,6 +347,12 @@ function genShorad ( vec3 , amount ) --works. todo: integrate it into Skynet
 
 end
 
+function directionalSpawning ()
+
+
+
+end
+
 function rotateVector ( degree, radius ) --input degree and radius, rotates the vector and returns a vec3 offset
     local offset = {
         x = radius,
@@ -347,6 +363,17 @@ function rotateVector ( degree, radius ) --input degree and radius, rotates the 
 end
 
 function getVector ()
+
+    notify ( "Target " .. notifyCoords(vec3Prim, 1).." N, "..notifyCoords(vec3Prim, 2).." E, "..notifyCoords(vec3Prim, 3).." ft.\n" , 60 ) --works
+    local tacanPos = mist.getLeadPos ( "ramatTacan" )                 --works
+    notify ( "Tacan " .. notifyCoords(tacanPos, 1).." N, "..notifyCoords(tacanPos, 2).." E, " , 60 )
+
+    local latTarget, lonTarget, altTarget = coord.LOtoLL(vec3Prim)
+    local latTacan, lonTacan, altTacan = coord.LOtoLL(tacanPos)
+
+    local attackVector = math.deg ( math.atan2 ( lonTacan - lonTarget , latTacan - latTarget ) ) --works
+    notify ("angle " .. attackVector, 60) --woho it works!
+    return attackVector
 
 end
 
@@ -623,7 +650,6 @@ do
     missionCommands.addCommand("Objective info", nil, notifyObjective)
     missionCommands.addCommand("Start Escort mission", nil, genEscort)
     missionCommands.addCommand("Start Helicopter mission", nil, genHeloObjective)
-    missionCommands.addCommand("Debug: Get objective bearring", nil, getVector)
 
     for i = 1,#airbaseZones,1 do
         genSam(mist.utils.zoneToVec3(airbaseZones[i]), true )
@@ -638,4 +664,7 @@ do
 
     IADS:activate()
     A2A_DISPATCHER()
+
+
+    missionCommands.addCommand("Debug: Get objective bearring", nil, getVector)
 end
