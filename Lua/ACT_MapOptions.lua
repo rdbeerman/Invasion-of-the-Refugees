@@ -74,15 +74,15 @@ end
     
 function act.syria()
     
-    trigger.action.outText("Hello Syria", 10)
+    trigger.action.outText("Hello Syria", 5)
     map = "syria"
     
     act.capAirbases = {
-        AIRBASE.Syria.Damascus,
-        AIRBASE.Syria.Hama
+        AIRBASE.Syria.Palmyra,
+        AIRBASE.Syria.Tabqa
     }
 
-    act.zones = { "zone-1", "zone-2", "zone-3", "zone-4", "zone-5" }
+    act.zones = { "zone-1", "zone-2", "zone-3", "zone-4", "zone-5", "zone-6", "zone-7", "zone-8", "zone-9", "zone-10", "zone-11", "zone-12" }
 
     act.primObjectives = { "airbase-1", "airbase-2", "primObjective-1", "primObjective-2", "primObjective-3", "primObjective-4", "primObjective-5", "primObjective-6", "primObjective-7"}
 
@@ -100,13 +100,13 @@ function act.syria()
     act.capRed = { "CAP Red-1", "CAP Red-2", "CAP Red-3", "CAP Red-4", "CAP Red-5", "CAP Red-6", "CAP Red-7" }
 
     act.blueground = { "blueGround-1" }
-    act.heloObjectives = { "heloObjective #001", "heloObjective #002", "heloObjective #003" }
+    act.heloObjectives = { "heloObjective-1", "heloObjective-2", "heloObjective-3" }
 
     act.escort = { "escort-1" }
 
     act.airbaseStructures = { "airbase-1", "airbase-2" }
     act.airbaseZones = { "airbaseZone-1", "airbaseZone-2" }
-    act.airbaseEwr = { "EWR Base-1", "EWR Base-2", "EWR Base-3" }
+    act.airbaseEwr = { "EWR Base #001", "EWR Base #002", "EWR Base #003" }
 
 end
 
