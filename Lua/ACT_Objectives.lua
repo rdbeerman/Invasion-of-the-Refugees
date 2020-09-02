@@ -3,6 +3,7 @@ enableDebug = false
 enableMathDebug = false
 markerScatter = 1000
 compThres = 50
+primObjectiveCounter = 0
 
 --[[
 
@@ -105,6 +106,7 @@ end
 
 function genPrimObjective()
     primCompletion = false
+    primObjectiveCounter = primObjectiveCounter + 1 --to check if a primary has been manually spawned, not pretty but should work
 
     primObjective = primObjectiveList[math.random(#primObjectiveList)]
     objectiveLoc = objectiveLocList[math.random(#objectiveLocList)]
@@ -648,6 +650,15 @@ end
 
 ]]
 
+function autoStart()
+
+    if primObjectiveCounter == 0 then
+        normalMode()
+        manualStart()
+    end
+
+end
+
 function manualStart()
     for i = 1,#airbaseZones,1 do
         genAirbaseSam(airbaseZones[i], true )
@@ -791,7 +802,5 @@ do
 
     --if no manual start is triggered, the mission starts after 120 seconds
 
-    normalMode() --sets the spawn variables to the defaults from the top
-    timer.scheduleFunction(manualStart, {}, timer.getTime() + 120)
-
+    timer.scheduleFunction(autoStart, {}, timer.getTime() + 120)
 end
