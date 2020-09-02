@@ -4,6 +4,28 @@ enableMathDebug = false
 markerScatter = 1000
 compThres = 50
 
+--[[
+
+    difficultiy settings (default)
+
+]]--
+
+--static defenses
+ewrNumberDefault = 2
+samNumberDefault = 1
+shoradNumberDefault = 4
+
+--cap numbers
+capLimitDefault = 1
+lowIntervalDefault = 350
+highIntervalDefault = 450
+probabilityDefault = 1
+
+--easy mode factor
+easyModeFactor = 2 --50% less enemies
+--hard mode factor
+hardModeFactor = 1.5 --50% more enemies
+
 -- Set templates --
 -- Import map specific templates
 objectiveLocList = act.getZones()
@@ -58,25 +80,6 @@ statics = {}
 vec3Sam = {}
 isAirfield = false
 heloCounter = 0
-
-
---[[
-
-    difficultiy settings (default)
-
-]]--
-
---static defenses
-ewrNumber = 3
-samNumber = 2
-shoradNumber = 5
-
---cap numbers
-capLimit = 1
-lowInterval = 350
-highInterval = 450
-probability = 1
-
 
 if enableDebug == true then
     local iadsDebug = IADS:getDebugSettings()
@@ -404,15 +407,18 @@ end
 
 function getVector ()
 
-    notify ( "Target " .. notifyCoords(vec3Prim, 1).." N, "..notifyCoords(vec3Prim, 2).." E, "..notifyCoords(vec3Prim, 3).." ft.\n" , 60 ) --works
     local tacanPos = mist.getLeadPos ( "ramatTacan" )                 --works
-    notify ( "Tacan " .. notifyCoords(tacanPos, 1).." N, "..notifyCoords(tacanPos, 2).." E, " , 60 )
-
     local latTarget, lonTarget, altTarget = coord.LOtoLL(vec3Prim)
     local latTacan, lonTacan, altTacan = coord.LOtoLL(tacanPos)
 
     local attackVector = math.deg ( math.atan2 ( lonTacan - lonTarget , latTacan - latTarget ) ) --works
-    notify ("angle " .. attackVector, 60) --woho it works!
+
+    if enableMathDebug == true then
+        notify ( "Target " .. notifyCoords(vec3Prim, 1).." N, "..notifyCoords(vec3Prim, 2).." E, "..notifyCoords(vec3Prim, 3).." ft.\n" , 60 ) --works
+        notify ( "Tacan " .. notifyCoords(tacanPos, 1).." N, "..notifyCoords(tacanPos, 2).." E, " , 60 )
+        notify ("angle " .. attackVector, 60) --woho it works!
+    end
+
     return attackVector
 
 end
@@ -636,6 +642,12 @@ function roundNumber(num, idp)                                              -- F
     return math.floor(num * mult + 0.5) / mult
 end
 
+--[[
+
+    manual start and difficulty selection before the mission starts (first 120 seconds)
+
+]]
+
 function manualStart()
     for i = 1,#airbaseZones,1 do
         genAirbaseSam(airbaseZones[i], true )
@@ -652,24 +664,58 @@ function manualStart()
     IADS:activate()
     A2A_DISPATCHER()
 
-    missionCommands.removeItem (manualStartRadioFunction)
-    missionCommands.removeItem (easyModeRadioFunction)
+    --missionCommands.removeItem (manualStartRadioMenu)
+    --missionCommands.removeItem (easyModeRadioMenu)
+    --missionCommands.removeItem (normalModeRadioMenu)
+    --missionCommands.removeItem (hardModeRadioMenu)
     missionCommands.removeItem (startCommands)
+end
+
+function normalMode()
+
+    notify("normal mode activated", 10)
+    ewrNumber = ewrNumberDefault
+    samNumber = samNumberDefault
+    shoradNumber = shoradNumberDefault
+
+    capLimit = capLimitDefault
+    lowInterval = lowIntervalDefault
+    highInterval = highIntervalDefault
+    probability = probabilityDefault
+
+    --missionCommands.removeItem (normalModeRadioMenu)
+
 end
 
 function easyMode() --reduce the amount of enemies, only useable before manual start
 
-    notify("easy mode activated", 60)
-    ewrNumber = 2
-    samNumber = 1
-    shoradNumber = 3
+    notify("easy mode activated", 10)
+    ewrNumber = math.ceil ( ewrNumberDefault / easyModeFactor )
+    samNumber = math.ceil ( samNumberDefault / easyModeFactor )
+    shoradNumber = math.ceil ( shoradNumberDefault / easyModeFactor )
 
-    capLimit = 1
-    lowInterval = 550
-    highInterval = 700
-    probability = 1
+    capLimit = capLimitDefault
+    lowInterval = math.ceil ( lowIntervalDefault * easyModeFactor )
+    highInterval = math.ceil ( highIntervalDefault * easyModeFactor )
+    probability = probabilityDefault
 
-    missionCommands.removeItem(easyModeRadioFunction)
+    --missionCommands.removeItem (easyModeRadioMenu)
+
+end
+
+function hardMode() --reduce the amount of enemies, only useable before manual start
+
+    notify("hard mode activated", 10)
+    ewrNumber = math.ceil ( ewrNumberDefault * hardModeFactor )
+    samNumber = math.ceil ( samNumberDefault * hardModeFactor )
+    shoradNumber = math.ceil ( shoradNumberDefault * hardModeFactor )
+
+    capLimit = capLimitDefault
+    lowInterval = math.ceil ( lowIntervalDefault / hardModeFactor )
+    highInterval = math.ceil ( highIntervalDefault / hardModeFactor )
+    probability = probabilityDefault
+
+    --missionCommands.removeItem (hardModeRadioMenu)
 
 end
 
@@ -732,16 +778,20 @@ do
 
     invasionCommandsRoot = missionCommands.addSubMenu ("Invasion Commands") --invasion commands submenu
 
-    objectiveInfo = missionCommands.addCommand("Objective info", invasionCommandsRoot, notifyObjective)
-    startEscortMission = missionCommands.addCommand("Start Escort mission", invasionCommandsRoot, genEscort)
-    startHelicopterMission = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
+    objectiveInfoRadioMenu = missionCommands.addCommand("Objective info", invasionCommandsRoot, notifyObjective)
+    startEscortMissionRadioMenu = missionCommands.addCommand("Start Escort mission", invasionCommandsRoot, genEscort)
+    startHelicopterMissionRadioMenu = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
 
     startCommands = missionCommands.addSubMenu ("Start Commands", invasionCommandsRoot) --nested submenu for start commands
 
-    easyModeRadioFunction = missionCommands.addCommand ("easy Mode", startCommands, easyMode)
-    manualStartRadioFunction = missionCommands.addCommand("manual start", startCommands , manualStart)
+    easyModeRadioMenu = missionCommands.addCommand ("easy mode", startCommands, easyMode)
+    normalModeRadioMenu = missionCommands.addCommand ("normal mode", startCommands, normalMode)
+    hardModeRadioMenu = missionCommands.addCommand ("hard mode", startCommands, hardMode)
+    manualStartRadioMenu = missionCommands.addCommand("manual start", startCommands , manualStart)
 
-    --if no manual start is triggered, the mission starts after 180 seconds
-    timer.scheduleFunction(manualStart, {}, timer.getTime() + 180)
+    --if no manual start is triggered, the mission starts after 120 seconds
+
+    normalMode() --sets the spawn variables to the defaults from the top
+    timer.scheduleFunction(manualStart, {}, timer.getTime() + 120)
 
 end
