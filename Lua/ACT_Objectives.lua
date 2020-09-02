@@ -87,6 +87,28 @@ for i = 1,#airbaseEWR,1 do
     IADS:addEarlyWarningRadar(airbaseEWR[i])
 end
 
+function manualStart()
+    for i = 1,#airbaseZones,1 do
+        genAirbaseSam(airbaseZones[i], true )
+    end
+    
+
+    genPrimObjective()
+    
+    timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
+    timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
+
+    notify("Completed init", 1)
+
+    IADS:activate()
+    A2A_DISPATCHER()
+end
+
+function easyMode() --reduce the amount of enemies, only useable before manual start
+
+
+end
+
 function genPrimObjective()
     primCompletion = false
 
@@ -339,7 +361,7 @@ function genAirbaseSam( zone, mark )
     vec3Sam[#vec3Sam + 1] = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter)) 
 end
 
-function genShorad ( vec3 , amount ) --works. todo: integrate it into Skynet
+function genShorad ( vec3 , amount ) 
 
     local theta = 360 / amount
     local offset = 10000
@@ -385,7 +407,7 @@ function genShorad ( vec3 , amount ) --works. todo: integrate it into Skynet
 
 end
 
-function directionalSpawning ()
+function directionalSpawning () --not sure if it will be needed
 
 
 
@@ -689,10 +711,16 @@ do
     missionCommands.addCommand("Start Escort mission", nil, genEscort)
     missionCommands.addCommand("Start Helicopter mission", nil, genHeloObjective)
 
-    for i = 1,#airbaseZones,1 do
+    missionCommands.addCommand("Debug: manualStart", nil, manualStart)
+
+    missionCommands.addCommand("Debug: Get objective bearring", nil, getVector)
+
+
+    --[[
+    or i = 1,#airbaseZones,1 do
         genAirbaseSam(airbaseZones[i], true )
     end
-    
+
     genPrimObjective()
     
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
@@ -702,7 +730,6 @@ do
 
     IADS:activate()
     A2A_DISPATCHER()
+    ]]--
 
-
-    missionCommands.addCommand("Debug: Get objective bearring", nil, getVector)
 end
