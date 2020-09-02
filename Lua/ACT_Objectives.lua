@@ -60,8 +60,12 @@ isAirfield = false
 heloCounter = 0
 
 
---spawn variables move to map options another time
---default numbers for "hard mode"
+--[[
+
+    difficultiy settings (default)
+
+]]--
+
 --static defenses
 ewrNumber = 3
 samNumber = 2
@@ -722,32 +726,19 @@ do
     _SETTINGS:SetPlayerMenuOff()
     notify("Starting init", 1)
 
+    --[[
+        adds the F-10 radio commands for the mission
+    ]]
+
     invasionCommandsRoot = missionCommands.addSubMenu ("Invasion Commands") --invasion commands submenu
 
-    missionCommands.addCommand("Objective info", invasionCommandsRoot, notifyObjective)
-    missionCommands.addCommand("Start Escort mission", invasionCommandsRoot, genEscort)
-    missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
+    objectiveInfo = missionCommands.addCommand("Objective info", invasionCommandsRoot, notifyObjective)
+    startEscortMission = missionCommands.addCommand("Start Escort mission", invasionCommandsRoot, genEscort)
+    startHelicopterMission = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
 
     startCommands = missionCommands.addSubMenu ("Start Commands", invasionCommandsRoot) --nested submenu for start commands
 
     easyMode = missionCommands.addCommand ("easy Mode", startCommands, easyMode)
     manualStart = missionCommands.addCommand("manual start", startCommands , manualStart)
-
-    --commented out because it is now handled by the manualStart() function
-    --[[ 
-    or i = 1,#airbaseZones,1 do
-        genAirbaseSam(airbaseZones[i], true )
-    end
-
-    genPrimObjective()
-    
-    timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
-    timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
-
-    notify("Completed init", 1)
-
-    IADS:activate()
-    A2A_DISPATCHER()
-    ]]--
 
 end
