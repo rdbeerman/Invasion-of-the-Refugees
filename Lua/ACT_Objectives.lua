@@ -741,6 +741,7 @@ do
     easyModeRadioFunction = missionCommands.addCommand ("easy Mode", startCommands, easyMode)
     manualStartRadioFunction = missionCommands.addCommand("manual start", startCommands , manualStart)
 
-    timer.scheduleFunction(manualStart, {}, timer.getTime() + 180) --if no manual start is done, the mission starts after 180 seconds
+    --if no manual start is triggered, the mission starts after 180 seconds
+    timer.scheduleFunction(manualStart, {}, timer.getTime() + 180)
 
 end
