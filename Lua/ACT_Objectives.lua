@@ -73,6 +73,7 @@ primCompletedFlag = 99
 primMarker = 98
 secCompletion = {}
 primObjectiveCounter = 0
+primObjectiveType = "" --used for setting it manually
 objectiveCounter = 0
 samId = 0
 IADS = SkynetIADS:create('IADS-Network')
@@ -104,7 +105,7 @@ for i = 1,#airbaseEWR,1 do
     IADS:addEarlyWarningRadar(airbaseEWR[i])
 end
 
-function genPrimObjective()
+function genPrimObjective( type )
     primCompletion = false
     primObjectiveCounter = primObjectiveCounter + 1 --to check if a primary has been manually spawned, not pretty but should work
 
@@ -199,6 +200,41 @@ function genPrimObjective()
         end
     end
     
+end
+
+function genBuildingTarget (primObjective, objectiveLoc)
+end
+
+function genVehicleTarget (primObjective, objectiveLoc)
+end
+
+function genAirfieldTarget (primObjective, objectiveLoc)
+    --storage for the old airfieldTarget function
+
+    for i = 1,#typeAirbase,1 do                 -- check if generated objective is a airbase
+        if primObjective == typeAirbase[i] then
+            isAirfield = true
+
+            local airbase = Group.getByName(primObjective)
+            trigger.action.activateGroup(airbase)
+
+            primName = "Airbase"
+            vec3Prim = mist.getLeadPos(primObjective)
+            markObjective("Objective: Airbase", primObjective, primMarker)
+
+            mist.flagFunc.group_alive_less_than {
+                groupName = primObjective,
+                flag = primCompletedFlag,
+                percent = compThres,
+            }
+
+            if enableDebug == true then
+                notify(primObjective.."@"..objectiveLoc, 60)
+            end
+            return
+        end
+    end
+
 end
 
 function genSurroundings ( vec3, samQuantity, ewrQuantity, satellitesQuantity, defenses ) --generates SAMs, EWRs and defenses
@@ -653,7 +689,7 @@ end
 function autoStart()
 
     if primObjectiveCounter == 0 then
-        normalMode()
+        setModeEasy()
         manualStart()
     end
 
@@ -665,7 +701,7 @@ function manualStart()
     end
     
 
-    genPrimObjective()
+    genPrimObjective( buildings )
     
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
     timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
@@ -675,10 +711,10 @@ function manualStart()
     IADS:activate()
     A2A_DISPATCHER()
 
-    missionCommands.removeItem (startCommands)
+    missionCommands.removeItem (radioSubMenuStartCommands)
 end
 
-function normalMode()
+function setModeNormal()
 
     notify("normal mode activated", 10)
     ewrNumber = ewrNumberDefault
@@ -692,7 +728,7 @@ function normalMode()
 
 end
 
-function easyMode() --reduce the amount of enemies, only useable before manual start
+function setModeEasy() --reduce the amount of enemies, only useable before manual start
 
     notify("easy mode activated", 10)
     ewrNumber = math.ceil ( ewrNumberDefault / easyModeFactor )
@@ -706,7 +742,7 @@ function easyMode() --reduce the amount of enemies, only useable before manual s
 
 end
 
-function hardMode() --reduce the amount of enemies, only useable before manual start
+function setModeHard() --reduce the amount of enemies, only useable before manual start
 
     notify("hard mode activated", 10)
     ewrNumber = math.ceil ( ewrNumberDefault * hardModeFactor )
@@ -717,6 +753,27 @@ function hardMode() --reduce the amount of enemies, only useable before manual s
     lowInterval = math.ceil ( lowIntervalDefault / hardModeFactor )
     highInterval = math.ceil ( highIntervalDefault / hardModeFactor )
     probability = probabilityDefault
+
+end
+
+function setDisableEnemyCap ()
+
+    capLimit = 0
+    notify ("enemy CAP disabled", 60)
+
+end
+
+function setEnableEnemyCap ()
+
+    capLimit = capLimitDefault
+    notify ("enemy CAP enabled", 60)
+
+end
+
+function setTargetBuilding ()
+
+    notify ("selected building target", 60)
+    notify ("Debug: not implemented", 60)
 
 end
 
@@ -771,7 +828,7 @@ end
 do
 
     _SETTINGS:SetPlayerMenuOff()
-    notify("Starting init", 1)
+    notify("Starting init", 5)
 
     --[[
         adds the F-10 radio commands for the mission
@@ -783,14 +840,23 @@ do
     startEscortMissionRadioMenu = missionCommands.addCommand("Start Escort mission", invasionCommandsRoot, genEscort)
     startHelicopterMissionRadioMenu = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
 
-    startCommands = missionCommands.addSubMenu ("Start Commands", invasionCommandsRoot) --nested submenu for start commands
+    radioSubMenuStartCommands = missionCommands.addSubMenu ("Start Commands", invasionCommandsRoot) --nested submenu for start commands
 
-    easyModeRadioMenu = missionCommands.addCommand ("easy mode", startCommands, easyMode)
-    normalModeRadioMenu = missionCommands.addCommand ("normal mode", startCommands, normalMode)
-    hardModeRadioMenu = missionCommands.addCommand ("hard mode", startCommands, hardMode)
-    manualStartRadioMenu = missionCommands.addCommand("manual start", startCommands , manualStart)
+    --difficulty settings
+    radioMenuEasyMode = missionCommands.addCommand ("easy mode", radioSubMenuStartCommands, setModeEasy)
+    radioMenuNormalMode = missionCommands.addCommand ("normal mode", radioSubMenuStartCommands, SetModeNormal)
+    radioMenuHardMode = missionCommands.addCommand ("hard mode", radioSubMenuStartCommands, setModeHard)
+    --cap settings
+    radioMenuDisableCap = missionCommands.addCommand ( "disable enemy CAP", radioSubMenuStartCommands, setDisableEnemyCap)
+    radioMenuEnableCap = missionCommands.addCommand ( "enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
+    --target type settings
+    radioMenuTargetBuilding = missionCommands.addCommand ("set building target", radioSubMenuStartCommands, setTargetBuilding)
+    
+    radioMenuManualStart = missionCommands.addCommand("manual start", radioSubMenuStartCommands , manualStart)
 
     --if no manual start is triggered, the mission starts after 120 seconds
-    timer.scheduleFunction(autoStart, {}, timer.getTime() + 120)
+    timer.scheduleFunction(autoStart, {}, timer.getTime() + 180)
+
+    notify("mission file loaded completly", 5)
     
 end
