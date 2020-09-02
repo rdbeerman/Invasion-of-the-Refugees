@@ -96,40 +96,6 @@ for i = 1,#airbaseEWR,1 do
     IADS:addEarlyWarningRadar(airbaseEWR[i])
 end
 
-function manualStart()
-    for i = 1,#airbaseZones,1 do
-        genAirbaseSam(airbaseZones[i], true )
-    end
-    
-
-    genPrimObjective()
-    
-    timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
-    timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
-
-    notify("Completed init", 1)
-
-    IADS:activate()
-    A2A_DISPATCHER()
-end
-
-function easyMode() --reduce the amount of enemies, only useable before manual start
-
-    notify("easy mode activated", 60)
-    ewrNumber = 2
-    samNumber = 1
-    shoradNumber = 2
-
-    capLimit = 1
-    lowInterval = 550
-    highInterval = 700
-    probability = 1
-
-    --missionCommands.removeItem ("Easy Mode")
-    missionCommands.removeItem(commandDB["Easy Mode"])
-
-end
-
 function genPrimObjective()
     primCompletion = false
 
@@ -382,7 +348,7 @@ function genAirbaseSam( zone, mark )
     vec3Sam[#vec3Sam + 1] = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter)) 
 end
 
-function genShorad ( vec3 , amount ) 
+function genShorad ( vec3 , amount ) --works. todo: integrate it into Skynet
 
     local theta = 360 / amount
     local offset = 10000
@@ -392,14 +358,9 @@ function genShorad ( vec3 , amount )
     local spawnArea = angularOffset*2 + spawnDirection
     local tempSpawnAngularSeperation = spawnArea / amount
 
-    if enableMathDebug == true then 
-        notify ( "spawnArea: " .. spawnArea, 60)
-        notify ( "tempSpawnAngularSeperation: " .. tempSpawnAngularSeperation, 60)
-    end
-
     for i = 1 , amount , 1 do
 
-        local shoradPosition = mist.vec.add(vec3, rotateVector( tempSpawnAngularSeperation, offset ))
+        local shoradPosition = mist.vec.add(vec3, rotateVector( theta*i, offset ))
 
         local shoradExternal = shoradList[math.random(#shoradList)]
         mist.teleportToPoint {
@@ -425,12 +386,6 @@ function genShorad ( vec3 , amount )
 
 
     end
-
-end
-
-function directionalSpawning () --not sure if it will be needed
-
-
 
 end
 
@@ -677,6 +632,43 @@ function roundNumber(num, idp)                                              -- F
     return math.floor(num * mult + 0.5) / mult
 end
 
+function manualStart()
+    for i = 1,#airbaseZones,1 do
+        genAirbaseSam(airbaseZones[i], true )
+    end
+    
+
+    genPrimObjective()
+    
+    timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
+    timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
+
+    notify("Completed init", 1)
+
+    IADS:activate()
+    A2A_DISPATCHER()
+
+    missionCommands.removeItem (manualStart)
+    missionCommands.removeItem (easyMode)
+    missionCommands.removeItem (startCommands)
+end
+
+function easyMode() --reduce the amount of enemies, only useable before manual start
+
+    notify("easy mode activated", 60)
+    ewrNumber = 2
+    samNumber = 1
+    shoradNumber = 3
+
+    capLimit = 1
+    lowInterval = 550
+    highInterval = 700
+    probability = 1
+
+    missionCommands.removeItem(easyMode)
+
+end
+
 function A2A_DISPATCHER()
     
     --Define Detecting network
@@ -726,18 +718,20 @@ end
 
 -- MAIN SETUP --
 do
-    local commandDB = {}
 
     _SETTINGS:SetPlayerMenuOff()
     notify("Starting init", 1)
-    missionCommands.addCommand("Objective info", nil, notifyObjective)
-    missionCommands.addCommand("Start Escort mission", nil, genEscort)
-    missionCommands.addCommand("Start Helicopter mission", nil, genHeloObjective)
 
-    commandDB["manualStart"] = missionCommands.addCommand("manual start", nil, manualStart)
-    commandDB["easyMode"] = missionCommands.addCommand("Easy Mode", nil, easyMode)
+    invasionCommandsRoot = missionCommands.addSubMenu ("Invasion Commands") --invasion commands submenu
 
-    missionCommands.addCommand("Debug: Get objective bearring", nil, getVector)
+    missionCommands.addCommand("Objective info", invasionCommandsRoot, notifyObjective)
+    missionCommands.addCommand("Start Escort mission", invasionCommandsRoot, genEscort)
+    missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
+
+    startCommands = missionCommands.addSubMenu ("Start Commands", invasionCommandsRoot) --nested submenu for start commands
+
+    easyMode = missionCommands.addCommand ("easy Mode", startCommands, easyMode)
+    manualStart = missionCommands.addCommand("manual start", startCommands , manualStart)
 
     --commented out because it is now handled by the manualStart() function
     --[[ 
