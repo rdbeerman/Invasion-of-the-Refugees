@@ -61,9 +61,18 @@ heloCounter = 0
 
 
 --spawn variables move to map options another time
-ewrNumber = 2
-samNumber = 1
-shoradNumber = 4
+--default numbers for "hard mode"
+--static defenses
+ewrNumber = 3
+samNumber = 2
+shoradNumber = 5
+
+--cap numbers
+capLimit = 1
+lowInterval = 350
+highInterval = 450
+probability = 1
+
 
 if enableDebug == true then
     local iadsDebug = IADS:getDebugSettings()
@@ -106,6 +115,18 @@ end
 
 function easyMode() --reduce the amount of enemies, only useable before manual start
 
+    notify("easy mode activated", 60)
+    ewrNumber = 2
+    samNumber = 1
+    shoradNumber = 2
+
+    capLimit = 1
+    lowInterval = 550
+    highInterval = 700
+    probability = 1
+
+    --missionCommands.removeItem ("Easy Mode")
+    missionCommands.removeItem(commandDB["Easy Mode"])
 
 end
 
@@ -690,10 +711,10 @@ function A2A_DISPATCHER()
 
     --Define CAP Squadron execution
     A2ADispatcherRED:SetSquadronCap( "CAP_RED_1", BorderRED,  6000, 8000, 600, 900, 600, 900, "BARO")
-    A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_1", 1, 350, 450, 1) --old settings were 450, 550
+    A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_1", capLimit, lowInterval, highInterval, probability) --old settings were 450, 550
 
     A2ADispatcherRED:SetSquadronCap( "CAP_RED_2", BorderRED,  3000, 9000, 400, 800, 600, 900, "BARO")
-    A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_2", 1, 350, 450, 1) --old settings were 450, 550
+    A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_2", capLimit, lowInterval, highInterval, probability) --old settings were 450, 550
 
     --Debug
     A2ADispatcherRED:SetTacticalDisplay( enableDebug )
@@ -705,18 +726,21 @@ end
 
 -- MAIN SETUP --
 do
+    local commandDB = {}
+
     _SETTINGS:SetPlayerMenuOff()
     notify("Starting init", 1)
     missionCommands.addCommand("Objective info", nil, notifyObjective)
     missionCommands.addCommand("Start Escort mission", nil, genEscort)
     missionCommands.addCommand("Start Helicopter mission", nil, genHeloObjective)
 
-    missionCommands.addCommand("Debug: manualStart", nil, manualStart)
+    commandDB["manualStart"] = missionCommands.addCommand("manual start", nil, manualStart)
+    commandDB["easyMode"] = missionCommands.addCommand("Easy Mode", nil, easyMode)
 
     missionCommands.addCommand("Debug: Get objective bearring", nil, getVector)
 
-
-    --[[
+    --commented out because it is now handled by the manualStart() function
+    --[[ 
     or i = 1,#airbaseZones,1 do
         genAirbaseSam(airbaseZones[i], true )
     end
