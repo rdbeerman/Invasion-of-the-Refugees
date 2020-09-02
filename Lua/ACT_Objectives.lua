@@ -3,7 +3,6 @@ enableDebug = false
 enableMathDebug = false
 markerScatter = 1000
 compThres = 50
-primObjectiveCounter = 0
 
 --[[
 
@@ -73,6 +72,7 @@ staticList = {"Workshop A", "Farm A", "Farm B", "Comms tower M", "Chemical tank 
 primCompletedFlag = 99
 primMarker = 98
 secCompletion = {}
+primObjectiveCounter = 0
 objectiveCounter = 0
 samId = 0
 IADS = SkynetIADS:create('IADS-Network')
@@ -675,10 +675,6 @@ function manualStart()
     IADS:activate()
     A2A_DISPATCHER()
 
-    --missionCommands.removeItem (manualStartRadioMenu)
-    --missionCommands.removeItem (easyModeRadioMenu)
-    --missionCommands.removeItem (normalModeRadioMenu)
-    --missionCommands.removeItem (hardModeRadioMenu)
     missionCommands.removeItem (startCommands)
 end
 
@@ -694,8 +690,6 @@ function normalMode()
     highInterval = highIntervalDefault
     probability = probabilityDefault
 
-    --missionCommands.removeItem (normalModeRadioMenu)
-
 end
 
 function easyMode() --reduce the amount of enemies, only useable before manual start
@@ -710,8 +704,6 @@ function easyMode() --reduce the amount of enemies, only useable before manual s
     highInterval = math.ceil ( highIntervalDefault * easyModeFactor )
     probability = probabilityDefault
 
-    --missionCommands.removeItem (easyModeRadioMenu)
-
 end
 
 function hardMode() --reduce the amount of enemies, only useable before manual start
@@ -725,8 +717,6 @@ function hardMode() --reduce the amount of enemies, only useable before manual s
     lowInterval = math.ceil ( lowIntervalDefault / hardModeFactor )
     highInterval = math.ceil ( highIntervalDefault / hardModeFactor )
     probability = probabilityDefault
-
-    --missionCommands.removeItem (hardModeRadioMenu)
 
 end
 
@@ -801,6 +791,6 @@ do
     manualStartRadioMenu = missionCommands.addCommand("manual start", startCommands , manualStart)
 
     --if no manual start is triggered, the mission starts after 120 seconds
-
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 120)
+    
 end
