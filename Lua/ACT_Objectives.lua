@@ -652,8 +652,8 @@ function manualStart()
     IADS:activate()
     A2A_DISPATCHER()
 
-    missionCommands.removeItem (manualStart)
-    missionCommands.removeItem (easyMode)
+    missionCommands.removeItem (manualStartRadioFunction)
+    missionCommands.removeItem (easyModeRadioFunction)
     missionCommands.removeItem (startCommands)
 end
 
@@ -669,7 +669,7 @@ function easyMode() --reduce the amount of enemies, only useable before manual s
     highInterval = 700
     probability = 1
 
-    missionCommands.removeItem(easyMode)
+    missionCommands.removeItem(easyModeRadioFunction)
 
 end
 
@@ -738,7 +738,7 @@ do
 
     startCommands = missionCommands.addSubMenu ("Start Commands", invasionCommandsRoot) --nested submenu for start commands
 
-    easyMode = missionCommands.addCommand ("easy Mode", startCommands, easyMode)
-    manualStart = missionCommands.addCommand("manual start", startCommands , manualStart)
+    easyModeRadioFunction = missionCommands.addCommand ("easy Mode", startCommands, easyMode)
+    manualStartRadioFunction = missionCommands.addCommand("manual start", startCommands , manualStart)
 
 end
