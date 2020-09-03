@@ -1,5 +1,5 @@
 -- General Settings --
-enableDebug = false
+enableDebug = true
 enableMathDebug = false
 markerScatter = 1000
 compThres = 50
@@ -73,7 +73,7 @@ primCompletedFlag = 99
 primMarker = 98
 secCompletion = {}
 primObjectiveCounter = 0
-primObjectiveType = "" --used for setting it manually
+primObjectiveType = 0 --used for setting it manually
 objectiveCounter = 0
 samId = 0
 IADS = SkynetIADS:create('IADS-Network')
@@ -105,38 +105,50 @@ for i = 1,#airbaseEWR,1 do
     IADS:addEarlyWarningRadar(airbaseEWR[i])
 end
 
-function genPrimObjective( type )
+function genPrimObjective()
+
     primCompletion = false
     primObjectiveCounter = primObjectiveCounter + 1 --to check if a primary has been manually spawned, not pretty but should work
 
-    primObjective = primObjectiveList[math.random(#primObjectiveList)]
+    --primObjective = primObjectiveList[math.random(#primObjectiveList)] --not needed anymore
     objectiveLoc = objectiveLocList[math.random(#objectiveLocList)]
 
-    for i = 1,#typeAirbase,1 do                 -- check if generated objective is a airbase
-        if primObjective == typeAirbase[i] then
-            isAirfield = true
 
-            local airbase = Group.getByName(primObjective)
-            trigger.action.activateGroup(airbase)
+    if primObjectiveType == 0 then --if no prim objective has been specified, randomzie it
 
-            primName = "Airbase"
-            vec3Prim = mist.getLeadPos(primObjective)
-            markObjective("Objective: Airbase", primObjective, primMarker)
+        notify("target not set, defaulting to building", 60)
+        primObjectiveType = 2 --debuging
 
-            mist.flagFunc.group_alive_less_than {
-                groupName = primObjective,
-                flag = primCompletedFlag,
-                percent = compThres,
-            }
+    end
 
-            if enableDebug == true then
-                notify(primObjective.."@"..objectiveLoc, 60)
-            end
-            return
-        end
+    if primObjectiveType == 1 then --airfield
+
+        primObjective = typeStructure[math.random(#typeStructure)]
+        genAirbaseTarget ()
+        notify ("target: Airbase", 60)
+
+    end
+
+    if primObjectiveType == 2 then --structure
+
+        primObjective = typeStructure[math.random(#typeStructure)]
+        genStructureTarget ()
+        notify ("target: structure", 60)
+
+    end
+
+    if primObjectiveType == 3 then --vehicle
+
+        primObjective = typeAirbase[math.random(#typeAirbase)]
+        genVehicleTarget ()
+        notify ("target: vehicles", 60)
+
     end
     
-    
+end
+
+function genStructureTarget ()
+
     for i = 1,#typeStructure,1 do               -- check if generated objective is a group of buildings
         if primObjective == typeStructure[i] then
             primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false) -- spawn Objective
@@ -167,6 +179,10 @@ function genPrimObjective( type )
             return
         end
     end
+
+end
+
+function genVehicleTarget ()
 
     for i = 1,#typeSpecial,1 do -- check if generated objective is a special objective with custom name
         if primObjective == typeSpecial[i] then
@@ -199,16 +215,10 @@ function genPrimObjective( type )
             return
         end
     end
-    
+
 end
 
-function genBuildingTarget (primObjective, objectiveLoc)
-end
-
-function genVehicleTarget (primObjective, objectiveLoc)
-end
-
-function genAirfieldTarget (primObjective, objectiveLoc)
+function genAirbaseTarget ()
     --storage for the old airfieldTarget function
 
     for i = 1,#typeAirbase,1 do                 -- check if generated objective is a airbase
@@ -696,12 +706,13 @@ function autoStart()
 end
 
 function manualStart()
+
     for i = 1,#airbaseZones,1 do
         genAirbaseSam(airbaseZones[i], true )
     end
     
 
-    genPrimObjective( buildings )
+    genPrimObjective()
     
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
     timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
@@ -711,7 +722,7 @@ function manualStart()
     IADS:activate()
     A2A_DISPATCHER()
 
-    missionCommands.removeItem (radioSubMenuStartCommands)
+    --missionCommands.removeItem (radioSubMenuStartCommands)
 end
 
 function setModeNormal()
@@ -721,10 +732,8 @@ function setModeNormal()
     samNumber = samNumberDefault
     shoradNumber = shoradNumberDefault
 
-    capLimit = capLimitDefault
     lowInterval = lowIntervalDefault
     highInterval = highIntervalDefault
-    probability = probabilityDefault
 
 end
 
@@ -735,10 +744,8 @@ function setModeEasy() --reduce the amount of enemies, only useable before manua
     samNumber = math.ceil ( samNumberDefault / easyModeFactor )
     shoradNumber = math.ceil ( shoradNumberDefault / easyModeFactor )
 
-    capLimit = capLimitDefault
     lowInterval = math.ceil ( lowIntervalDefault * easyModeFactor )
     highInterval = math.ceil ( highIntervalDefault * easyModeFactor )
-    probability = probabilityDefault
 
 end
 
@@ -749,10 +756,8 @@ function setModeHard() --reduce the amount of enemies, only useable before manua
     samNumber = math.ceil ( samNumberDefault * hardModeFactor )
     shoradNumber = math.ceil ( shoradNumberDefault * hardModeFactor )
 
-    capLimit = capLimitDefault
     lowInterval = math.ceil ( lowIntervalDefault / hardModeFactor )
     highInterval = math.ceil ( highIntervalDefault / hardModeFactor )
-    probability = probabilityDefault
 
 end
 
@@ -773,8 +778,13 @@ end
 function setTargetBuilding ()
 
     notify ("selected building target", 60)
-    notify ("Debug: not implemented", 60)
+    primObjectiveType = 2
 
+end
+
+function setTargetSpecial ()
+    notify ("selected special target", 60)
+    primObjectiveType = 3
 end
 
 function A2A_DISPATCHER()
@@ -836,27 +846,34 @@ do
 
     invasionCommandsRoot = missionCommands.addSubMenu ("Invasion Commands") --invasion commands submenu
 
-    objectiveInfoRadioMenu = missionCommands.addCommand("Objective info", invasionCommandsRoot, notifyObjective)
-    startEscortMissionRadioMenu = missionCommands.addCommand("Start Escort mission", invasionCommandsRoot, genEscort)
-    startHelicopterMissionRadioMenu = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
+    radioMenuObjectiveInfo = missionCommands.addCommand("Objective info", invasionCommandsRoot, notifyObjective)
+    radioMenuStartEscortMission = missionCommands.addCommand("Start Escort mission", invasionCommandsRoot, genEscort)
+    radioMenuStartHelicopterMission = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
 
     radioSubMenuStartCommands = missionCommands.addSubMenu ("Start Commands", invasionCommandsRoot) --nested submenu for start commands
 
     --difficulty settings
     radioMenuEasyMode = missionCommands.addCommand ("easy mode", radioSubMenuStartCommands, setModeEasy)
-    radioMenuNormalMode = missionCommands.addCommand ("normal mode", radioSubMenuStartCommands, SetModeNormal)
+    radioMenuNormalMode = missionCommands.addCommand ("normal mode", radioSubMenuStartCommands, setModeNormal)
     radioMenuHardMode = missionCommands.addCommand ("hard mode", radioSubMenuStartCommands, setModeHard)
     --cap settings
     radioMenuDisableCap = missionCommands.addCommand ( "disable enemy CAP", radioSubMenuStartCommands, setDisableEnemyCap)
     radioMenuEnableCap = missionCommands.addCommand ( "enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
     --target type settings
     radioMenuTargetBuilding = missionCommands.addCommand ("set building target", radioSubMenuStartCommands, setTargetBuilding)
+    radioMenuTargetSpecial = missionCommands.addCommand ("set special target", radioSubMenuStartCommands, setTargetSpecial)
     
     radioMenuManualStart = missionCommands.addCommand("manual start", radioSubMenuStartCommands , manualStart)
 
-    --if no manual start is triggered, the mission starts after 120 seconds
-    timer.scheduleFunction(autoStart, {}, timer.getTime() + 180)
 
-    notify("mission file loaded completly", 5)
+    
+    --if no manual start is triggered, the mission starts after 120 seconds
+    --"temp"
+    capLimit = capLimitDefault
+    probability = probabilityDefault
+    setModeEasy() --defaults to easy mode first, to catch manual start without a setmode
+    timer.scheduleFunction(autoStart, {}, timer.getTime() + 180) --autostart of the mission after 3 minutes, if no manual start was triggered
+
+    notify("mission file loaded", 5)
     
 end
