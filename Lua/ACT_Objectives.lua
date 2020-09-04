@@ -1,5 +1,5 @@
 -- General Settings --
-enableDebug = true
+enableDebug = false
 enableMathDebug = false
 markerScatter = 1000
 compThres = 50
@@ -33,6 +33,7 @@ primObjectiveList = act.getPrimObjectives()
 
 typeStructure = act.getStructures()
 typeSpecial = act.getTypeSpecial()
+typeSpecialSam = act.getTypeSpecialSam()
 
 samList = act.getSams()
 ewrList = act.getEwrs()
@@ -83,6 +84,8 @@ vec3Sam = {}
 isAirfield = false
 heloCounter = 0
 
+settingsArray = {"", "", ""}
+
 if enableDebug == true then
     local iadsDebug = IADS:getDebugSettings()
     iadsDebug.IADSStatus = true
@@ -109,23 +112,20 @@ function genPrimObjective()
 
     primCompletion = false
     primObjectiveCounter = primObjectiveCounter + 1 --to check if a primary has been manually spawned, not pretty but should work
-
-    --primObjective = primObjectiveList[math.random(#primObjectiveList)] --not needed anymore
     objectiveLoc = objectiveLocList[math.random(#objectiveLocList)]
 
-
     if primObjectiveType == 0 then --if no prim objective has been specified, randomzie it
-
-        notify("target not set, defaulting to building", 60)
-        primObjectiveType = 2 --debuging
-
+        primObjectiveType = math.random(2, 4)
     end
 
     if primObjectiveType == 1 then --airfield
 
-        primObjective = typeStructure[math.random(#typeStructure)]
+        primObjective = typeStructure[math.random(#typeStructure)] --wrong needs fixing before implementation
         genAirbaseTarget ()
-        notify ("target: Airbase", 60)
+
+        if enableDebug == true then
+            notify("airbase target spawning", 5)
+        end
 
     end
 
@@ -133,15 +133,32 @@ function genPrimObjective()
 
         primObjective = typeStructure[math.random(#typeStructure)]
         genStructureTarget ()
-        notify ("target: structure", 60)
+
+        if enableDebug == true then
+            notify("structure target spawning", 5)
+        end
 
     end
 
     if primObjectiveType == 3 then --vehicle
 
-        primObjective = typeAirbase[math.random(#typeAirbase)]
+        primObjective = typeSpecial[math.random(#typeSpecial)]
         genVehicleTarget ()
-        notify ("target: vehicles", 60)
+
+        if enableDebug == true then
+            notify("vehicle target spawning", 5)
+        end
+
+    end
+
+    if primObjectiveType == 4 then --SAM (SA-10)
+
+        primObjective = typeSpecialSam[math.random(#typeSpecialSam)]
+        genSamTarget ()
+
+        if enableDebug == true then
+            notify("SAM target spawning", 5)
+        end
 
     end
     
@@ -170,6 +187,10 @@ function genStructureTarget ()
             primNaming()                        -- names objective based on spawned statics
             local markerName = "Objective: "..tostring(primName)
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
+
+            if enableDebug == true then
+                notify("before genSurroundings", 60)
+            end
 
             genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber , true ) --moved defenses to an extra function (postion, sam, ewr, short range defenses)
 
@@ -207,6 +228,10 @@ function genVehicleTarget ()
             local markerName = "Objective: "..specialNames[i]
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
             
+            if enableDebug == true then
+                notify("before genSurroundings", 60)
+            end
+
             genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  true ) --position, sam, ewr, defenses
 
             if enableDebug == true then
@@ -218,8 +243,47 @@ function genVehicleTarget ()
 
 end
 
-function genAirbaseTarget ()
-    --storage for the old airfieldTarget function
+function genSamTarget () --not integrated into IADS so far. Should also work as an EWR
+
+    for i = 1,#typeSpecialSam,1 do -- check if generated objective is a special objective with custom name
+        if primObjective == typeSpecialSam[i] then
+            primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false) -- spawn objective
+            objectiveCounter = objectiveCounter + 1
+            
+            local group = Group.getByName(primObjective)
+            local countryId = group:getUnit(1):getCountry()
+            local countryName = country.name[countryId]
+            
+            vec3Prim = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter)) -- get primObjective location
+
+            mist.flagFunc.group_alive_less_than {
+                groupName = countryName.." gnd "..tostring(objectiveCounter),
+                flag = primCompletedFlag,
+                percent = compThres,
+            }
+
+            local specialSamNames = act.getSpecialSamNames()
+
+            primName = specialSamNames[i] -- get objective name by using index in specialNames
+            local markerName = "Objective: "..specialSamNames[i]
+            markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
+            
+            if enableDebug == true then
+                notify("before genSurroundings", 60)
+            end
+
+            genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  true ) --position, sam, ewr, defenses
+
+            if enableDebug == true then
+                notify(primObjective.."@"..objectiveLoc, 60)
+            end
+            return
+        end
+    end
+
+end
+
+function genAirbaseTarget () --not used right now
 
     for i = 1,#typeAirbase,1 do                 -- check if generated objective is a airbase
         if primObjective == typeAirbase[i] then
@@ -260,10 +324,11 @@ function genSurroundings ( vec3, samQuantity, ewrQuantity, satellitesQuantity, d
     if defenses == true then
         genDefense( vec3 ) --generates the short range defenses of an objective
     end
-    
+
     if satellitesQuantity ~= 0 then
         genShorad ( vec3 , satellitesQuantity )
     end
+
 end
 
 function genDefense(vec3) -- generates a defense group at point vec3 with set offset
@@ -403,15 +468,11 @@ function genAirbaseSam( zone, mark )
     vec3Sam[#vec3Sam + 1] = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter)) 
 end
 
-function genShorad ( vec3 , amount ) --works. todo: integrate it into Skynet
+function genShorad ( vec3 , amount ) 
 
     local theta = 360 / amount
     local offset = 10000
 
-    local angularOffset = 90
-    local spawnDirection = getVector()
-    local spawnArea = angularOffset*2 + spawnDirection
-    local tempSpawnAngularSeperation = spawnArea / amount
 
     for i = 1 , amount , 1 do
 
@@ -453,9 +514,9 @@ function rotateVector ( degree, radius ) --input degree and radius, rotates the 
     return returnOffset
 end
 
-function getVector ()
+function getVector () --not used right now
 
-    local tacanPos = mist.getLeadPos ( "ramatTacan" )                 --works
+    local tacanPos = mist.getLeadPos ( "ramatTacan" )                 --breakes everything but SY
     local latTarget, lonTarget, altTarget = coord.LOtoLL(vec3Prim)
     local latTacan, lonTacan, altTacan = coord.LOtoLL(tacanPos)
 
@@ -464,7 +525,7 @@ function getVector ()
     if enableMathDebug == true then
         notify ( "Target " .. notifyCoords(vec3Prim, 1).." N, "..notifyCoords(vec3Prim, 2).." E, "..notifyCoords(vec3Prim, 3).." ft.\n" , 60 ) --works
         notify ( "Tacan " .. notifyCoords(tacanPos, 1).." N, "..notifyCoords(tacanPos, 2).." E, " , 60 )
-        notify ("angle " .. attackVector, 60) --woho it works!
+        notify ("angle " .. attackVector, 60)
     end
 
     return attackVector
@@ -717,74 +778,132 @@ function manualStart()
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
     timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
 
-    notify("Completed init", 1)
-
     IADS:activate()
     A2A_DISPATCHER()
 
-    --missionCommands.removeItem (radioSubMenuStartCommands)
+    readSettings()
+
+    --missionCommands.removeItem (radioSubMenuStartCommands) --not sure if this should be kept or not.
+end
+
+--[[
+
+Settings Array:
+[1] target type
+[2] difficulty setting
+[3] CAP state (on or off)
+
+]]
+
+function readSettings ()
+
+    for i = 1, #settingsArray, 1 do
+
+        notify ( settingsArray[i], 60)
+
+    end
+
 end
 
 function setModeNormal()
 
-    notify("normal mode activated", 10)
+    if enableDebug == true then
+        notify("normal mode activated", 5)
+    end
+
     ewrNumber = ewrNumberDefault
     samNumber = samNumberDefault
     shoradNumber = shoradNumberDefault
 
     lowInterval = lowIntervalDefault
     highInterval = highIntervalDefault
+    settingsArray[2] = "normal Mode"
 
 end
 
 function setModeEasy() --reduce the amount of enemies, only useable before manual start
 
-    notify("easy mode activated", 10)
+    if enableDebug == true then
+        notify("easy mode activated", 5)
+    end
+
     ewrNumber = math.ceil ( ewrNumberDefault / easyModeFactor )
     samNumber = math.ceil ( samNumberDefault / easyModeFactor )
     shoradNumber = math.ceil ( shoradNumberDefault / easyModeFactor )
 
     lowInterval = math.ceil ( lowIntervalDefault * easyModeFactor )
     highInterval = math.ceil ( highIntervalDefault * easyModeFactor )
+    settingsArray[2] = "easy Mode"
 
 end
 
 function setModeHard() --reduce the amount of enemies, only useable before manual start
 
-    notify("hard mode activated", 10)
+    if enableDebug == true then
+        notify("hard mode activated", 5)
+    end
+
     ewrNumber = math.ceil ( ewrNumberDefault * hardModeFactor )
     samNumber = math.ceil ( samNumberDefault * hardModeFactor )
     shoradNumber = math.ceil ( shoradNumberDefault * hardModeFactor )
 
     lowInterval = math.ceil ( lowIntervalDefault / hardModeFactor )
     highInterval = math.ceil ( highIntervalDefault / hardModeFactor )
+    settingsArray[2] = "hard Mode"
 
 end
 
 function setDisableEnemyCap ()
 
+    if enableDebug == true then
+        notify("cap deactivated", 5)
+    end
+
     capLimit = 0
-    notify ("enemy CAP disabled", 60)
+    settingsArray[3] = "CAP disabled"
 
 end
 
 function setEnableEnemyCap ()
 
+    if enableDebug == true then
+        notify("cap activated", 5)
+    end
+
     capLimit = capLimitDefault
-    notify ("enemy CAP enabled", 60)
+    settingsArray[3] = "CAP enabled"
 
 end
 
 function setTargetBuilding ()
 
-    notify ("selected building target", 60)
+    if enableDebug == true then
+        notify("selected building target", 5)
+    end
+
     primObjectiveType = 2
+    settingsArray[1] = "Building target"
 
 end
 
 function setTargetSpecial ()
-    notify ("selected special target", 60)
+
+    if enableDebug == true then
+        notify("selected special target", 5)
+    end
+
     primObjectiveType = 3
+    settingsArray[1] = "Vehicle target"
+end
+
+function setTargetSpecialSam ()
+
+    if enableDebug == true then
+        notify("selected SAM target", 5)
+    end
+
+    primObjectiveType = 4
+    settingsArray[1] = "SAM target"
 end
 
 function A2A_DISPATCHER()
@@ -846,11 +965,19 @@ do
 
     invasionCommandsRoot = missionCommands.addSubMenu ("Invasion Commands") --invasion commands submenu
 
+    radioSubMenuStartCommands = missionCommands.addSubMenu ("Start Commands", invasionCommandsRoot) --nested submenu for start commands
+
     radioMenuObjectiveInfo = missionCommands.addCommand("Objective info", invasionCommandsRoot, notifyObjective)
     radioMenuStartEscortMission = missionCommands.addCommand("Start Escort mission", invasionCommandsRoot, genEscort)
     radioMenuStartHelicopterMission = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
 
-    radioSubMenuStartCommands = missionCommands.addSubMenu ("Start Commands", invasionCommandsRoot) --nested submenu for start commands
+    radioMenuManualStart = missionCommands.addCommand("manual start", radioSubMenuStartCommands , manualStart)
+    radioMenuReadSettings = missionCommands.addCommand ("show selected settings", radioSubMenuStartCommands, readSettings)
+
+    --target type settings
+    radioMenuTargetBuilding = missionCommands.addCommand ("set building target", radioSubMenuStartCommands, setTargetBuilding)
+    radioMenuTargetSpecial = missionCommands.addCommand ("set special target", radioSubMenuStartCommands, setTargetSpecial)
+    radioMenuTargetSpecialSam = missionCommands.addCommand ("set SAM target", radioSubMenuStartCommands, setTargetSpecialSam)
 
     --difficulty settings
     radioMenuEasyMode = missionCommands.addCommand ("easy mode", radioSubMenuStartCommands, setModeEasy)
@@ -859,21 +986,13 @@ do
     --cap settings
     radioMenuDisableCap = missionCommands.addCommand ( "disable enemy CAP", radioSubMenuStartCommands, setDisableEnemyCap)
     radioMenuEnableCap = missionCommands.addCommand ( "enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
-    --target type settings
-    radioMenuTargetBuilding = missionCommands.addCommand ("set building target", radioSubMenuStartCommands, setTargetBuilding)
-    radioMenuTargetSpecial = missionCommands.addCommand ("set special target", radioSubMenuStartCommands, setTargetSpecial)
-    
-    radioMenuManualStart = missionCommands.addCommand("manual start", radioSubMenuStartCommands , manualStart)
 
-
-    
-    --if no manual start is triggered, the mission starts after 120 seconds
     --"temp"
-    capLimit = capLimitDefault
     probability = probabilityDefault
     setModeEasy() --defaults to easy mode first, to catch manual start without a setmode
+    setEnableEnemyCap()
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 180) --autostart of the mission after 3 minutes, if no manual start was triggered
 
-    notify("mission file loaded", 5)
+    notify("init completed", 5)
     
 end

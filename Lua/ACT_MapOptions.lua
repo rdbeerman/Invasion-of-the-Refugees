@@ -14,10 +14,12 @@ function act.caucasus()
 
     act.structures = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004"}
     act.typeSpecial = { "primObjective #005", "primObjective #006", "primObjective #007" }
+    act.typeSpecialSam = { "primObjective-8" }
 
     act.specialNames = {"SCUD Site", "Artillery Battery", "Smerch Battery"}
+    act.specialSamNames = {"SA-10 site"}
 
-    act.sams = {"SAM #001", "SAM #002", "SAM #003", "SAM #004" }
+    act.sams = {"SAM #001", "SAM #002", "SAM #004" } --sa-3 removed
     act.ewrs = {"EWR #001", "EWR #002", "EWR #003"}
     act.shorad = {"shorad-1", "shorad-2"}
     act.defenses = {"defense #001", "defense #002", "defense #003", "defense #004", "defense #005"}
@@ -51,10 +53,12 @@ function act.persianGulf()
 
     act.structures = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004"}
     act.typeSpecial = { "primObjective #005", "primObjective #006", "primObjective #007" }
+    act.typeSpecialSam = { "primObjective-8" }
 
     act.specialNames = {"SCUD Site", "Artillery Battery", "Smerch Battery"}
+    act.specialSamNames = {"SA-10 site"}
 
-    act.sams = {"SAM #001", "SAM #002", "SAM #003", "SAM #004" }
+    act.sams = {"SAM #001", "SAM #002", "SAM #004" } --buggy sa-3 removed
     act.ewrs = {"EWR #001", "EWR #002", "EWR #003"}
     act.shorad = {"shorad-1", "shorad-2"}
     act.defenses = {"defense #001", "defense #002", "defense #003", "defense #004", "defense #005"}
@@ -88,8 +92,10 @@ function act.syria()
 
     act.structures = {"primObjective-1", "primObjective-2", "primObjective-3", "primObjective-4"}
     act.typeSpecial = { "primObjective-5", "primObjective-6", "primObjective-7" }
+    act.typeSpecialSam = { "primObjective-8" }
 
     act.specialNames = {"SCUD Site", "Artillery Battery", "Smerch Battery"}
+    act.specialSamNames = {"SA-10 site"}
 
     act.sams = {"SAM-1", "SAM-2", "SAM-4" } --sam-3 removed for now
     act.ewrs = {"EWR-1", "EWR-2", "EWR-3"}
@@ -124,6 +130,10 @@ end
 
 function act.getTypeSpecial()
     return act.typeSpecial
+end
+
+function act.getTypeSpecialSam()
+    return act.typeSpecialSam
 end
 
 function act.getSams()
@@ -176,4 +186,8 @@ end
 
 function act.getSpecialNames()
     return act.specialNames
+end
+
+function act.getSpecialSamNames()
+    return act.specialSamNames
 end
