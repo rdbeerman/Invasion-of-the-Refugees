@@ -1,0 +1,18 @@
+Invasion 2.0 guide:
+
+During the first 10 minutes of the mission the settings can be changed.
+Open the F10 radio menu, and go into the "invasion commands" submenu.
+Here you can select different settings for the mission.
+
+small, medium and large group settings dictate how many enemies, both SAMs and aircraft, will be spawned.
+"small group" is designed for <10 players
+"medium group" is for 10-20 players
+"large group" is for >20 players
+
+In addition, the primary objective type can be selected, either a structure (building complex), special (vehicle group) or SAM (SA-10)
+
+Enemy CAP can also be turned off.
+
+Afterwards confirm the settings and start the mission.
+
+If no settings are selected during the first 10 minutes, default settings will be used.

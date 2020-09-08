@@ -1,0 +1,16 @@
+2.0.0:
+
+added start customization
+expanded radio menu
+added SA-10 as a primary target
+
+2.0.1
+
+started writing changelogs
+added guide for the new mission customization
+renamed some radio functions to make them a bit clearer
+moved russia to red on all maps
+added Combined Joint Task Forces Blue and red to blue and red respectivly
+moved SU-33 and SU-25Ts to Joint Task Force Blue
+added UN peacekeeping forces to blue - might be useful in the future
+changed the weather to accommodate for picky navy pilots
