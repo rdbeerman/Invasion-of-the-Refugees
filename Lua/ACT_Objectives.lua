@@ -267,10 +267,6 @@ function genSamTarget () --not integrated into IADS so far. Should also work as 
             primName = specialSamNames[i] -- get objective name by using index in specialNames
             local markerName = "Objective: "..specialSamNames[i]
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
-            
-            if enableDebug == true then
-                notify("before genSurroundings", 60)
-            end
 
             genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  true ) --position, sam, ewr, defenses
 
@@ -760,7 +756,9 @@ end
 function autoStart()
 
     if primObjectiveCounter == 0 then
+        setTargetRandom()
         setModeEasy()
+        setEnableEnemyCap()
         manualStart()
     end
 
@@ -772,7 +770,6 @@ function manualStart()
         genAirbaseSam(airbaseZones[i], true )
     end
     
-
     genPrimObjective()
     
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
@@ -783,7 +780,7 @@ function manualStart()
 
     readSettings()
 
-    --missionCommands.removeItem (radioSubMenuStartCommands) --not sure if this should be kept or not.
+    missionCommands.removeItem (radioSubMenuStartCommands) --not sure if this should be kept or not.
 end
 
 --[[
@@ -798,9 +795,7 @@ Settings Array:
 function readSettings ()
 
     for i = 1, #settingsArray, 1 do
-
-        notify ( settingsArray[i], 60)
-
+        notify ( settingsArray[i], 15)
     end
 
 end
@@ -855,31 +850,53 @@ end
 
 function setDisableEnemyCap ()
 
-    if enableDebug == true then
-        notify("cap deactivated", 5)
-    end
+    notify("CAP disabled", 5)
 
     capLimit = 0
     settingsArray[3] = "CAP disabled"
+
+    --remove the disable option, add the enable option again
+    radioMenuEnableCap = missionCommands.addCommand ( "enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
+    missionCommands.removeItem (radioMenuDisableCap)
 
 end
 
 function setEnableEnemyCap ()
 
-    if enableDebug == true then
-        notify("cap activated", 5)
-    end
+    notify("CAP enabled", 5)
 
     capLimit = capLimitDefault
     settingsArray[3] = "CAP enabled"
+
+    --remove the enable option, add the disable one
+    radioMenuDisableCap = missionCommands.addCommand ( "disable enemy CAP", radioSubMenuStartCommands, setDisableEnemyCap)
+    missionCommands.removeItem (radioMenuEnableCap)
+
+end
+
+function setTargetRandom ()
+
+    local random = math.random(2, 4)
+
+    notify ("selected random target", 5)
+
+    if random == 2 then
+        setTargetBuilding()
+    end
+
+    if random == 3 then
+        setTargetSpecial()
+    end
+
+    if random == 4 then
+        setTargetSpecialSam()
+    end
 
 end
 
 function setTargetBuilding ()
 
-    if enableDebug == true then
-        notify("selected building target", 5)
-    end
+    notify("selected building target", 5)
 
     primObjectiveType = 2
     settingsArray[1] = "Building target"
@@ -888,9 +905,7 @@ end
 
 function setTargetSpecial ()
 
-    if enableDebug == true then
-        notify("selected special target", 5)
-    end
+    notify("selected special target", 5)
 
     primObjectiveType = 3
     settingsArray[1] = "Vehicle target"
@@ -898,9 +913,7 @@ end
 
 function setTargetSpecialSam ()
 
-    if enableDebug == true then
-        notify("selected SAM target", 5)
-    end
+    notify("selected SAM target", 5)
 
     primObjectiveType = 4
     settingsArray[1] = "SAM target"
@@ -971,27 +984,27 @@ do
     radioMenuStartEscortMission = missionCommands.addCommand("Start Escort mission", invasionCommandsRoot, genEscort)
     radioMenuStartHelicopterMission = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
 
-    radioMenuManualStart = missionCommands.addCommand("manual start", radioSubMenuStartCommands , manualStart)
-    radioMenuReadSettings = missionCommands.addCommand ("show selected settings", radioSubMenuStartCommands, readSettings)
+    radioMenuManualStart = missionCommands.addCommand("apply settings and start", radioSubMenuStartCommands , manualStart)
+    radioMenuReadSettings = missionCommands.addCommand ("display selected settings", radioSubMenuStartCommands, readSettings)
 
     --target type settings
+    radioMenuTargetRandom = missionCommands.addCommand ("set random target", radioSubMenuStartCommands, setTargetRandom)
     radioMenuTargetBuilding = missionCommands.addCommand ("set building target", radioSubMenuStartCommands, setTargetBuilding)
     radioMenuTargetSpecial = missionCommands.addCommand ("set special target", radioSubMenuStartCommands, setTargetSpecial)
     radioMenuTargetSpecialSam = missionCommands.addCommand ("set SAM target", radioSubMenuStartCommands, setTargetSpecialSam)
 
     --difficulty settings
-    radioMenuEasyMode = missionCommands.addCommand ("easy mode", radioSubMenuStartCommands, setModeEasy)
-    radioMenuNormalMode = missionCommands.addCommand ("normal mode", radioSubMenuStartCommands, setModeNormal)
-    radioMenuHardMode = missionCommands.addCommand ("hard mode", radioSubMenuStartCommands, setModeHard)
+    radioMenuEasyMode = missionCommands.addCommand ("small group", radioSubMenuStartCommands, setModeEasy)
+    radioMenuNormalMode = missionCommands.addCommand ("medium group", radioSubMenuStartCommands, setModeNormal)
+    radioMenuHardMode = missionCommands.addCommand ("large group", radioSubMenuStartCommands, setModeHard)
     --cap settings
     radioMenuDisableCap = missionCommands.addCommand ( "disable enemy CAP", radioSubMenuStartCommands, setDisableEnemyCap)
-    radioMenuEnableCap = missionCommands.addCommand ( "enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
+    radioMenuEnableCap = missionCommands.addCommand ( "enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap) --gets added after disabling it
 
-    --"temp"
-    probability = probabilityDefault
-    setModeEasy() --defaults to easy mode first, to catch manual start without a setmode
+    --default settings
+    probability = probabilityDefault --no idea what it does, or if it is needed
     setEnableEnemyCap()
-    timer.scheduleFunction(autoStart, {}, timer.getTime() + 180) --autostart of the mission after 3 minutes, if no manual start was triggered
+    timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
     notify("init completed", 5)
     
