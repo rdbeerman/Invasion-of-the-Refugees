@@ -1,26 +1,23 @@
 -- General Settings --
-enableDebug = false
+enableDebug = true
+enableIadsDebug = false
 enableMathDebug = false
 markerScatter = 1000
 compThres = 50
 
 --[[
-
     difficultiy settings (default)
-
 ]]--
 
 --static defenses
 ewrNumberDefault = 2
 samNumberDefault = 1
-shoradNumberDefault = 4
-
+shoradNumberDefault = 5
 --cap numbers
 capLimitDefault = 1
 lowIntervalDefault = 350
 highIntervalDefault = 450
 probabilityDefault = 1
-
 --easy mode factor
 easyModeFactor = 2 --50% less enemies
 --hard mode factor
@@ -40,15 +37,11 @@ ewrList = act.getEwrs()
 shoradList = act.getShorad()
 defenseList = act.getDefenses()
 defenseListSmall = act.getSmallDefenses()
-
 capRed = act.getRedCap ()
-
 --helo stuff
 blueGround = act.getBlueGround()
 heloObjectives = act.getHeloObjectives()
-
 escortList = act.getEscort()
-
 --airbase stuff
 airbaseZones = act.getAirbaseZones()
 typeAirbase = act.getAirbaseStructures()
@@ -85,8 +78,10 @@ isAirfield = false
 heloCounter = 0
 
 settingsArray = {"", "", ""}
+settingsArrayLog = {""}
+settingsArrayLogLenght = 0
 
-if enableDebug == true then
+if enableIadsDebug == true then
     local iadsDebug = IADS:getDebugSettings()
     iadsDebug.IADSStatus = true
     iadsDebug.samWentDark = true
@@ -188,10 +183,6 @@ function genStructureTarget ()
             local markerName = "Objective: "..tostring(primName)
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
 
-            if enableDebug == true then
-                notify("before genSurroundings", 60)
-            end
-
             genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber , true ) --moved defenses to an extra function (postion, sam, ewr, short range defenses)
 
             if enableDebug == true then
@@ -227,10 +218,6 @@ function genVehicleTarget ()
             primName = specialNames[i] -- get objective name by using index in specialNames
             local markerName = "Objective: "..specialNames[i]
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
-            
-            if enableDebug == true then
-                notify("before genSurroundings", 60)
-            end
 
             genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  true ) --position, sam, ewr, defenses
 
@@ -279,7 +266,7 @@ function genSamTarget () --not integrated into IADS so far. Should also work as 
 
 end
 
-function genAirbaseTarget () --not used right now
+function genAirbaseTarget () --not used right now --idea: use it to place fuel tanks, if fuel tanks get destroyed, the airbase has reduced spawnrate
 
     for i = 1,#typeAirbase,1 do                 -- check if generated objective is a airbase
         if primObjective == typeAirbase[i] then
@@ -310,7 +297,7 @@ end
 function genSurroundings ( vec3, samQuantity, ewrQuantity, satellitesQuantity, defenses ) --generates SAMs, EWRs and defenses
 
     for i = 1 , samQuantity, 1 do
-        genSam ( vec3 , false ) --generates a SAM site with a chance to detect SEAD missiles
+        genSam ( vec3 , true ) --generates a SAM site with a chance to detect SEAD missiles
     end
 
     for i = 1 , ewrQuantity , 1 do
@@ -508,24 +495,6 @@ function rotateVector ( degree, radius ) --input degree and radius, rotates the 
     }
     local returnOffset = mist.utils.makeVec3( mist.vec.rotateVec2 ( offset, math.rad(degree) ) )
     return returnOffset
-end
-
-function getVector () --not used right now
-
-    local tacanPos = mist.getLeadPos ( "ramatTacan" )                 --breakes everything but SY
-    local latTarget, lonTarget, altTarget = coord.LOtoLL(vec3Prim)
-    local latTacan, lonTacan, altTacan = coord.LOtoLL(tacanPos)
-
-    local attackVector = math.deg ( math.atan2 ( lonTacan - lonTarget , latTacan - latTarget ) ) --works
-
-    if enableMathDebug == true then
-        notify ( "Target " .. notifyCoords(vec3Prim, 1).." N, "..notifyCoords(vec3Prim, 2).." E, "..notifyCoords(vec3Prim, 3).." ft.\n" , 60 ) --works
-        notify ( "Tacan " .. notifyCoords(tacanPos, 1).." N, "..notifyCoords(tacanPos, 2).." E, " , 60 )
-        notify ("angle " .. attackVector, 60)
-    end
-
-    return attackVector
-
 end
 
 function improveSamAuto (groupName) --inputs group name and tunes it automatically according to its type
@@ -753,6 +722,10 @@ end
 
 ]]
 
+function respawnTanker()
+    notify ("not implemented", 15)
+end
+
 function autoStart()
 
     if primObjectiveCounter == 0 then
@@ -793,18 +766,20 @@ Settings Array:
 ]]
 
 function readSettings ()
-
     for i = 1, #settingsArray, 1 do
         notify ( settingsArray[i], 15)
     end
+end
 
+function readSettingsLog ()
+    for i = 1, #settingsArrayLogLenght, 1 do
+        notify ( settingsArrayLog[i], 15)
+    end
 end
 
 function setModeNormal()
 
-    if enableDebug == true then
-        notify("normal mode activated", 5)
-    end
+    notify("medium group selected", 5)
 
     ewrNumber = ewrNumberDefault
     samNumber = samNumberDefault
@@ -812,15 +787,17 @@ function setModeNormal()
 
     lowInterval = lowIntervalDefault
     highInterval = highIntervalDefault
-    settingsArray[2] = "normal Mode"
+    settingsArray[2] = "medium group"
+
+    --logs the change of settings for debug purposes
+    settingsArrayLogLenght = settingsArrayLogLenght + 1
+    settingsArrayLog[settingsArrayLogLenght] = "medium group"
 
 end
 
 function setModeEasy() --reduce the amount of enemies, only useable before manual start
 
-    if enableDebug == true then
-        notify("easy mode activated", 5)
-    end
+    notify("small group selected", 5)
 
     ewrNumber = math.ceil ( ewrNumberDefault / easyModeFactor )
     samNumber = math.ceil ( samNumberDefault / easyModeFactor )
@@ -828,15 +805,17 @@ function setModeEasy() --reduce the amount of enemies, only useable before manua
 
     lowInterval = math.ceil ( lowIntervalDefault * easyModeFactor )
     highInterval = math.ceil ( highIntervalDefault * easyModeFactor )
-    settingsArray[2] = "easy Mode"
+    settingsArray[2] = "small group"
+
+    --logs the change of settings for debug purposes
+    settingsArrayLogLenght = settingsArrayLogLenght + 1
+    settingsArrayLog[settingsArrayLogLenght] = "small group"
 
 end
 
 function setModeHard() --reduce the amount of enemies, only useable before manual start
 
-    if enableDebug == true then
-        notify("hard mode activated", 5)
-    end
+    notify("large group selected", 5)
 
     ewrNumber = math.ceil ( ewrNumberDefault * hardModeFactor )
     samNumber = math.ceil ( samNumberDefault * hardModeFactor )
@@ -844,7 +823,11 @@ function setModeHard() --reduce the amount of enemies, only useable before manua
 
     lowInterval = math.ceil ( lowIntervalDefault / hardModeFactor )
     highInterval = math.ceil ( highIntervalDefault / hardModeFactor )
-    settingsArray[2] = "hard Mode"
+    settingsArray[2] = "large group"
+
+    --logs the change of settings for debug purposes
+    settingsArrayLogLenght = settingsArrayLogLenght + 1
+    settingsArrayLog[settingsArrayLogLenght] = "large group"
 
 end
 
@@ -854,6 +837,10 @@ function setDisableEnemyCap ()
 
     capLimit = 0
     settingsArray[3] = "CAP disabled"
+
+    --logs the change of settings for debug purposes
+    settingsArrayLogLenght = settingsArrayLogLenght + 1
+    settingsArrayLog[settingsArrayLogLenght] = "CAP disabled"
 
     --remove the disable option, add the enable option again
     radioMenuEnableCap = missionCommands.addCommand ( "enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
@@ -867,6 +854,10 @@ function setEnableEnemyCap ()
 
     capLimit = capLimitDefault
     settingsArray[3] = "CAP enabled"
+
+    --logs the change of settings for debug purposes
+    settingsArrayLogLenght = settingsArrayLogLenght + 1
+    settingsArrayLog[settingsArrayLogLenght] = "CAP enabled"
 
     --remove the enable option, add the disable one
     radioMenuDisableCap = missionCommands.addCommand ( "disable enemy CAP", radioSubMenuStartCommands, setDisableEnemyCap)
@@ -900,6 +891,9 @@ function setTargetBuilding ()
 
     primObjectiveType = 2
     settingsArray[1] = "Building target"
+    --logs the change of settings for debug purposes
+    settingsArrayLogLenght = settingsArrayLogLenght + 1
+    settingsArrayLog[settingsArrayLogLenght] = "Building target"
 
 end
 
@@ -909,6 +903,9 @@ function setTargetSpecial ()
 
     primObjectiveType = 3
     settingsArray[1] = "Vehicle target"
+    --logs the change of settings for debug purposes
+    settingsArrayLogLenght = settingsArrayLogLenght + 1
+    settingsArrayLog[settingsArrayLogLenght] = "Vehicle target"
 end
 
 function setTargetSpecialSam ()
@@ -917,6 +914,9 @@ function setTargetSpecialSam ()
 
     primObjectiveType = 4
     settingsArray[1] = "SAM target"
+    --logs the change of settings for debug purposes
+    settingsArrayLogLenght = settingsArrayLogLenght + 1
+    settingsArrayLog[settingsArrayLogLenght] = "SAM target"
 end
 
 function A2A_DISPATCHER()
@@ -975,24 +975,25 @@ do
     --[[
         adds the F-10 radio commands for the mission
     ]]
-
+    --submenus
     invasionCommandsRoot = missionCommands.addSubMenu ("Invasion Commands") --invasion commands submenu
-
     radioSubMenuStartCommands = missionCommands.addSubMenu ("Start Commands", invasionCommandsRoot) --nested submenu for start commands
 
+    --invasion command submenu
+    radioMenuReadSettings = missionCommands.addCommand ("display selected settings", invasionCommandsRoot, readSettings)
+    --radioMenuReadSettingsLog = missionCommands.addCommand ("show settings log", invasionCommandsRoot, readSettingsLog) --not working
     radioMenuObjectiveInfo = missionCommands.addCommand("Objective info", invasionCommandsRoot, notifyObjective)
     radioMenuStartEscortMission = missionCommands.addCommand("Start Escort mission", invasionCommandsRoot, genEscort)
     radioMenuStartHelicopterMission = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
+    radioMenuRespawnTanker = missionCommands.addCommand ("respawn tanker", invasionCommandsRoot, respawnTanker)
 
+    --start commands submenu
     radioMenuManualStart = missionCommands.addCommand("apply settings and start", radioSubMenuStartCommands , manualStart)
-    radioMenuReadSettings = missionCommands.addCommand ("display selected settings", radioSubMenuStartCommands, readSettings)
-
     --target type settings
     radioMenuTargetRandom = missionCommands.addCommand ("set random target", radioSubMenuStartCommands, setTargetRandom)
     radioMenuTargetBuilding = missionCommands.addCommand ("set building target", radioSubMenuStartCommands, setTargetBuilding)
     radioMenuTargetSpecial = missionCommands.addCommand ("set special target", radioSubMenuStartCommands, setTargetSpecial)
     radioMenuTargetSpecialSam = missionCommands.addCommand ("set SAM target", radioSubMenuStartCommands, setTargetSpecialSam)
-
     --difficulty settings
     radioMenuEasyMode = missionCommands.addCommand ("small group", radioSubMenuStartCommands, setModeEasy)
     radioMenuNormalMode = missionCommands.addCommand ("medium group", radioSubMenuStartCommands, setModeNormal)
@@ -1004,7 +1005,7 @@ do
     --default settings
     probability = probabilityDefault --no idea what it does, or if it is needed
     setEnableEnemyCap()
-    timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
+    timer.scheduleFunction(autoStart, {}, timer.getTime() + 900) --autostart of the mission after 10 minutes, if no manual start was selected
 
     notify("init completed", 5)
     

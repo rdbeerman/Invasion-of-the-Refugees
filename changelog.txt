@@ -14,3 +14,9 @@ added Combined Joint Task Forces Blue and red to blue and red respectivly
 moved SU-33 and SU-25Ts to Joint Task Force Blue
 added UN peacekeeping forces to blue - might be useful in the future
 changed the weather to accommodate for picky navy pilots
+
+2.0.2
+removed Tunguskas and TORs from the short range defenses
+moved show settings menu to invasion settings, useable after mission start now
+added feedback for group size selection
+fixed CA land based hornet radios
