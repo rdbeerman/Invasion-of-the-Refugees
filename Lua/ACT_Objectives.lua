@@ -1,7 +1,6 @@
 -- General Settings --
-enableDebug = true
+enableDebug = false
 enableIadsDebug = false
-enableMathDebug = false
 markerScatter = 1000
 compThres = 50
 
@@ -16,7 +15,7 @@ shoradNumberDefault = 5
 --cap numbers
 capLimitDefault = 1
 lowIntervalDefault = 350
-highIntervalDefault = 450
+highIntervalDefault = 700
 probabilityDefault = 1
 --easy mode factor
 easyModeFactor = 2 --50% less enemies
@@ -81,22 +80,22 @@ settingsArray = {"", "", ""}
 settingsArrayLog = {""}
 settingsArrayLogLenght = 0
 
-if enableIadsDebug == true then
+function toggleIadsDebug ( trueOrFalse )
     local iadsDebug = IADS:getDebugSettings()
-    iadsDebug.IADSStatus = true
-    iadsDebug.samWentDark = true
-    iadsDebug.contacts = true
-    iadsDebug.radarWentLive = true
-    iadsDebug.ewRadarNoConnection = true
-    iadsDebug.samNoConnection = true
-    iadsDebug.jammerProbability = true
-    iadsDebug.addedEWRadar = true
-    iadsDebug.hasNoPower = true
-    iadsDebug.addedSAMSite = true
-    iadsDebug.warnings = true
-    iadsDebug.harmDefence = true
-    iadsDebug.samSiteStatusEnvOutput = true
-    iadsDebug.earlyWarningRadarStatusEnvOutput = true
+    iadsDebug.IADSStatus = trueOrFalse
+    iadsDebug.samWentDark = trueOrFalse
+    iadsDebug.contacts = trueOrFalse
+    iadsDebug.radarWentLive = trueOrFalse
+    iadsDebug.ewRadarNoConnection = trueOrFalse
+    iadsDebug.samNoConnection = trueOrFalse
+    iadsDebug.jammerProbability = trueOrFalse
+    iadsDebug.addedEWRadar = trueOrFalse
+    iadsDebug.hasNoPower = trueOrFalse
+    iadsDebug.addedSAMSite = trueOrFalse
+    iadsDebug.warnings = trueOrFalse
+    iadsDebug.harmDefence = trueOrFalse
+    iadsDebug.samSiteStatusEnvOutput = trueOrFalse
+    iadsDebug.earlyWarningRadarStatusEnvOutput = trueOrFalse
 end
 
 for i = 1,#airbaseEWR,1 do
@@ -777,6 +776,24 @@ function readSettingsLog ()
     end
 end
 
+function radioEnableDebug ()
+    enableDebug = true
+    enableIadsDebug = true
+    A2ADispatcherRED:SetTacticalDisplay( enableDebug )
+    toggleIadsDebug( true )
+    radioMenuDisableDebug = missionCommands.addCommand ("disable Debug", radioSubMenuDebugCommands, radioDisableDebug)
+    missionCommands.removeItem (radioMenuEnableDebug)
+end
+
+function radioDisableDebug ()
+    enableDebug = false
+    enableIADSDebug = false
+    A2ADispatcherRED:SetTacticalDisplay( enableDebug )
+    toggleIadsDebug( false )
+    radioMenuEnableDebug = missionCommands.addCommand ("enable Debug", radioSubMenuDebugCommands, radioEnableDebug)
+    missionCommands.removeItem (radioMenuDisableDebug)
+end
+
 function setModeNormal()
 
     notify("medium group selected", 5)
@@ -978,14 +995,18 @@ do
     --submenus
     invasionCommandsRoot = missionCommands.addSubMenu ("Invasion Commands") --invasion commands submenu
     radioSubMenuStartCommands = missionCommands.addSubMenu ("Start Commands", invasionCommandsRoot) --nested submenu for start commands
+    radioSubMenuDebugCommands = missionCommands.addSubMenu ("Debug Commands", invasionCommandsRoot)
 
     --invasion command submenu
     radioMenuReadSettings = missionCommands.addCommand ("display selected settings", invasionCommandsRoot, readSettings)
-    --radioMenuReadSettingsLog = missionCommands.addCommand ("show settings log", invasionCommandsRoot, readSettingsLog) --not working
     radioMenuObjectiveInfo = missionCommands.addCommand("Objective info", invasionCommandsRoot, notifyObjective)
     radioMenuStartEscortMission = missionCommands.addCommand("Start Escort mission", invasionCommandsRoot, genEscort)
     radioMenuStartHelicopterMission = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
     radioMenuRespawnTanker = missionCommands.addCommand ("respawn tanker", invasionCommandsRoot, respawnTanker)
+
+    --deubg command submenu
+    radioMenuEnableDebug = missionCommands.addCommand ("enable Debug", radioSubMenuDebugCommands, radioEnableDebug)
+    radioMenuReadSettingsLog = missionCommands.addCommand ("show settings log", radioSubMenuDebugCommands, readSettingsLog) --not working
 
     --start commands submenu
     radioMenuManualStart = missionCommands.addCommand("apply settings and start", radioSubMenuStartCommands , manualStart)
@@ -999,7 +1020,7 @@ do
     radioMenuNormalMode = missionCommands.addCommand ("medium group", radioSubMenuStartCommands, setModeNormal)
     radioMenuHardMode = missionCommands.addCommand ("large group", radioSubMenuStartCommands, setModeHard)
     --cap settings
-    radioMenuDisableCap = missionCommands.addCommand ( "disable enemy CAP", radioSubMenuStartCommands, setDisableEnemyCap)
+    --radioMenuDisableCap = missionCommands.addCommand ( "disable enemy CAP", radioSubMenuStartCommands, setDisableEnemyCap)
     radioMenuEnableCap = missionCommands.addCommand ( "enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap) --gets added after disabling it
 
     --default settings
