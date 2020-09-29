@@ -109,7 +109,7 @@ function genPrimObjective()
     primObjectiveCounter = primObjectiveCounter + 1 --to check if a primary has been manually spawned, not pretty but should work
     objectiveLoc = objectiveLocList[math.random(#objectiveLocList)]
 
-    if primObjectiveType == 0 then --if no prim objective has been specified, randomzie it
+    if primObjectiveType == 0 then --if no prim objective has been specified, randomize it
         primObjectiveType = math.random(2, 4)
     end
 
@@ -501,10 +501,8 @@ function genShorad ( vec3 , amount )
         IADS:addSAMSite(shoradName)
         genDefenseSmall( mist.getLeadPos(shoradExternalGroup) )
 
-
+        env.error(debugHeader.."Spawned SHORAD type: "..shoradExternal, false)
     end
-
-    env.error(debugHeader.."Spawned SHORAD type: "..shoradExternal, false)
 end
 
 function rotateVector ( degree, radius ) --input degree and radius, rotates the vector and returns a vec3 offset
@@ -761,17 +759,16 @@ function autoStart()
         setEnableEnemyCap()
         manualStart()
     end
-
 end
 
-function manualStart()
+function manualStart() -- problem is here
 
     for i = 1,#airbaseZones,1 do
         genAirbaseSam(airbaseZones[i], true )
     end
     
     genPrimObjective()
-    
+
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
     timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
 
@@ -780,7 +777,8 @@ function manualStart()
 
     readSettings()
 
-    missionCommands.removeItem (radioSubMenuStartCommands) --not sure if this should be kept or not.
+    missionCommands.removeItem(radioSubMenuStartCommands)
+
 end
 
 --[[
@@ -827,7 +825,7 @@ function setDifficulty(mode)
     difficultyFactors = {easyModeFactor, 1 ,hardModeFactor}
     local factor = difficultyFactors[mode]
 
-    notify("Settings selected for "..difficultyNames[mode].." group size.", 5)
+    notify("Selected difficulty: "..difficultyNames[mode], 5)
 
     ewrNumber = math.ceil ( ewrNumberDefault * factor )
     samNumber = math.ceil ( samNumberDefault * factor )
@@ -873,7 +871,7 @@ function setEnableEnemyCap ()
     radioMenuDisableCap = missionCommands.addCommand ( "Disable enemy CAP", radioSubMenuStartCommands, setDisableEnemyCap)
     missionCommands.removeItem (radioMenuEnableCap)
 
-    env.error(debugHeader.."Enabled CAP", enableDebug)
+    env.error(debugHeader.."Enabled CAP", false)
 end
 
 function setTargetRandom ()
@@ -1020,7 +1018,7 @@ do
     --default settings
     probability = probabilityDefault
     setEnableEnemyCap()
-    timer.scheduleFunction(autoStart, {}, timer.getTime() + 900) --autostart of the mission after 10 minutes, if no manual start was selected
+    timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
     notify("init completed", 5)
     
