@@ -757,7 +757,7 @@ function autoStart()
 
     if primObjectiveCounter == 0 then
         setTargetRandom()
-        setModeEasy()
+        setDifficulty(2)
         setEnableEnemyCap()
         manualStart()
     end
@@ -823,8 +823,8 @@ function radioDisableDebug ()
 end
 
 function setDifficulty(mode)
-    difficultyNames = {"Normal", "Small", "Large"}
-    difficultyFactors = {1, easyModeFactor, hardModeFactor}
+    difficultyNames = {"Easy", "Medium", "Hard"}
+    difficultyFactors = {easyModeFactor, 1 ,hardModeFactor}
     local factor = difficultyFactors[mode]
 
     notify("Settings selected for "..difficultyNames[mode].." group size.", 5)
@@ -835,7 +835,9 @@ function setDifficulty(mode)
 
     lowInterval = math.ceil ( lowIntervalDefault / factor )
     highInterval = math.ceil ( highIntervalDefault / factor )
-    settingsArray[2] =  difficultyNames[mode].." group size"
+    settingsArray[2] =  difficultyNames[mode]
+
+    env.error(debugHeader.."Selected difficulty: "..difficultyNames[mode], false)
 end
 
 function setDisableEnemyCap ()
@@ -1008,9 +1010,9 @@ do
     radioMenuTargetSpecial = missionCommands.addCommand ("Set target type: Vehicle group", radioSubMenuStartCommands, setTargetSpecial)
     radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuStartCommands, setTargetSpecialSam)
     --difficulty settings
-    radioMenuEasyMode = missionCommands.addCommand ("Set difficulty: small group", radioSubMenuStartCommands, setDifficulty, 1)
-    radioMenuNormalMode = missionCommands.addCommand ("Set difficulty: medium group", radioSubMenuStartCommands, setDifficulty, 2)
-    radioMenuHardMode = missionCommands.addCommand ("Set difficulty: large group", radioSubMenuStartCommands, setDifficulty, 3)
+    radioMenuEasyMode = missionCommands.addCommand ("Set difficulty: Easy", radioSubMenuStartCommands, setDifficulty, 1)
+    radioMenuNormalMode = missionCommands.addCommand ("Set difficulty: Medium", radioSubMenuStartCommands, setDifficulty, 2)
+    radioMenuHardMode = missionCommands.addCommand ("Set difficulty: Hard", radioSubMenuStartCommands, setDifficulty, 3)
     --cap settings
     --radioMenuDisableCap = missionCommands.addCommand ( "disable enemy CAP", radioSubMenuStartCommands, setDisableEnemyCap)
     radioMenuEnableCap = missionCommands.addCommand ( "Enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap) --gets added after disabling it
