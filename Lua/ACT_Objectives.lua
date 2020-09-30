@@ -802,23 +802,40 @@ function readSettingsLog ()
     end
 end
 
-function radioEnableDebug ()
-    enableDebug = true
+function radioEnableIadsDebug ()
     enableIadsDebug = true
-    A2ADispatcherRED:SetTacticalDisplay( enableDebug )
-    toggleIadsDebug( true )
-    radioMenuDisableDebug = missionCommands.addCommand ("disable Debug", radioSubMenuDebugCommands, radioDisableDebug)
-    missionCommands.removeItem (radioMenuEnableDebug)
+    toggleIadsDebug( enableIadsDebug )
+    radioMenuDisableIadsDebug = missionCommands.addCommand ("Disable IADS debug", radioSubMenuDebugCommands, radioDisableIadsDebug)
+    missionCommands.removeItem (radioMenuEnableIadsDebug)
+    notify ("IADS debug enabled", 15)
 end
 
-function radioDisableDebug ()
-    enableDebug = false
-    enableIADSDebug = false
-    A2ADispatcherRED:SetTacticalDisplay( enableDebug )
+function radioDisableIadsDebug()
+    enableIadsDebug = false
     toggleIadsDebug( false )
-    radioMenuEnableDebug = missionCommands.addCommand ("Enable Debug", radioSubMenuDebugCommands, radioEnableDebug)
-    missionCommands.removeItem (radioMenuDisableDebug)
+    radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS debug", radioSubMenuDebugCommands, radioEnableIadsDebug)
+    missionCommands.removeItem (radioMenuDisableIadsDebug)
+    notify ("IADS debug disabled", 15)
 end
+
+function radioEnableAirDispatcherDebug()
+    enableDebug = true
+    A2ADispatcherRED:SetTacticalDisplay( enableDebug )
+
+    radioMenuDisableDispatcherDebug = missionCommands.addCommand ("Disable AA-Dispatcher debug", radioSubMenuDebugCommands, radioDisableAirDispatcherDebug)
+    missionCommands.removeItem (radioMenuEnableDispatcherDebug)
+    notify ("Air dispatcher debug enabled", 15)
+end
+
+function radioDisableAirDispatcherDebug()
+    enableDebug = false
+    A2ADispatcherRED:SetTacticalDisplay( enableDebug )
+
+    radioMenuEnableDispatcherDebug = missionCommands.addCommand ("Enable AA-Dispatcher debug", radioSubMenuDebugCommands, radioEnableAirDispatcherDebug)
+    missionCommands.removeItem (radioMenuDisableDispatcherDebug)
+    notify ("Air dispatcher debug disabled", 15)
+end
+    
 
 function setDifficulty(mode)
     difficultyNames = {"Easy", "Medium", "Hard"}
@@ -983,6 +1000,8 @@ do
 
     --[[
         adds the F-10 radio commands for the mission
+
+        todo: add a lot of additional options to set every spawn parameter, because why not. Should be nested "guided" menus similar to Lcode in JF
     ]]
     --submenus
     invasionCommandsRoot = missionCommands.addSubMenu ("Invasion Commands") --invasion commands submenu
@@ -997,7 +1016,8 @@ do
     --radioMenuRespawnTanker = missionCommands.addCommand ("respawn tanker", invasionCommandsRoot, respawnTanker)
 
     --deubg command submenu
-    radioMenuEnableDebug = missionCommands.addCommand ("Enable Debug", radioSubMenuDebugCommands, radioEnableDebug)
+    radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS Debug", radioSubMenuDebugCommands, radioEnableIadsDebug)
+    radioMenuEnableDispatcherDebug = missionCommands.addCommand ("Enable AA-Dispatcher Debug", radioSubMenuDebugCommands, radioEnableAirDispatcherDebug)
     --radioMenuReadSettingsLog = missionCommands.addCommand ("show settings log", radioSubMenuDebugCommands, readSettingsLog) --not working
 
     --start commands submenu
@@ -1018,6 +1038,8 @@ do
     --default settings
     probability = probabilityDefault
     setEnableEnemyCap()
+    setDifficulty(1)
+    setTargetRandom()
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
     notify("init completed", 5)
