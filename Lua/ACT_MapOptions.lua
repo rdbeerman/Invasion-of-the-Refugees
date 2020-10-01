@@ -19,7 +19,7 @@ function act.caucasus()
     act.specialNames = {"SCUD Site", "Artillery Battery", "Smerch Battery"}
     act.specialSamNames = {"SA-10 site"}
 
-    act.sams = {"SAM #001", "SAM #002", "SAM #004" } --sa-3 removed
+    act.sams = {"SAM #001", "SAM #002", "SAM #003", "SAM #004" }
     act.ewrs = {"EWR #001", "EWR #002", "EWR #003"}
     act.shorad = {"shorad-1", "shorad-2"}
     act.defenses = {"defense #001", "defense #002", "defense #003", "defense #004", "defense #005"}
@@ -58,7 +58,7 @@ function act.persianGulf()
     act.specialNames = {"SCUD Site", "Artillery Battery", "Smerch Battery"}
     act.specialSamNames = {"SA-10 site"}
 
-    act.sams = {"SAM #001", "SAM #002", "SAM #004" } --buggy sa-3 removed
+    act.sams = {"SAM #001", "SAM #002", "SAM #003", "SAM #004" }
     act.ewrs = {"EWR #001", "EWR #002", "EWR #003"}
     act.shorad = {"shorad-1", "shorad-2"}
     act.defenses = {"defense #001", "defense #002", "defense #003", "defense #004", "defense #005"}
@@ -73,7 +73,7 @@ function act.persianGulf()
 
     act.airbaseStructures = { "airbase #002" }
     act.airbaseZones = { "airbaseZone #001", "airbaseZone #002" }
-    act.airbaseEwr = { "EWR Base #001", "EWR Base #002" }
+    act.airbaseEwr = { "EWR Base #001", "EWR Base #002", "EWR Base #003" }
 end
     
 function act.syria()
@@ -97,7 +97,7 @@ function act.syria()
     act.specialNames = {"SCUD Site", "Artillery Battery", "Smerch Battery"}
     act.specialSamNames = {"SA-10 site"}
 
-    act.sams = {"SAM-1", "SAM-2", "SAM-4" } --sam-3 removed for now
+    act.sams = {"SAM-1", "SAM-2", "SAM-3", "SAM-4" }
     act.ewrs = {"EWR-1", "EWR-2", "EWR-3"}
     act.shorad = {"shorad-1", "shorad-2"}
     act.defenses = {"defense-1", "defense-2", "defense-3", "defense-4", "defense-5"}

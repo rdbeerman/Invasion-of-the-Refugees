@@ -260,6 +260,8 @@ function genSamTarget () --not integrated into IADS so far. Should also work as 
             local markerName = "Objective: "..specialSamNames[i]
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
 
+            IADS:addSAMSite(countryName.." gnd "..tostring(objectiveCounter)) --add SA-10 to IADS
+
             genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  true ) --position, sam, ewr, defenses
 
             env.error(debugHeader..primObjective.."@"..objectiveLoc, false)
@@ -307,8 +309,8 @@ function genSurroundings ( vec3, samQuantity, ewrQuantity, satellitesQuantity, d
         genSam ( vec3 , true ) --generates a SAM site with a chance to detect SEAD missiles
     end
 
-    for i = 1 , ewrQuantity , 1 do
-        genEwr ( vec3 )
+    if ewrQuantity ~= 0 then
+        genEwr ( vec3 , ewrQuantity )
     end
 
     if defenses == true then
@@ -359,36 +361,40 @@ function genDefenseSmall(vec3) -- generates a defense group at point vec3 with s
     env.error(debugHeader.."Spawned small defense.", false)
 end
 
-function genEwr( vec3 ) --generate N EWR sites away from the main objective and adds a bit of protection to them
+function genEwr( vec3 , amount ) --generate N EWR sites away from the main objective and adds a bit of protection to them
+    for i = 1 , amount , 1 do
 
-    local offset = {
-        x = 0, 
-        y = 0,
-        z = 0
-    }
+        if i == 1 then
+            ewrRadius = 1500
+            ewrInnerRadius = 1000
+        else
+            ewrRadius = 35000
+            ewrInnerRadius = 20000
+        end
 
-    local ewrExternal = ewrList[math.random(#ewrList)]
-    mist.teleportToPoint {
-        groupName = ewrExternal,
-        point = vec3,
-        action = "clone",
-        disperse = false,
-        radius = 35000,
-        innerRadius = 20000
-    }
-    objectiveCounter = objectiveCounter + 1
-
-    local group = Group.getByName(ewrExternal) 
-    local countryId = group:getUnit(1):getCountry()
-    local countryName = country.name[countryId]
-
-    ewrExternalGroup = Group.getByName(countryName.." gnd "..tostring(objectiveCounter))
-    ewrExternalUnit = ewrExternalGroup:getUnit(1):getName()
-
-    IADS:addEarlyWarningRadar(ewrExternalUnit) -- add EWR to IADS
-    genDefenseSmall( mist.getLeadPos(ewrExternalGroup) )
-
-    env.error(debugHeader.."Spawned EWR type: "..ewrExternal, false)
+        local ewrExternal = ewrList[math.random(#ewrList)]
+        mist.teleportToPoint {
+            groupName = ewrExternal,
+            point = vec3,
+            action = "clone",
+            disperse = false,
+            radius = ewrRadius,
+            innerRadius = ewrInnerRadius
+        }
+        objectiveCounter = objectiveCounter + 1
+    
+        local group = Group.getByName(ewrExternal) 
+        local countryId = group:getUnit(1):getCountry()
+        local countryName = country.name[countryId]
+    
+        ewrExternalGroup = Group.getByName(countryName.." gnd "..tostring(objectiveCounter))
+        ewrExternalUnit = ewrExternalGroup:getUnit(1):getName()
+    
+        IADS:addEarlyWarningRadar(ewrExternalUnit) -- add EWR to IADS
+        genDefenseSmall( mist.getLeadPos(ewrExternalGroup) )
+    
+        env.error(debugHeader.."Spawned EWR type: "..ewrExternal, false)
+    end
 end
 
 function genSam(vec3, mark ) -- generates SAM site in random location around point vec3, boolean mark sets f10 marker
@@ -471,7 +477,6 @@ function genShorad ( vec3 , amount )
 
     local theta = 360 / amount
     local offset = 6000
-
 
     for i = 1 , amount , 1 do
 
@@ -770,6 +775,7 @@ function manualStart() -- problem is here
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
     timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
 
+    IADS:getSAMSites():setAutonomousBehaviour(SkynetIADSAbstractRadarElement.AUTONOMOUS_STATE_DCS_AI)
     IADS:activate()
     A2A_DISPATCHER()
 
@@ -797,7 +803,7 @@ end
 function radioEnableIadsDebug ()
     enableIadsDebug = true
     toggleIadsDebug( enableIadsDebug )
-    radioMenuDisableIadsDebug = missionCommands.addCommand ("Disable IADS debug", radioSubMenuDebugCommands, radioDisableIadsDebug)
+    radioMenuDisableIadsDebug = missionCommands.addCommand ("Disable IADS debug (full)", radioSubMenuDebugCommands, radioDisableIadsDebug)
     missionCommands.removeItem (radioMenuEnableIadsDebug)
     notify ("IADS debug enabled", 15)
 end
@@ -805,7 +811,7 @@ end
 function radioDisableIadsDebug()
     enableIadsDebug = false
     toggleIadsDebug( false )
-    radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS debug", radioSubMenuDebugCommands, radioEnableIadsDebug)
+    radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS debug (full)", radioSubMenuDebugCommands, radioEnableIadsDebug)
     missionCommands.removeItem (radioMenuDisableIadsDebug)
     notify ("IADS debug disabled", 15)
 end
@@ -873,6 +879,12 @@ function setEnableEnemyCap ()
     missionCommands.removeItem (radioMenuEnableCap)
 
     env.error(debugHeader.."Enabled CAP", false)
+end
+
+function addAwacsToIads ()
+    IADS:addEarlyWarningRadar("AWACS Red #001")
+
+    notify ("AWACS added to IADS", 5)
 end
 
 function setTargetRandom ()
@@ -988,7 +1000,7 @@ do
     --radioMenuRespawnTanker = missionCommands.addCommand ("respawn tanker", invasionCommandsRoot, respawnTanker)
 
     --deubg command submenu
-    radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS Debug", radioSubMenuDebugCommands, radioEnableIadsDebug)
+    radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS Debug (full)", radioSubMenuDebugCommands, radioEnableIadsDebug)
     radioMenuEnableDispatcherDebug = missionCommands.addCommand ("Enable AA-Dispatcher Debug", radioSubMenuDebugCommands, radioEnableAirDispatcherDebug)
 
     --start commands submenu
@@ -1003,7 +1015,8 @@ do
     radioMenuNormalMode = missionCommands.addCommand ("Set difficulty: Medium", radioSubMenuStartCommands, setDifficulty, 2)
     radioMenuHardMode = missionCommands.addCommand ("Set difficulty: Hard", radioSubMenuStartCommands, setDifficulty, 3)
     --cap settings
-    radioMenuEnableCap = missionCommands.addCommand ( "Enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap) --gets added after disabling it
+    radioMenuEnableCap = missionCommands.addCommand ( "Enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
+    radioMenuAddAwacsToIads = missionCommands.addCommand ( "Add AWACS to IADS", radioSubMenuStartCommands, addAwacsToIads)
 
     --default settings
     probability = probabilityDefault
