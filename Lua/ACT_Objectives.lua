@@ -10,7 +10,7 @@ compThres = 50
 ]]--
 
 --static defenses
-ewrNumberDefault = 2
+ewrNumberDefault = 3
 samNumberDefault = 1
 shoradNumberDefault = 5
 --cap numbers
@@ -78,8 +78,6 @@ isAirfield = false
 heloCounter = 0
 
 settingsArray = {"", "", ""}
-settingsArrayLog = {""}
-settingsArrayLogLength = 0
 
 function toggleIadsDebug ( trueOrFalse )
     local iadsDebug = IADS:getDebugSettings()
@@ -472,7 +470,7 @@ end
 function genShorad ( vec3 , amount ) 
 
     local theta = 360 / amount
-    local offset = 10000
+    local offset = 6000
 
 
     for i = 1 , amount , 1 do
@@ -796,12 +794,6 @@ function readSettings ()
     end
 end
 
-function readSettingsLog ()
-    for i = 1, #settingsArrayLogLength, 1 do
-        notify ( settingsArrayLog[i], 15)
-    end
-end
-
 function radioEnableIadsDebug ()
     enableIadsDebug = true
     toggleIadsDebug( enableIadsDebug )
@@ -862,10 +854,6 @@ function setDisableEnemyCap ()
     capLimit = 0
     settingsArray[3] = "CAP disabled"
 
-    --logs the change of settings for debug purposes
-    settingsArrayLogLength = settingsArrayLogLength + 1
-    settingsArrayLog[settingsArrayLogLength] = "CAP disabled"
-
     --remove the disable option, add the enable option again
     radioMenuEnableCap = missionCommands.addCommand ( "enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
     missionCommands.removeItem (radioMenuDisableCap)
@@ -879,10 +867,6 @@ function setEnableEnemyCap ()
 
     capLimit = capLimitDefault
     settingsArray[3] = "CAP enabled"
-
-    --logs the change of settings for debug purposes
-    settingsArrayLogLength = settingsArrayLogLength + 1
-    settingsArrayLog[settingsArrayLogLength] = "CAP enabled"
 
     --remove the enable option, add the disable one
     radioMenuDisableCap = missionCommands.addCommand ( "Disable enemy CAP", radioSubMenuStartCommands, setDisableEnemyCap)
@@ -912,26 +896,17 @@ function setTargetRandom ()
 end
 
 function setTargetBuilding ()
-
     notify("selected building target", 5)
 
     primObjectiveType = 2
     settingsArray[1] = "Building target"
-    --logs the change of settings for debug purposes
-    settingsArrayLogLength = settingsArrayLogLength + 1
-    settingsArrayLog[settingsArrayLogLength] = "Building target"
-
 end
 
 function setTargetSpecial ()
-
     notify("selected vehicles target", 5)
 
     primObjectiveType = 3
     settingsArray[1] = "Vehicle target"
-    --logs the change of settings for debug purposes
-    settingsArrayLogLength = settingsArrayLogLength + 1
-    settingsArrayLog[settingsArrayLogLength] = "Vehicle target"
 end
 
 function setTargetSpecialSam ()
@@ -940,9 +915,6 @@ function setTargetSpecialSam ()
 
     primObjectiveType = 4
     settingsArray[1] = "SAM target"
-    --logs the change of settings for debug purposes
-    settingsArrayLogLength = settingsArrayLogLength + 1
-    settingsArrayLog[settingsArrayLogLength] = "SAM target"
 end
 
 function A2A_DISPATCHER()
@@ -1018,7 +990,6 @@ do
     --deubg command submenu
     radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS Debug", radioSubMenuDebugCommands, radioEnableIadsDebug)
     radioMenuEnableDispatcherDebug = missionCommands.addCommand ("Enable AA-Dispatcher Debug", radioSubMenuDebugCommands, radioEnableAirDispatcherDebug)
-    --radioMenuReadSettingsLog = missionCommands.addCommand ("show settings log", radioSubMenuDebugCommands, readSettingsLog) --not working
 
     --start commands submenu
     radioMenuManualStart = missionCommands.addCommand("Apply settings and start", radioSubMenuStartCommands , manualStart)
@@ -1032,7 +1003,6 @@ do
     radioMenuNormalMode = missionCommands.addCommand ("Set difficulty: Medium", radioSubMenuStartCommands, setDifficulty, 2)
     radioMenuHardMode = missionCommands.addCommand ("Set difficulty: Hard", radioSubMenuStartCommands, setDifficulty, 3)
     --cap settings
-    --radioMenuDisableCap = missionCommands.addCommand ( "disable enemy CAP", radioSubMenuStartCommands, setDisableEnemyCap)
     radioMenuEnableCap = missionCommands.addCommand ( "Enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap) --gets added after disabling it
 
     --default settings
