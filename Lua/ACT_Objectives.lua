@@ -10,7 +10,7 @@ compThres = 50
 ]]--
 
 --static defenses
-ewrNumberDefault = 2
+ewrNumberDefault = 3
 samNumberDefault = 1
 shoradNumberDefault = 5
 --cap numbers
@@ -78,8 +78,6 @@ isAirfield = false
 heloCounter = 0
 
 settingsArray = {"", "", ""}
-settingsArrayLog = {""}
-settingsArrayLogLength = 0
 
 function toggleIadsDebug ( trueOrFalse )
     local iadsDebug = IADS:getDebugSettings()
@@ -262,6 +260,8 @@ function genSamTarget () --not integrated into IADS so far. Should also work as 
             local markerName = "Objective: "..specialSamNames[i]
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
 
+            IADS:addSAMSite(countryName.." gnd "..tostring(objectiveCounter)) --add SA-10 to IADS
+
             genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  true ) --position, sam, ewr, defenses
 
             env.error(debugHeader..primObjective.."@"..objectiveLoc, false)
@@ -309,8 +309,8 @@ function genSurroundings ( vec3, samQuantity, ewrQuantity, satellitesQuantity, d
         genSam ( vec3 , true ) --generates a SAM site with a chance to detect SEAD missiles
     end
 
-    for i = 1 , ewrQuantity , 1 do
-        genEwr ( vec3 )
+    if ewrQuantity ~= 0 then
+        genEwr ( vec3 , ewrQuantity )
     end
 
     if defenses == true then
@@ -361,36 +361,40 @@ function genDefenseSmall(vec3) -- generates a defense group at point vec3 with s
     env.error(debugHeader.."Spawned small defense.", false)
 end
 
-function genEwr( vec3 ) --generate N EWR sites away from the main objective and adds a bit of protection to them
+function genEwr( vec3 , amount ) --generate N EWR sites away from the main objective and adds a bit of protection to them
+    for i = 1 , amount , 1 do
 
-    local offset = {
-        x = 0, 
-        y = 0,
-        z = 0
-    }
+        if i == 1 then
+            ewrRadius = 1500
+            ewrInnerRadius = 1000
+        else
+            ewrRadius = 35000
+            ewrInnerRadius = 20000
+        end
 
-    local ewrExternal = ewrList[math.random(#ewrList)]
-    mist.teleportToPoint {
-        groupName = ewrExternal,
-        point = vec3,
-        action = "clone",
-        disperse = false,
-        radius = 35000,
-        innerRadius = 20000
-    }
-    objectiveCounter = objectiveCounter + 1
-
-    local group = Group.getByName(ewrExternal) 
-    local countryId = group:getUnit(1):getCountry()
-    local countryName = country.name[countryId]
-
-    ewrExternalGroup = Group.getByName(countryName.." gnd "..tostring(objectiveCounter))
-    ewrExternalUnit = ewrExternalGroup:getUnit(1):getName()
-
-    IADS:addEarlyWarningRadar(ewrExternalUnit) -- add EWR to IADS
-    genDefenseSmall( mist.getLeadPos(ewrExternalGroup) )
-
-    env.error(debugHeader.."Spawned EWR type: "..ewrExternal, false)
+        local ewrExternal = ewrList[math.random(#ewrList)]
+        mist.teleportToPoint {
+            groupName = ewrExternal,
+            point = vec3,
+            action = "clone",
+            disperse = false,
+            radius = ewrRadius,
+            innerRadius = ewrInnerRadius
+        }
+        objectiveCounter = objectiveCounter + 1
+    
+        local group = Group.getByName(ewrExternal) 
+        local countryId = group:getUnit(1):getCountry()
+        local countryName = country.name[countryId]
+    
+        ewrExternalGroup = Group.getByName(countryName.." gnd "..tostring(objectiveCounter))
+        ewrExternalUnit = ewrExternalGroup:getUnit(1):getName()
+    
+        IADS:addEarlyWarningRadar(ewrExternalUnit) -- add EWR to IADS
+        genDefenseSmall( mist.getLeadPos(ewrExternalGroup) )
+    
+        env.error(debugHeader.."Spawned EWR type: "..ewrExternal, false)
+    end
 end
 
 function genSam(vec3, mark ) -- generates SAM site in random location around point vec3, boolean mark sets f10 marker
@@ -472,8 +476,7 @@ end
 function genShorad ( vec3 , amount ) 
 
     local theta = 360 / amount
-    local offset = 10000
-
+    local offset = 6000
 
     for i = 1 , amount , 1 do
 
@@ -772,6 +775,7 @@ function manualStart() -- problem is here
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
     timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
 
+    IADS:getSAMSites():setAutonomousBehaviour(SkynetIADSAbstractRadarElement.AUTONOMOUS_STATE_DCS_AI)
     IADS:activate()
     A2A_DISPATCHER()
 
@@ -796,29 +800,40 @@ function readSettings ()
     end
 end
 
-function readSettingsLog ()
-    for i = 1, #settingsArrayLogLength, 1 do
-        notify ( settingsArrayLog[i], 15)
-    end
-end
-
-function radioEnableDebug ()
-    enableDebug = true
+function radioEnableIadsDebug ()
     enableIadsDebug = true
-    A2ADispatcherRED:SetTacticalDisplay( enableDebug )
-    toggleIadsDebug( true )
-    radioMenuDisableDebug = missionCommands.addCommand ("disable Debug", radioSubMenuDebugCommands, radioDisableDebug)
-    missionCommands.removeItem (radioMenuEnableDebug)
+    toggleIadsDebug( enableIadsDebug )
+    radioMenuDisableIadsDebug = missionCommands.addCommand ("Disable IADS debug (full)", radioSubMenuDebugCommands, radioDisableIadsDebug)
+    missionCommands.removeItem (radioMenuEnableIadsDebug)
+    notify ("IADS debug enabled", 15)
 end
 
-function radioDisableDebug ()
-    enableDebug = false
-    enableIADSDebug = false
-    A2ADispatcherRED:SetTacticalDisplay( enableDebug )
+function radioDisableIadsDebug()
+    enableIadsDebug = false
     toggleIadsDebug( false )
-    radioMenuEnableDebug = missionCommands.addCommand ("Enable Debug", radioSubMenuDebugCommands, radioEnableDebug)
-    missionCommands.removeItem (radioMenuDisableDebug)
+    radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS debug (full)", radioSubMenuDebugCommands, radioEnableIadsDebug)
+    missionCommands.removeItem (radioMenuDisableIadsDebug)
+    notify ("IADS debug disabled", 15)
 end
+
+function radioEnableAirDispatcherDebug()
+    enableDebug = true
+    A2ADispatcherRED:SetTacticalDisplay( enableDebug )
+
+    radioMenuDisableDispatcherDebug = missionCommands.addCommand ("Disable AA-Dispatcher debug", radioSubMenuDebugCommands, radioDisableAirDispatcherDebug)
+    missionCommands.removeItem (radioMenuEnableDispatcherDebug)
+    notify ("Air dispatcher debug enabled", 15)
+end
+
+function radioDisableAirDispatcherDebug()
+    enableDebug = false
+    A2ADispatcherRED:SetTacticalDisplay( enableDebug )
+
+    radioMenuEnableDispatcherDebug = missionCommands.addCommand ("Enable AA-Dispatcher debug", radioSubMenuDebugCommands, radioEnableAirDispatcherDebug)
+    missionCommands.removeItem (radioMenuDisableDispatcherDebug)
+    notify ("Air dispatcher debug disabled", 15)
+end
+    
 
 function setDifficulty(mode)
     difficultyNames = {"Easy", "Medium", "Hard"}
@@ -845,10 +860,6 @@ function setDisableEnemyCap ()
     capLimit = 0
     settingsArray[3] = "CAP disabled"
 
-    --logs the change of settings for debug purposes
-    settingsArrayLogLength = settingsArrayLogLength + 1
-    settingsArrayLog[settingsArrayLogLength] = "CAP disabled"
-
     --remove the disable option, add the enable option again
     radioMenuEnableCap = missionCommands.addCommand ( "enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
     missionCommands.removeItem (radioMenuDisableCap)
@@ -863,15 +874,17 @@ function setEnableEnemyCap ()
     capLimit = capLimitDefault
     settingsArray[3] = "CAP enabled"
 
-    --logs the change of settings for debug purposes
-    settingsArrayLogLength = settingsArrayLogLength + 1
-    settingsArrayLog[settingsArrayLogLength] = "CAP enabled"
-
     --remove the enable option, add the disable one
     radioMenuDisableCap = missionCommands.addCommand ( "Disable enemy CAP", radioSubMenuStartCommands, setDisableEnemyCap)
     missionCommands.removeItem (radioMenuEnableCap)
 
     env.error(debugHeader.."Enabled CAP", false)
+end
+
+function addAwacsToIads ()
+    IADS:addEarlyWarningRadar("AWACS Red #001")
+
+    notify ("AWACS added to IADS", 5)
 end
 
 function setTargetRandom ()
@@ -895,26 +908,17 @@ function setTargetRandom ()
 end
 
 function setTargetBuilding ()
-
     notify("selected building target", 5)
 
     primObjectiveType = 2
     settingsArray[1] = "Building target"
-    --logs the change of settings for debug purposes
-    settingsArrayLogLength = settingsArrayLogLength + 1
-    settingsArrayLog[settingsArrayLogLength] = "Building target"
-
 end
 
 function setTargetSpecial ()
-
     notify("selected vehicles target", 5)
 
     primObjectiveType = 3
     settingsArray[1] = "Vehicle target"
-    --logs the change of settings for debug purposes
-    settingsArrayLogLength = settingsArrayLogLength + 1
-    settingsArrayLog[settingsArrayLogLength] = "Vehicle target"
 end
 
 function setTargetSpecialSam ()
@@ -923,9 +927,6 @@ function setTargetSpecialSam ()
 
     primObjectiveType = 4
     settingsArray[1] = "SAM target"
-    --logs the change of settings for debug purposes
-    settingsArrayLogLength = settingsArrayLogLength + 1
-    settingsArrayLog[settingsArrayLogLength] = "SAM target"
 end
 
 function A2A_DISPATCHER()
@@ -983,6 +984,8 @@ do
 
     --[[
         adds the F-10 radio commands for the mission
+
+        todo: add a lot of additional options to set every spawn parameter, because why not. Should be nested "guided" menus similar to Lcode in JF
     ]]
     --submenus
     invasionCommandsRoot = missionCommands.addSubMenu ("Invasion Commands") --invasion commands submenu
@@ -997,8 +1000,8 @@ do
     --radioMenuRespawnTanker = missionCommands.addCommand ("respawn tanker", invasionCommandsRoot, respawnTanker)
 
     --deubg command submenu
-    radioMenuEnableDebug = missionCommands.addCommand ("Enable Debug", radioSubMenuDebugCommands, radioEnableDebug)
-    --radioMenuReadSettingsLog = missionCommands.addCommand ("show settings log", radioSubMenuDebugCommands, readSettingsLog) --not working
+    radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS Debug (full)", radioSubMenuDebugCommands, radioEnableIadsDebug)
+    radioMenuEnableDispatcherDebug = missionCommands.addCommand ("Enable AA-Dispatcher Debug", radioSubMenuDebugCommands, radioEnableAirDispatcherDebug)
 
     --start commands submenu
     radioMenuManualStart = missionCommands.addCommand("Apply settings and start", radioSubMenuStartCommands , manualStart)
@@ -1012,12 +1015,14 @@ do
     radioMenuNormalMode = missionCommands.addCommand ("Set difficulty: Medium", radioSubMenuStartCommands, setDifficulty, 2)
     radioMenuHardMode = missionCommands.addCommand ("Set difficulty: Hard", radioSubMenuStartCommands, setDifficulty, 3)
     --cap settings
-    --radioMenuDisableCap = missionCommands.addCommand ( "disable enemy CAP", radioSubMenuStartCommands, setDisableEnemyCap)
-    radioMenuEnableCap = missionCommands.addCommand ( "Enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap) --gets added after disabling it
+    radioMenuEnableCap = missionCommands.addCommand ( "Enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
+    radioMenuAddAwacsToIads = missionCommands.addCommand ( "Add AWACS to IADS", radioSubMenuStartCommands, addAwacsToIads)
 
     --default settings
     probability = probabilityDefault
     setEnableEnemyCap()
+    setDifficulty(1)
+    setTargetRandom()
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
     notify("init completed", 5)
