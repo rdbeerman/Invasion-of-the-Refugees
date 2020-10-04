@@ -15,8 +15,8 @@ samNumberDefault = 1
 shoradNumberDefault = 5
 --cap numbers
 capLimitDefault = 1
-lowIntervalDefault = 350
-highIntervalDefault = 700
+lowIntervalDefault = 600
+highIntervalDefault = 1200
 probabilityDefault = 1
 --easy mode factor
 easyModeFactor = 0.5 --50% less enemies
@@ -77,7 +77,7 @@ vec3Sam = {}
 isAirfield = false
 heloCounter = 0
 
-settingsArray = {"", "", ""}
+settingsArray = {"", "", "", ""}
 
 function toggleIadsDebug ( trueOrFalse )
     local iadsDebug = IADS:getDebugSettings()
@@ -800,6 +800,8 @@ function readSettings ()
     end
 end
 
+--debug radio settings
+
 function radioEnableIadsDebug ()
     enableIadsDebug = true
     toggleIadsDebug( enableIadsDebug )
@@ -834,23 +836,36 @@ function radioDisableAirDispatcherDebug()
     notify ("Air dispatcher debug disabled", 15)
 end
     
+--difficulty settings
 
-function setDifficulty(mode)
+function setDifficultySam(mode)
     difficultyNames = {"Easy", "Medium", "Hard"}
     difficultyFactors = {easyModeFactor, 1 ,hardModeFactor}
     local factor = difficultyFactors[mode]
 
-    notify("Selected difficulty: "..difficultyNames[mode], 5)
+    notify("Selected SAM difficulty: "..difficultyNames[mode], 5)
 
     ewrNumber = math.ceil ( ewrNumberDefault * factor )
     samNumber = math.ceil ( samNumberDefault * factor )
     shoradNumber = math.ceil ( shoradNumberDefault * factor )
 
-    lowInterval = math.ceil ( lowIntervalDefault / factor )
-    highInterval = math.ceil ( highIntervalDefault / factor )
     settingsArray[2] =  difficultyNames[mode]
 
-    env.error(debugHeader.."Selected difficulty: "..difficultyNames[mode], false)
+    env.error(debugHeader.."Selected SAM difficulty: "..difficultyNames[mode], false)
+end
+
+function setDifficultyCap(mode)
+    difficultyNames = {"Easy", "Medium", "Hard"}
+    difficultyFactors = {easyModeFactor, 1 ,hardModeFactor}
+    local factor = difficultyFactors[mode]
+
+    notify("Selected CAP difficulty: "..difficultyNames[mode], 5)
+
+    lowInterval = math.ceil ( lowIntervalDefault / factor )
+    highInterval = math.ceil ( highIntervalDefault / factor )
+    settingsArray[3] =  difficultyNames[mode]
+
+    env.error(debugHeader.."Selected CAP difficulty: "..difficultyNames[mode], false)
 end
 
 function setDisableEnemyCap ()
@@ -858,7 +873,7 @@ function setDisableEnemyCap ()
     notify("CAP disabled", 5)
 
     capLimit = 0
-    settingsArray[3] = "CAP disabled"
+    settingsArray[4] = "CAP disabled"
 
     --remove the disable option, add the enable option again
     radioMenuEnableCap = missionCommands.addCommand ( "enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
@@ -886,6 +901,8 @@ function addAwacsToIads ()
 
     notify ("AWACS added to IADS", 5)
 end
+
+--target settings
 
 function setTargetRandom ()
 
@@ -1011,9 +1028,14 @@ do
     radioMenuTargetSpecial = missionCommands.addCommand ("Set target type: Vehicle group", radioSubMenuStartCommands, setTargetSpecial)
     radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuStartCommands, setTargetSpecialSam)
     --difficulty settings
-    radioMenuEasyMode = missionCommands.addCommand ("Set difficulty: Easy", radioSubMenuStartCommands, setDifficulty, 1)
-    radioMenuNormalMode = missionCommands.addCommand ("Set difficulty: Medium", radioSubMenuStartCommands, setDifficulty, 2)
-    radioMenuHardMode = missionCommands.addCommand ("Set difficulty: Hard", radioSubMenuStartCommands, setDifficulty, 3)
+    --sam
+    radioMenuEasyModeSam = missionCommands.addCommand ("Set SAM difficulty: Easy", radioSubMenuStartCommands, setDifficultySam, 1)
+    radioMenuNormalModeSam = missionCommands.addCommand ("Set SAM difficulty: Medium", radioSubMenuStartCommands, setDifficultySam, 2)
+    radioMenuHardModeSam = missionCommands.addCommand ("Set SAM difficulty: Hard", radioSubMenuStartCommands, setDifficultySam, 3)
+    --cap
+    radioMenuEasyModeCap = missionCommands.addCommand ("Set CAP difficulty: Easy", radioSubMenuStartCommands, setDifficultyCap, 1)
+    radioMenuNormalModeCap = missionCommands.addCommand ("Set CAP difficulty: Easy", radioSubMenuStartCommands, setDifficultyCap, 2)
+    radioMenuHardModeCap = missionCommands.addCommand ("Set CAP difficulty: Easy", radioSubMenuStartCommands, setDifficultyCap, 3)
     --cap settings
     radioMenuEnableCap = missionCommands.addCommand ( "Enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
     radioMenuAddAwacsToIads = missionCommands.addCommand ( "Add AWACS to IADS", radioSubMenuStartCommands, addAwacsToIads)
@@ -1021,7 +1043,8 @@ do
     --default settings
     probability = probabilityDefault
     setEnableEnemyCap()
-    setDifficulty(1)
+    setDifficultySam(2)
+    setDifficultyCap(1)
     setTargetRandom()
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
