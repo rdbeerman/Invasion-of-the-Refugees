@@ -462,7 +462,7 @@ function genAirbaseSam( zone, mark )
     improveSamAuto ( countryName.." gnd "..tostring(objectiveCounter) )
     
     if mark == true then
-        markObjective("SAM Site", countryName.." gnd "..tostring(objectiveCounter), 200 + samId)
+        markObjective("SAM Site: " .. getSamType(countryName.." gnd "..tostring(objectiveCounter)), countryName.." gnd "..tostring(objectiveCounter), 200 + samId)
 
         mist.flagFunc.group_alive_less_than {
             groupName = countryName.." gnd "..tostring(objectiveCounter),
@@ -750,7 +750,7 @@ end
 
 function notifyObjective()
     if primCompletion == false then
-        local message = "The primary objective is a Iranian "..primName.." that has been located in the area near: \n"
+        local message = "The primary objective is a "..primName.." that has been located in the area near: \n"
         message = message..notifyCoords(vec3Prim, 1).." N, "..notifyCoords(vec3Prim, 2).." E, "..notifyCoords(vec3Prim, 3).." ft.\n"
         message = message.."\n Beware, SAM sites have been spotted near: \n"
 
@@ -1030,19 +1030,21 @@ do
     --start commands submenu
     radioMenuManualStart = missionCommands.addCommand("Apply settings and start", radioSubMenuStartCommands , manualStart)
     --target type settings
-    radioMenuTargetRandom = missionCommands.addCommand ("Set target type: Random", radioSubMenuStartCommands, setTargetRandom)
-    radioMenuTargetBuilding = missionCommands.addCommand ("Set target type: Building", radioSubMenuStartCommands, setTargetBuilding)
-    radioMenuTargetSpecial = missionCommands.addCommand ("Set target type: Vehicle group", radioSubMenuStartCommands, setTargetSpecial)
-    radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuStartCommands, setTargetSpecialSam)
+    radioSubMenuTargetType = missionCommands.addSubMenu ("Set target type:", radioSubMenuStartCommands)
+
+    radioMenuTargetRandom = missionCommands.addCommand ("Set target type: Random", radioSubMenuTargetType, setTargetRandom)
+    radioMenuTargetBuilding = missionCommands.addCommand ("Set target type: Building", radioSubMenuTargetType, setTargetBuilding)
+    radioMenuTargetSpecial = missionCommands.addCommand ("Set target type: Vehicle group", radioSubMenuTargetType, setTargetSpecial)
+    radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuTargetType, setTargetSpecialSam)
     --difficulty settings
     --sam
-    radioSubMenuSamDifficulty = missionCommands.addSubMenu ("Set SAM difficulty", radioSubMenuStartCommands)
+    radioSubMenuSamDifficulty = missionCommands.addSubMenu ("Set SAM difficulty:", radioSubMenuStartCommands)
 
     radioMenuEasyModeSam = missionCommands.addCommand ("Set SAM difficulty: Easy", radioSubMenuSamDifficulty, setDifficultySam, 1)
     radioMenuNormalModeSam = missionCommands.addCommand ("Set SAM difficulty: Medium", radioSubMenuSamDifficulty, setDifficultySam, 2)
     radioMenuHardModeSam = missionCommands.addCommand ("Set SAM difficulty: Hard", radioSubMenuSamDifficulty, setDifficultySam, 3)
     --cap
-    radioSubMenuCapDifficulty = missionCommands.addSubMenu ("Set CAP difficulty", radioSubMenuStartCommands)
+    radioSubMenuCapDifficulty = missionCommands.addSubMenu ("Set CAP difficulty:", radioSubMenuStartCommands)
 
     radioMenuEasyModeCap = missionCommands.addCommand ("Set CAP difficulty: Easy", radioSubMenuCapDifficulty, setDifficultyCap, 1)
     radioMenuNormalModeCap = missionCommands.addCommand ("Set CAP difficulty: Medium", radioSubMenuCapDifficulty, setDifficultyCap, 2)
