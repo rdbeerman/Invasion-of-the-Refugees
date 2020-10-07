@@ -261,6 +261,7 @@ function genSamTarget () --not integrated into IADS so far. Should also work as 
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
 
             IADS:addSAMSite(countryName.." gnd "..tostring(objectiveCounter)) --add SA-10 to IADS
+            improveSamAuto (countryName.." gnd "..tostring(objectiveCounter))
 
             genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  true ) --position, sam, ewr, defenses
 
@@ -405,8 +406,8 @@ function genSam(vec3, mark ) -- generates SAM site in random location around poi
         point = vec3,
         action = "clone",
         disperse = false,
-        radius = 7000,
-        innerRadius = 2000
+        radius = 10000,
+        innerRadius = 8000
     }
     
     local group = Group.getByName(sam)
@@ -414,21 +415,23 @@ function genSam(vec3, mark ) -- generates SAM site in random location around poi
     local countryName = country.name[countryId]
     
     objectiveCounter = objectiveCounter + 1
-    IADS:addSAMSite(countryName.." gnd "..tostring(objectiveCounter)) --group name
 
-    improveSamAuto ( countryName.." gnd "..tostring(objectiveCounter) )
-    
+    local samGroupName = countryName.." gnd "..tostring(objectiveCounter)
+
+    IADS:addSAMSite( samGroupName ) --group name
+    improveSamAuto ( samGroupName )
+
     if mark == true then
-        markObjective("SAM Site", countryName.." gnd "..tostring(objectiveCounter), 200 + samId)
+        markObjective("SAM Site: " .. getSamType ( samGroupName ), samGroupName, 200 + samId)
 
         mist.flagFunc.group_alive_less_than {
-            groupName = countryName.." gnd "..tostring(objectiveCounter),
+            groupName = samGroupName,
             flag = 200 + samId,
             percent = compThres,
         }
     end
 
-    vec3Sam[#vec3Sam + 1] = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter))
+    vec3Sam[#vec3Sam + 1] = mist.getLeadPos(samGroupName)
     
     env.error(debugHeader.."Spawned SAM type: "..sam, false)
 end
@@ -517,8 +520,8 @@ function rotateVector ( degree, radius ) --input degree and radius, rotates the 
     return returnOffset
 end
 
-function improveSamAuto (groupName) --inputs group name and tunes it automatically according to its type
-
+function getSamType (groupName)
+    local samType = ""
     local group = Group.getByName(groupName)
     local unitType = group:getUnit(1):getTypeName() --outputs unit type name
 
@@ -527,28 +530,54 @@ function improveSamAuto (groupName) --inputs group name and tunes it automatical
     end
 
     if string.find(unitType, "Kub") then --SA-6
-        IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 40 )
-        IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(90)
+        samType = "SA-6"
+    elseif string.find(unitType, "rapier") then --Rapier
+        samType = "Rapier"
+    elseif string.find(unitType, "Hawk") then --Hawk
+        samType = "Hawk"
+    elseif string.find(unitType, "Buk") then --SA-11
+        samType = "SA-11"
+    elseif string.find(unitType, "SNR") then --SA-2
+        samType = "SA-2"
+    elseif string.find(unitType, "S-300PS") then --SA-10
+        samType = "SA-10"
+    else --not found
+        samType = "unknown"
+    end
 
-    else if string.find(unitType, "rapier") then --Rapier
+    if enableDebug == true then
+        trigger.action.outText(samType, 60)
+    end
+
+    return samType
+end
+
+function improveSamAuto (groupName) --inputs group name and tunes it automatically according to its type
+
+    local samType = getSamType(groupName)
+
+    if samType == "Rapier" then
         IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 20 )
         IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(100)
-
-    else if string.find(unitType, "Hawk") then --Hawk
+    elseif samType == "Hawk" then
         IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 40 )
         IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(85)
-
-    else if string.find(unitType, "Buk") then --SA-11
+    elseif samType == "SA-2" then
+        IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 20 )
+        IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(85)
+    elseif samType == "SA-6" then
+        IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 40 )
+        IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(90)
+    elseif samType == "SA-11" then
         IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 60 )
         IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(90)
+    elseif samType == "SA-10" then
+        IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 90 )
+        IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(95)
 
-    else --not found
+    else
         IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 50 )
         IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent( 100 )
-
-    end
-    end
-    end
     end
 end
 
@@ -755,11 +784,7 @@ end
 --end
 
 function autoStart()
-
     if primObjectiveCounter == 0 then
-        setTargetRandom()
-        setDifficulty(2)
-        setEnableEnemyCap()
         manualStart()
     end
 end
@@ -782,6 +807,7 @@ function manualStart() -- problem is here
     readSettings()
 
     missionCommands.removeItem(radioSubMenuStartCommands)
+    notify("Mission started!", 15)
 
 end
 
@@ -843,15 +869,15 @@ function setDifficultySam(mode)
     difficultyFactors = {easyModeFactor, 1 ,hardModeFactor}
     local factor = difficultyFactors[mode]
 
-    notify("Selected SAM difficulty: "..difficultyNames[mode], 5)
+    notify("selected SAM difficulty: "..difficultyNames[mode], 5)
 
     ewrNumber = math.ceil ( ewrNumberDefault * factor )
     samNumber = math.ceil ( samNumberDefault * factor )
     shoradNumber = math.ceil ( shoradNumberDefault * factor )
 
-    settingsArray[2] =  difficultyNames[mode]
+    settingsArray[2] = "SAM difficulty: " .. difficultyNames[mode]
 
-    env.error(debugHeader.."Selected SAM difficulty: "..difficultyNames[mode], false)
+    env.error(debugHeader.."selected SAM difficulty: "..difficultyNames[mode], false)
 end
 
 function setDifficultyCap(mode)
@@ -859,23 +885,19 @@ function setDifficultyCap(mode)
     difficultyFactors = {easyModeFactor, 1 ,hardModeFactor}
     local factor = difficultyFactors[mode]
 
-    notify("Selected CAP difficulty: "..difficultyNames[mode], 5)
+    notify("selected CAP difficulty: "..difficultyNames[mode], 5)
 
     lowInterval = math.ceil ( lowIntervalDefault / factor )
     highInterval = math.ceil ( highIntervalDefault / factor )
-    settingsArray[3] =  difficultyNames[mode]
+    settingsArray[3] =  "CAP difficulty: " .. difficultyNames[mode]
 
-    env.error(debugHeader.."Selected CAP difficulty: "..difficultyNames[mode], false)
+    env.error(debugHeader.."selected CAP difficulty: "..difficultyNames[mode], false)
 end
 
 function setDisableEnemyCap ()
-
     notify("CAP disabled", 5)
-
     capLimit = 0
     settingsArray[4] = "CAP disabled"
-
-    --remove the disable option, add the enable option again
     radioMenuEnableCap = missionCommands.addCommand ( "enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
     missionCommands.removeItem (radioMenuDisableCap)
 
@@ -883,13 +905,9 @@ function setDisableEnemyCap ()
 end
 
 function setEnableEnemyCap ()
-
     notify("CAP enabled", 5)
-
     capLimit = capLimitDefault
-    settingsArray[3] = "CAP enabled"
-
-    --remove the enable option, add the disable one
+    settingsArray[4] = "CAP enabled"
     radioMenuDisableCap = missionCommands.addCommand ( "Disable enemy CAP", radioSubMenuStartCommands, setDisableEnemyCap)
     missionCommands.removeItem (radioMenuEnableCap)
 
@@ -898,50 +916,39 @@ end
 
 function addAwacsToIads ()
     IADS:addEarlyWarningRadar("AWACS Red #001")
-
     notify ("AWACS added to IADS", 5)
 end
 
 --target settings
 
 function setTargetRandom ()
-
     local random = math.random(2, 4)
-
     notify ("selected random target", 5)
-
     if random == 2 then
         setTargetBuilding()
     end
-
     if random == 3 then
         setTargetSpecial()
     end
-
     if random == 4 then
         setTargetSpecialSam()
     end
-
 end
 
 function setTargetBuilding ()
     notify("selected building target", 5)
-
     primObjectiveType = 2
     settingsArray[1] = "Building target"
 end
 
 function setTargetSpecial ()
     notify("selected vehicles target", 5)
-
     primObjectiveType = 3
     settingsArray[1] = "Vehicle target"
 end
 
 function setTargetSpecialSam ()
-
     notify("selected SAM target", 5)
-
     primObjectiveType = 4
     settingsArray[1] = "SAM target"
 end
@@ -1029,16 +1036,20 @@ do
     radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuStartCommands, setTargetSpecialSam)
     --difficulty settings
     --sam
-    radioMenuEasyModeSam = missionCommands.addCommand ("Set SAM difficulty: Easy", radioSubMenuStartCommands, setDifficultySam, 1)
-    radioMenuNormalModeSam = missionCommands.addCommand ("Set SAM difficulty: Medium", radioSubMenuStartCommands, setDifficultySam, 2)
-    radioMenuHardModeSam = missionCommands.addCommand ("Set SAM difficulty: Hard", radioSubMenuStartCommands, setDifficultySam, 3)
+    radioSubMenuSamDifficulty = missionCommands.addSubMenu ("Set SAM difficulty", radioSubMenuStartCommands)
+
+    radioMenuEasyModeSam = missionCommands.addCommand ("Set SAM difficulty: Easy", radioSubMenuSamDifficulty, setDifficultySam, 1)
+    radioMenuNormalModeSam = missionCommands.addCommand ("Set SAM difficulty: Medium", radioSubMenuSamDifficulty, setDifficultySam, 2)
+    radioMenuHardModeSam = missionCommands.addCommand ("Set SAM difficulty: Hard", radioSubMenuSamDifficulty, setDifficultySam, 3)
     --cap
-    radioMenuEasyModeCap = missionCommands.addCommand ("Set CAP difficulty: Easy", radioSubMenuStartCommands, setDifficultyCap, 1)
-    radioMenuNormalModeCap = missionCommands.addCommand ("Set CAP difficulty: Easy", radioSubMenuStartCommands, setDifficultyCap, 2)
-    radioMenuHardModeCap = missionCommands.addCommand ("Set CAP difficulty: Easy", radioSubMenuStartCommands, setDifficultyCap, 3)
+    radioSubMenuCapDifficulty = missionCommands.addSubMenu ("Set CAP difficulty", radioSubMenuStartCommands)
+
+    radioMenuEasyModeCap = missionCommands.addCommand ("Set CAP difficulty: Easy", radioSubMenuCapDifficulty, setDifficultyCap, 1)
+    radioMenuNormalModeCap = missionCommands.addCommand ("Set CAP difficulty: Medium", radioSubMenuCapDifficulty, setDifficultyCap, 2)
+    radioMenuHardModeCap = missionCommands.addCommand ("Set CAP difficulty: Hard", radioSubMenuCapDifficulty, setDifficultyCap, 3)
     --cap settings
     radioMenuEnableCap = missionCommands.addCommand ( "Enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
-    radioMenuAddAwacsToIads = missionCommands.addCommand ( "Add AWACS to IADS", radioSubMenuStartCommands, addAwacsToIads)
+    --radioMenuAddAwacsToIads = missionCommands.addCommand ( "Add AWACS to IADS", radioSubMenuStartCommands, addAwacsToIads)
 
     --default settings
     probability = probabilityDefault
