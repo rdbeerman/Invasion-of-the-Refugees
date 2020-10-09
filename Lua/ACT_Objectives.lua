@@ -15,8 +15,8 @@ samNumberDefault = 1
 shoradNumberDefault = 5
 --cap numbers
 capLimitDefault = 1
-lowIntervalDefault = 600
-highIntervalDefault = 1200
+lowIntervalDefault = 500
+highIntervalDefault = 1000
 probabilityDefault = 1
 --easy mode factor
 easyModeFactor = 0.5 --50% less enemies
@@ -572,7 +572,7 @@ function improveSamAuto (groupName) --inputs group name and tunes it automatical
         IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 60 )
         IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(90)
     elseif samType == "SA-10" then
-        IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 90 )
+        IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 80 )
         IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(95)
 
     else
