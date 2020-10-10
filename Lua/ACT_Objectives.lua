@@ -12,7 +12,7 @@ compThres = 50
 --static defenses
 ewrNumberDefault = 3
 samNumberDefault = 1
-shoradNumberDefault = 1
+shoradNumberDefault = 5
 pointDefenseExists = false
 --cap numbers
 capLimitDefault = 1
@@ -76,6 +76,7 @@ IADS = SkynetIADS:create('IADS-Network')
 ewrGroups = {}
 statics = {}
 vec3Sam = {}
+vec3SamType = {}
 isAirfield = false
 heloCounter = 0
 
@@ -87,16 +88,16 @@ function toggleIadsDebug ( trueOrFalse )
     iadsDebug.samWentDark = trueOrFalse
     iadsDebug.contacts = trueOrFalse
     iadsDebug.radarWentLive = trueOrFalse
-    iadsDebug.ewRadarNoConnection = trueOrFalse
-    iadsDebug.samNoConnection = trueOrFalse
-    iadsDebug.jammerProbability = trueOrFalse
-    iadsDebug.addedEWRadar = trueOrFalse
-    iadsDebug.hasNoPower = trueOrFalse
-    iadsDebug.addedSAMSite = trueOrFalse
+    iadsDebug.ewRadarNoConnection = false
+    iadsDebug.samNoConnection = false
+    iadsDebug.jammerProbability = false
+    iadsDebug.addedEWRadar = false
+    iadsDebug.hasNoPower = false
+    iadsDebug.addedSAMSite = false
     iadsDebug.warnings = trueOrFalse
     iadsDebug.harmDefence = trueOrFalse
-    iadsDebug.samSiteStatusEnvOutput = trueOrFalse
-    iadsDebug.earlyWarningRadarStatusEnvOutput = trueOrFalse
+    iadsDebug.samSiteStatusEnvOutput = false
+    iadsDebug.earlyWarningRadarStatusEnvOutput = false
 end
 
 for i = 1,#airbaseEWR,1 do
@@ -104,7 +105,6 @@ for i = 1,#airbaseEWR,1 do
 end
 
 function genPrimObjective()
-
     primCompletion = false
     primObjectiveCounter = primObjectiveCounter + 1 --to check if a primary has been manually spawned, not pretty but should work
     objectiveLoc = objectiveLocList[math.random(#objectiveLocList)]
@@ -114,7 +114,6 @@ function genPrimObjective()
     end
 
     if primObjectiveType == 1 then --airfield
-
         primObjective = typeStructure[math.random(#typeStructure)] --wrong needs fixing before implementation
         genAirbaseTarget ()
 
@@ -123,11 +122,9 @@ function genPrimObjective()
         if enableDebug == true then
             notify("airbase target spawning", 5)
         end
-
     end
 
     if primObjectiveType == 2 then --structure
-
         primObjective = typeStructure[math.random(#typeStructure)]
         genStructureTarget ()
 
@@ -135,11 +132,9 @@ function genPrimObjective()
         if enableDebug == true then
             notify("structure target spawning", 5)
         end
-
     end
 
     if primObjectiveType == 3 then --vehicle
-
         primObjective = typeSpecial[math.random(#typeSpecial)]
         genVehicleTarget ()
 
@@ -147,11 +142,9 @@ function genPrimObjective()
         if enableDebug == true then
             notify("vehicle target spawning", 5)
         end
-
     end
 
     if primObjectiveType == 4 then --SAM (SA-10)
-
         primObjective = typeSpecialSam[math.random(#typeSpecialSam)]
         genSamTarget ()
 
@@ -159,13 +152,10 @@ function genPrimObjective()
         if enableDebug == true then
             notify("SAM target spawning", 5)
         end
-
     end
-    
 end
 
 function genStructureTarget ()
-
     for i = 1,#typeStructure,1 do               -- check if generated objective is a group of buildings
         if primObjective == typeStructure[i] then
             primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false) -- spawn Objective
@@ -205,7 +195,6 @@ function genStructureTarget ()
 end
 
 function genVehicleTarget ()
-
     for i = 1,#typeSpecial,1 do -- check if generated objective is a special objective with custom name
         if primObjective == typeSpecial[i] then
             primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false) -- spawn objective
@@ -242,11 +231,9 @@ function genVehicleTarget ()
             return
         end
     end
-
 end
 
 function genSamTarget () --not integrated into IADS so far. Should also work as an EWR
-
     for i = 1,#typeSpecialSam,1 do -- check if generated objective is a special objective with custom name
         if primObjective == typeSpecialSam[i] then
             primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false) -- spawn objective
@@ -286,7 +273,6 @@ function genSamTarget () --not integrated into IADS so far. Should also work as 
             return
         end
     end
-
 end
 
 function genAirbaseTarget () --not used right now --idea: use it to place fuel tanks, if fuel tanks get destroyed, the airbase has reduced spawnrate
@@ -335,7 +321,6 @@ function genSurroundings ( vec3, samQuantity, ewrQuantity, satellitesQuantity, d
     if satellitesQuantity ~= 0 then
         genShorad ( vec3 , satellitesQuantity )
     end
-
 end
 
 function genDefense(vec3) -- generates a defense group at point vec3 with set offset
@@ -344,16 +329,13 @@ function genDefense(vec3) -- generates a defense group at point vec3 with set of
         y = 0,
         z = 0
     }
-
     mist.teleportToPoint {
         groupName = defenseList[math.random(#defenseList)],
         point = mist.vec.add(vec3, offset),
         action = "clone",
         disperse = false,
     }
-
     objectiveCounter = objectiveCounter + 1
-
     env.error(debugHeader.."Spawned defense.", false)
 end
 
@@ -426,10 +408,8 @@ function genSam(vec3, mark ) -- generates SAM site in random location around poi
     
     local group = Group.getByName(sam)
     local countryId = group:getUnit(1):getCountry()
-    local countryName = country.name[countryId]
-    
+    local countryName = country.name[countryId]    
     objectiveCounter = objectiveCounter + 1
-
     local samGroupName = countryName.." gnd "..tostring(objectiveCounter)
 
     IADS:addSAMSite( samGroupName ) --group name
@@ -437,16 +417,14 @@ function genSam(vec3, mark ) -- generates SAM site in random location around poi
 
     if mark == true then
         markObjective("SAM Site: " .. getSamType ( samGroupName ), samGroupName, 200 + samId)
-
         mist.flagFunc.group_alive_less_than {
             groupName = samGroupName,
             flag = 200 + samId,
             percent = compThres,
         }
     end
-
+    vec3SamType[#vec3SamType + 1] = getSamType(countryName.." gnd "..tostring(objectiveCounter))
     vec3Sam[#vec3Sam + 1] = mist.getLeadPos(samGroupName)
-    
     env.error(debugHeader.."Spawned SAM type: "..sam, false)
 end
 
@@ -484,13 +462,13 @@ function genAirbaseSam( zone, mark )
         }
     end
 
+    vec3SamType[#vec3SamType + 1] = getSamType(countryName.." gnd "..tostring(objectiveCounter))
     vec3Sam[#vec3Sam + 1] = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter))
     
     env.error(debugHeader.."Spawned airbase SAM type: "..sam, false)
 end
 
 function genShorad ( vec3 , amount ) 
-
     local theta = 360 / amount
     local offset = 6000
 
@@ -525,14 +503,11 @@ function genShorad ( vec3 , amount )
 end
 
 function genPointDefense (vec3 , defendedTarget , amount ) --seems to work, needs ingame testing
-
     local theta = 360 / amount
-    local offset = 700
+    local offset = 600
 
     for i = 1 , amount , 1 do
-
         local pointDefensePosition = mist.vec.add(vec3, rotateVector( theta*i, offset ))
-
         local pointDefense = pointDefenseList[math.random(#pointDefenseList)]
         mist.teleportToPoint {
             groupName = pointDefense,
@@ -549,7 +524,6 @@ function genPointDefense (vec3 , defendedTarget , amount ) --seems to work, need
         local countryId = group:getUnit(1):getCountry()
         local countryName = country.name[countryId]
         local pointDefenseName = countryName.." gnd "..tostring(objectiveCounter)
-
         local pointDefenseExternalGroup = Group.getByName(pointDefenseName)
 
             if primObjectiveType == 4 then --changes the integration of the SA-15 depending on the type of primary objective
@@ -561,7 +535,6 @@ function genPointDefense (vec3 , defendedTarget , amount ) --seems to work, need
             end
         
         genDefenseSmall( mist.getLeadPos(pointDefenseExternalGroup) )
-
     end
 end
 
@@ -601,17 +574,11 @@ function getSamType (groupName)
         samType = "unknown"
     end
 
-    if enableDebug == true then
-        trigger.action.outText(samType, 60)
-    end
-
     return samType
 end
 
 function improveSamAuto (groupName) --inputs group name and tunes it automatically according to its type
-
     local samType = getSamType(groupName)
-
     if samType == "Rapier" then
         IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 20 )
         IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(100)
@@ -633,7 +600,6 @@ function improveSamAuto (groupName) --inputs group name and tunes it automatical
     elseif samType == "SA-15" then
         IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 100 )
         IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(90)
-
     else
         IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 50 )
         IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent( 100 )
@@ -814,7 +780,7 @@ function notifyObjective()
         message = message.."\n Beware, SAM sites have been spotted near: \n"
 
         for i = 1,#vec3Sam,1 do
-            message = message.."- "..notifyCoords(vec3Sam[i], 1).." N, "..notifyCoords(vec3Sam[i], 2).."E, "..notifyCoords(vec3Sam[i],3).." ft.\n"
+            message = message.."- " .. vec3SamType[i] .. ": "..notifyCoords(vec3Sam[i], 1).." N, "..notifyCoords(vec3Sam[i], 2).."E, "..notifyCoords(vec3Sam[i],3).." ft.\n" 
         end
         
         notify(message, 45)
@@ -838,10 +804,6 @@ end
 
 ]]
 
---function respawnTanker()
-    --notify ("not implemented", 15)
---end
-
 function autoStart()
     if primObjectiveCounter == 0 then
         manualStart()
@@ -849,25 +811,20 @@ function autoStart()
 end
 
 function manualStart() -- problem is here
-
     for i = 1,#airbaseZones,1 do
         genAirbaseSam(airbaseZones[i], true )
     end
     
     genPrimObjective()
-
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
     timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
-
     IADS:getSAMSites():setAutonomousBehaviour(SkynetIADSAbstractRadarElement.AUTONOMOUS_STATE_DCS_AI)
     IADS:activate()
     A2A_DISPATCHER()
-
     readSettings()
 
     missionCommands.removeItem(radioSubMenuStartCommands)
     notify("Mission started!", 15)
-
 end
 
 --[[
@@ -935,7 +892,6 @@ function setDifficultySam(mode)
     shoradNumber = math.ceil ( shoradNumberDefault * factor )
 
     settingsArray[2] = "SAM difficulty: " .. difficultyNames[mode]
-
     env.error(debugHeader.."selected SAM difficulty: "..difficultyNames[mode], false)
 end
 
@@ -977,8 +933,6 @@ function addAwacsToIads ()
     IADS:addEarlyWarningRadar("AWACS Red #001")
     notify ("AWACS added to IADS", 5)
 end
-
---target settings
 
 function setTargetRandom ()
     local random = math.random(2, 4)
@@ -1078,14 +1032,12 @@ do
     --submenus
     invasionCommandsRoot = missionCommands.addSubMenu ("Invasion Commands") --invasion commands submenu
     radioSubMenuStartCommands = missionCommands.addSubMenu ("Start Commands", invasionCommandsRoot) --nested submenu for start commands
-    radioSubMenuDebugCommands = missionCommands.addSubMenu ("Debug Commands", invasionCommandsRoot)
 
     --invasion command submenu
     radioMenuReadSettings = missionCommands.addCommand ("Display selected settings", invasionCommandsRoot, readSettings)
     radioMenuObjectiveInfo = missionCommands.addCommand("Objective info", invasionCommandsRoot, notifyObjective)
     radioMenuStartEscortMission = missionCommands.addCommand("Start Escort mission", invasionCommandsRoot, genEscort)
     radioMenuStartHelicopterMission = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
-    --radioMenuRespawnTanker = missionCommands.addCommand ("respawn tanker", invasionCommandsRoot, respawnTanker)
 
     --deubg command submenu
     radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS Debug (full)", radioSubMenuDebugCommands, radioEnableIadsDebug)
@@ -1117,6 +1069,8 @@ do
     --cap settings
     radioMenuEnableCap = missionCommands.addCommand ( "Enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
     radioMenuAddAwacsToIads = missionCommands.addCommand ( "Add AWACS to IADS", radioSubMenuStartCommands, addAwacsToIads)
+    
+    radioSubMenuDebugCommands = missionCommands.addSubMenu ("Debug Commands", invasionCommandsRoot)
 
     --default settings
     probability = probabilityDefault
@@ -1124,16 +1078,6 @@ do
     setDifficultySam(2)
     setDifficultyCap(1)
     setTargetRandom()
-
-    --debug
-    setTargetSpecialSam()
-    --setTargetSpecial()
-    setAddPointDefense()
-    --addAwacsToIads()
-    setDifficultySam(1)
-    radioEnableIadsDebug()
-    --radioEnableAirDispatcherDebug()
-    manualStart()
 
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
