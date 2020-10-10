@@ -8,7 +8,7 @@ function act.caucasus()
         AIRBASE.Caucasus.Krasnodar_Center,
         AIRBASE.Caucasus.Anapa_Vityazevo
     }
-    act.zones = {"zone #001", "zone #002", "zone #003", "zone #004", "zone #005", "zone #006", "zone #007", "zone #008", "zone #009", "zone #010", "zone #011"}
+    act.zones = {"zone #001", "zone #002", "zone #003", "zone #004", "zone #005", "zone #006", "zone #007", "zone #008", "zone #009", "zone #010", "zone #011", "zone #012", "zone #013", "zone #014", "zone #015", "zone #016"}
 
     act.primObjectives = {"primObjective #001", "primObjective #002", "primObjective #003", "primObjective #004", "airbase #002", "primObjective #005", "primObjective #006" }
 
@@ -23,7 +23,8 @@ function act.caucasus()
     act.ewrs = {"EWR #001", "EWR #002", "EWR #003"}
     act.shorad = {"shorad-1", "shorad-2"}
     act.defenses = {"defense #001", "defense #002", "defense #003", "defense #004", "defense #005"}
-	act.smallDefenses = { "defenseSmall #001", "defenseSmall #002" }
+    act.smallDefenses = { "defenseSmall #001", "defenseSmall #002" }
+    act.pointDefenses = { "pointDefense-1"}
 
     act.capRed = { "CAP Red #001", "CAP Red #002", "CAP Red #003", "CAP Red #004", "CAP Red #005", "CAP Red #006", "CAP Red #007", "CAP Red #008", "CAP Red #009", "CAP Red #010" }
 
@@ -62,7 +63,8 @@ function act.persianGulf()
     act.ewrs = {"EWR #001", "EWR #002", "EWR #003"}
     act.shorad = {"shorad-1", "shorad-2"}
     act.defenses = {"defense #001", "defense #002", "defense #003", "defense #004", "defense #005"}
-	act.smallDefenses = { "defenseSmall #001", "defenseSmall #002" }
+    act.smallDefenses = { "defenseSmall #001", "defenseSmall #002" }
+    act.pointDefenses = { "pointDefense-1"}
 
     act.capRed = { "CAP Red #001", "CAP Red #002", "CAP Red #003", "CAP Red #004", "CAP Red #005", "CAP Red #006", "CAP Red #007", "CAP Red #008", "CAP Red #009", "CAP Red #010" }
 
@@ -101,7 +103,8 @@ function act.syria()
     act.ewrs = {"EWR-1", "EWR-2", "EWR-3"}
     act.shorad = {"shorad-1", "shorad-2"}
     act.defenses = {"defense-1", "defense-2", "defense-3", "defense-4", "defense-5"}
-	act.smallDefenses = { "defenseSmall-1", "defenseSmall-2" }
+    act.smallDefenses = { "defenseSmall-1", "defenseSmall-2" }
+    act.pointDefenses = { "pointDefense-1"}
 
     act.capRed = { "CAP Red-1", "CAP Red-2", "CAP Red-3", "CAP Red-4", "CAP Red-5", "CAP Red-6", "CAP Red-7" }
 
@@ -154,6 +157,10 @@ end
 
 function act.getSmallDefenses()
     return act.smallDefenses
+end
+
+function act.getPointDefenses()
+    return act.pointDefenses
 end
 
 function act.getRedCap()

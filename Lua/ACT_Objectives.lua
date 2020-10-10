@@ -12,7 +12,8 @@ compThres = 50
 --static defenses
 ewrNumberDefault = 3
 samNumberDefault = 1
-shoradNumberDefault = 5
+shoradNumberDefault = 1
+pointDefenseExists = false
 --cap numbers
 capLimitDefault = 1
 lowIntervalDefault = 500
@@ -37,6 +38,7 @@ ewrList = act.getEwrs()
 shoradList = act.getShorad()
 defenseList = act.getDefenses()
 defenseListSmall = act.getSmallDefenses()
+pointDefenseList = act.getPointDefenses()
 capRed = act.getRedCap ()
 --helo stuff
 blueGround = act.getBlueGround()
@@ -186,6 +188,10 @@ function genStructureTarget ()
             local markerName = "Objective: "..tostring(primName)
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
 
+            if pointDefenseExists == true then
+                genPointDefense (vec3Prim, countryName.." gnd "..tostring(objectiveCounter), 1)
+            end
+
             genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber , true ) --moved defenses to an extra function (postion, sam, ewr, short range defenses)
 
             env.error(debugHeader..primObjective.."@"..objectiveLoc, false)
@@ -222,6 +228,10 @@ function genVehicleTarget ()
             primName = specialNames[i] -- get objective name by using index in specialNames
             local markerName = "Objective: "..specialNames[i]
             markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
+
+            if pointDefenseExists == true then
+                genPointDefense (vec3Prim, countryName.." gnd "..tostring(objectiveCounter), 1)
+            end
 
             genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  true ) --position, sam, ewr, defenses
 
@@ -262,6 +272,10 @@ function genSamTarget () --not integrated into IADS so far. Should also work as 
 
             IADS:addSAMSite(countryName.." gnd "..tostring(objectiveCounter)) --add SA-10 to IADS
             improveSamAuto (countryName.." gnd "..tostring(objectiveCounter))
+            
+            if pointDefenseExists == true then
+                genPointDefense (vec3Prim, countryName.." gnd "..tostring(objectiveCounter), 1)
+            end
 
             genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  true ) --position, sam, ewr, defenses
 
@@ -326,7 +340,7 @@ end
 
 function genDefense(vec3) -- generates a defense group at point vec3 with set offset
     local offset = {
-        x = -500, --changed from -2000 after decreasing the diameter of the template
+        x = -250, --changed from -2000 after decreasing the diameter of the template
         y = 0,
         z = 0
     }
@@ -458,7 +472,6 @@ function genAirbaseSam( zone, mark )
     
     objectiveCounter = objectiveCounter + 1
     IADS:addSAMSite(countryName.." gnd "..tostring(objectiveCounter)) --group name
-
     improveSamAuto ( countryName.." gnd "..tostring(objectiveCounter) )
     
     if mark == true then
@@ -511,6 +524,47 @@ function genShorad ( vec3 , amount )
     end
 end
 
+function genPointDefense (vec3 , defendedTarget , amount ) --seems to work, needs ingame testing
+
+    local theta = 360 / amount
+    local offset = 700
+
+    for i = 1 , amount , 1 do
+
+        local pointDefensePosition = mist.vec.add(vec3, rotateVector( theta*i, offset ))
+
+        local pointDefense = pointDefenseList[math.random(#pointDefenseList)]
+        mist.teleportToPoint {
+            groupName = pointDefense,
+            point = pointDefensePosition,
+            action = "clone",
+            disperse = false,
+            radius = 100,
+            innerRadius = 50
+        }
+
+        objectiveCounter = objectiveCounter + 1
+
+        local group = Group.getByName(pointDefense) 
+        local countryId = group:getUnit(1):getCountry()
+        local countryName = country.name[countryId]
+        local pointDefenseName = countryName.." gnd "..tostring(objectiveCounter)
+
+        local pointDefenseExternalGroup = Group.getByName(pointDefenseName)
+
+            if primObjectiveType == 4 then --changes the integration of the SA-15 depending on the type of primary objective
+                IADS:getSAMSiteByGroupName(defendedTarget):addPointDefence(pointDefenseName) --adds a point defense to the defended target
+                IADS:getSAMSiteByGroupName(defendedTarget):setIgnoreHARMSWhilePointDefencesHaveAmmo(true)
+            else
+                IADS:addSAMSite(pointDefenseName)
+                improveSamAuto(pointDefenseName)
+            end
+        
+        genDefenseSmall( mist.getLeadPos(pointDefenseExternalGroup) )
+
+    end
+end
+
 function rotateVector ( degree, radius ) --input degree and radius, rotates the vector and returns a vec3 offset
     local offset = {
         x = radius,
@@ -541,6 +595,8 @@ function getSamType (groupName)
         samType = "SA-2"
     elseif string.find(unitType, "S-300PS") then --SA-10
         samType = "SA-10"
+    elseif string.find(unitType, "Tor") then --SA-15
+        samType = "SA-15"
     else --not found
         samType = "unknown"
     end
@@ -572,8 +628,11 @@ function improveSamAuto (groupName) --inputs group name and tunes it automatical
         IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 60 )
         IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(90)
     elseif samType == "SA-10" then
-        IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 80 )
+        IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 100 )
         IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(95)
+    elseif samType == "SA-15" then
+        IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 100 )
+        IADS:getSAMSiteByGroupName(groupName):setGoLiveRangeInPercent(90)
 
     else
         IADS:getSAMSiteByGroupName(groupName):setHARMDetectionChance( 50 )
@@ -953,6 +1012,11 @@ function setTargetSpecialSam ()
     settingsArray[1] = "SAM target"
 end
 
+function setAddPointDefense ()
+    notify("added point defense to primary target", 5)
+    pointDefenseExists = true --ugly testing solution
+end
+
 function A2A_DISPATCHER()
     
     --Define Detecting network
@@ -1036,6 +1100,7 @@ do
     radioMenuTargetBuilding = missionCommands.addCommand ("Set target type: Building", radioSubMenuTargetType, setTargetBuilding)
     radioMenuTargetSpecial = missionCommands.addCommand ("Set target type: Vehicle group", radioSubMenuTargetType, setTargetSpecial)
     radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuTargetType, setTargetSpecialSam)
+    radioMenuAddPointDefense = missionCommands.addCommand ("Add point defense to primary objective", radioSubMenuTargetType, setAddPointDefense)
     --difficulty settings
     --sam
     radioSubMenuSamDifficulty = missionCommands.addSubMenu ("Set SAM difficulty:", radioSubMenuStartCommands)
@@ -1051,7 +1116,7 @@ do
     radioMenuHardModeCap = missionCommands.addCommand ("Set CAP difficulty: Hard", radioSubMenuCapDifficulty, setDifficultyCap, 3)
     --cap settings
     radioMenuEnableCap = missionCommands.addCommand ( "Enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
-    --radioMenuAddAwacsToIads = missionCommands.addCommand ( "Add AWACS to IADS", radioSubMenuStartCommands, addAwacsToIads)
+    radioMenuAddAwacsToIads = missionCommands.addCommand ( "Add AWACS to IADS", radioSubMenuStartCommands, addAwacsToIads)
 
     --default settings
     probability = probabilityDefault
@@ -1059,6 +1124,17 @@ do
     setDifficultySam(2)
     setDifficultyCap(1)
     setTargetRandom()
+
+    --debug
+    setTargetSpecialSam()
+    --setTargetSpecial()
+    setAddPointDefense()
+    --addAwacsToIads()
+    setDifficultySam(1)
+    radioEnableIadsDebug()
+    --radioEnableAirDispatcherDebug()
+    manualStart()
+
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
     notify("init completed", 5)
