@@ -12,7 +12,7 @@ compThres = 50
 --static defenses
 ewrNumberDefault = 3
 samNumberDefault = 1
-shoradNumberDefault = 5
+shoradNumberDefault = 2
 pointDefenseExists = false
 --cap numbers
 capLimitDefault = 1
