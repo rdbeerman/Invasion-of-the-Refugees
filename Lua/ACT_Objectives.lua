@@ -46,7 +46,6 @@ heloObjectives = act.getHeloObjectives()
 escortList = act.getEscort()
 --airbase stuff
 airbaseZones = act.getAirbaseZones()
-typeAirbase = act.getAirbaseStructures()
 airbaseEWR = act.getAirbaseEwr()
 
 --custom names & statics
@@ -110,21 +109,10 @@ function genPrimObjective()
     objectiveLoc = objectiveLocList[math.random(#objectiveLocList)]
 
     if primObjectiveType == 0 then --if no prim objective has been specified, randomize it
-        primObjectiveType = math.random(2, 4)
+        primObjectiveType = math.random(1, 3)
     end
 
-    if primObjectiveType == 1 then --airfield
-        primObjective = typeStructure[math.random(#typeStructure)] --wrong needs fixing before implementation
-        genAirbaseTarget ()
-
-        env.error(debugHeader.."Completed Objective airbase spawning.", false)
-        
-        if enableDebug == true then
-            notify("airbase target spawning", 5)
-        end
-    end
-
-    if primObjectiveType == 2 then --structure
+    if primObjectiveType == 1 then --structure
         primObjective = typeStructure[math.random(#typeStructure)]
         genStructureTarget ()
 
@@ -134,7 +122,7 @@ function genPrimObjective()
         end
     end
 
-    if primObjectiveType == 3 then --vehicle
+    if primObjectiveType == 2 then --vehicle
         primObjective = typeSpecial[math.random(#typeSpecial)]
         genVehicleTarget ()
 
@@ -144,7 +132,7 @@ function genPrimObjective()
         end
     end
 
-    if primObjectiveType == 4 then --SAM (SA-10)
+    if primObjectiveType == 3 then --SAM (SA-10)
         primObjective = typeSpecialSam[math.random(#typeSpecialSam)]
         genSamTarget ()
 
@@ -273,35 +261,6 @@ function genSamTarget ()
             return
         end
     end
-end
-
-function genAirbaseTarget () --not used right now --idea: use it to place fuel tanks, if fuel tanks get destroyed, the airbase has reduced spawnrate
-
-    for i = 1,#typeAirbase,1 do                 -- check if generated objective is a airbase
-        if primObjective == typeAirbase[i] then
-            isAirfield = true
-
-            local airbase = Group.getByName(primObjective)
-            trigger.action.activateGroup(airbase)
-
-            primName = "Airbase"
-            vec3Prim = mist.getLeadPos(primObjective)
-            markObjective("Objective: Airbase", primObjective, primMarker)
-
-            mist.flagFunc.group_alive_less_than {
-                groupName = primObjective,
-                flag = primCompletedFlag,
-                percent = compThres,
-            }
-
-            env.error(debugHeader..primObjective.."@"..objectiveLoc, false)
-            if enableDebug == true then
-                notify(primObjective.."@"..objectiveLoc, 60)
-            end
-            return
-        end
-    end
-
 end
 
 function genSurroundings ( vec3, samQuantity, ewrQuantity, satellitesQuantity, defenses ) --generates SAMs, EWRs and defenses
@@ -526,7 +485,7 @@ function genPointDefense (vec3 , defendedTarget , amount ) --seems to work, need
         local pointDefenseName = countryName.." gnd "..tostring(objectiveCounter)
         local pointDefenseExternalGroup = Group.getByName(pointDefenseName)
 
-            if primObjectiveType == 4 then --changes the integration of the SA-15 depending on the type of primary objective
+            if primObjectiveType == 3 then --changes the integration of the SA-15 depending on the type of primary objective
                 IADS:getSAMSiteByGroupName(defendedTarget):addPointDefence(pointDefenseName) --adds a point defense to the defended target
                 IADS:getSAMSiteByGroupName(defendedTarget):setIgnoreHARMSWhilePointDefencesHaveAmmo(true)
             else
@@ -789,6 +748,12 @@ function notifyObjective()
     end
 end
 
+function newNotifyobjective() --maybe a new better notifyObjective function
+end
+
+function readCustomWPs() --a function that displays custom WPs to everyone. So A marker with the text "WYPT-n" gets read and displayed for everyone. Making it easier to coordinate waypoints.
+end
+
 function notify(message, displayFor)
     trigger.action.outText(message, displayFor)
 end
@@ -950,19 +915,19 @@ end
 
 function setTargetBuilding ()
     notify("selected building target", 5)
-    primObjectiveType = 2
+    primObjectiveType = 1
     settingsArray[1] = "Building target"
 end
 
 function setTargetSpecial ()
     notify("selected vehicles target", 5)
-    primObjectiveType = 3
+    primObjectiveType = 2
     settingsArray[1] = "Vehicle target"
 end
 
 function setTargetSpecialSam ()
     notify("selected SAM target", 5)
-    primObjectiveType = 4
+    primObjectiveType = 3
     settingsArray[1] = "SAM target"
 end
 
