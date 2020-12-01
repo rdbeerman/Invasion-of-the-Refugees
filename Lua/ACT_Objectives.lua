@@ -1,5 +1,5 @@
 -- General Settings --
-enableDebug = false
+enableDebug = true
 enableIadsDebug = false
 debugHeader = "---INVASION mission--- "
 markerScatter = 1000
@@ -233,7 +233,7 @@ function genVehicleTarget ()
     end
 end
 
-function genSamTarget () --not integrated into IADS so far. Should also work as an EWR
+function genSamTarget ()
     for i = 1,#typeSpecialSam,1 do -- check if generated objective is a special objective with custom name
         if primObjective == typeSpecialSam[i] then
             primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false) -- spawn objective
@@ -325,7 +325,7 @@ end
 
 function genDefense(vec3) -- generates a defense group at point vec3 with set offset
     local offset = {
-        x = -250, --changed from -2000 after decreasing the diameter of the template
+        x = -460,
         y = 0,
         z = 0
     }
@@ -1040,6 +1040,7 @@ do
     radioMenuStartHelicopterMission = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
 
     --deubg command submenu
+    radioSubMenuDebugCommands = missionCommands.addSubMenu ("Debug Commands", invasionCommandsRoot)
     radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS Debug (full)", radioSubMenuDebugCommands, radioEnableIadsDebug)
     radioMenuEnableDispatcherDebug = missionCommands.addCommand ("Enable AA-Dispatcher Debug", radioSubMenuDebugCommands, radioEnableAirDispatcherDebug)
 
@@ -1069,15 +1070,14 @@ do
     --cap settings
     radioMenuEnableCap = missionCommands.addCommand ( "Enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
     radioMenuAddAwacsToIads = missionCommands.addCommand ( "Add AWACS to IADS", radioSubMenuStartCommands, addAwacsToIads)
-    
-    radioSubMenuDebugCommands = missionCommands.addSubMenu ("Debug Commands", invasionCommandsRoot)
 
     --default settings
     probability = probabilityDefault
     setEnableEnemyCap()
-    setDifficultySam(2)
+    setDifficultySam(1)
     setDifficultyCap(1)
     setTargetRandom()
+    manualStart()
 
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
