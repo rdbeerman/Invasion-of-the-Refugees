@@ -1,7 +1,6 @@
 act = {}
 
 function templateArrayBuilder(type, arrayName, nameString) --1: groups; 2: zones
-    arrayName = {}
     local i = 1
     local _var = true
     if type == 1 then --check for groups
@@ -75,7 +74,41 @@ function act.persianGulf()
         AIRBASE.PersianGulf.Kerman_Airport
     }
 
+    act.zones = {}
+    act.sams = {}
+    act.ewrs = {}
+    act.shorad = {}
+    act.smallDefenses = {}
+    act.pointDefenses = {}
+    act.capRed = {}
+    act.airbaseZones = {}
+    act.airbaseEwr = {}
+
+    templateArrayBuilder(2, act.zones, "zone-")
+    templateArrayBuilder(1, act.sams, "SAM-")
+    templateArrayBuilder(1, act.ewrs, "EWR-")
+    templateArrayBuilder(1, act.shorad, "shorad-")
+    templateArrayBuilder(1, act.smallDefenses, "defenseSmall-")
+    templateArrayBuilder(1, act.pointDefenses, "pointDefense-")
+    templateArrayBuilder(1, act.capRed, "CAP Red-")
+    templateArrayBuilder(2, act.airbaseZones, "airbaseZone-")
+    templateArrayBuilder(1, act.airbaseEwr, "EWR Base-")
+
+    --[[
+
     act.zones = {"zone-1", "zone-2", "zone-3", "zone-4"}
+
+    act.sams = {"SAM-1", "SAM-2", "SAM-3", "SAM-4" }
+    act.ewrs = {"EWR-1", "EWR-2"}
+    act.shorad = {"shorad-1", "shorad-2"}
+    act.smallDefenses = { "defenseSmall-1", "defenseSmall-2" }
+    act.pointDefenses = { "pointDefense-1"}
+    act.capRed = { "CAP Red-1", "CAP Red-2", "CAP Red-3", "CAP Red-4", "CAP Red-5", "CAP Red-6", "CAP Red-7", "CAP Red-8", "CAP Red-9", "CAP Red-10" }
+
+    act.airbaseZones = { "airbaseZone-1", "airbaseZone-2" }
+    act.airbaseEwr = { "EWR Base-1", "EWR Base-2", "EWR Base-3" }
+
+    ]]
 
     act.primObjectives = {"primObjective-1", "primObjective-2", "primObjective-3", "primObjective-4", "primObjective-5", "primObjective-6", "primObjective-7"}
 
@@ -86,22 +119,11 @@ function act.persianGulf()
     act.specialNames = {"SCUD Site", "Artillery Battery", "Smerch Battery"}
     act.specialSamNames = {"SA-10 site"}
 
-    act.sams = {"SAM-1", "SAM-2", "SAM-3", "SAM-4" }
-    act.ewrs = {"EWR-1", "EWR-2"}
-    act.shorad = {"shorad-1", "shorad-2"}
-    act.defenses = {"defense-1", "defense-2", "defense-3", "defense-4", "defense-5"}
-    act.smallDefenses = { "defenseSmall-1", "defenseSmall-2" }
-    act.pointDefenses = { "pointDefense-1"}
-
-    act.capRed = { "CAP Red-1", "CAP Red-2", "CAP Red-3", "CAP Red-4", "CAP Red-5", "CAP Red-6", "CAP Red-7", "CAP Red-8", "CAP Red-9", "CAP Red-10" }
-
     act.blueground = { "blueGround-1" }
     act.heloObjectives = {"heloObjective-2", "heloObjective-3" }
 
     act.escort = { "escort-1" }
 
-    act.airbaseZones = { "airbaseZone-1", "airbaseZone-2" }
-    act.airbaseEwr = { "EWR Base-1", "EWR Base-2", "EWR Base-3" }
 end
     
 function act.syria()
@@ -175,10 +197,6 @@ end
 
 function act.getShorad()
     return act.shorad
-end
-
-function act.getDefenses()
-    return act.defenses
 end
 
 function act.getSmallDefenses()

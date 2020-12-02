@@ -12,6 +12,7 @@ compThres = 50
 --static defenses
 ewrNumberDefault = 3
 samNumberDefault = 1
+defenseNumberDefault = 5
 shoradNumberDefault = 2
 pointDefenseExists = false
 --cap numbers
@@ -36,7 +37,6 @@ typeSpecialSam = act.getTypeSpecialSam()
 samList = act.getSams()
 ewrList = act.getEwrs()
 shoradList = act.getShorad()
-defenseList = act.getDefenses()
 defenseListSmall = act.getSmallDefenses()
 pointDefenseList = act.getPointDefenses()
 capRed = act.getRedCap ()
@@ -170,7 +170,7 @@ function genStructureTarget ()
                 genPointDefense (vec3Prim, countryName.." gnd "..tostring(objectiveCounter), 1)
             end
 
-            genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber , true ) --moved defenses to an extra function (postion, sam, ewr, short range defenses)
+            genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber , defenseNumberDefault ) --moved defenses to an extra function (postion, sam, ewr, short range defenses)
 
             env.error(debugHeader..primObjective.."@"..objectiveLoc, false)
             if enableDebug == true then
@@ -210,7 +210,7 @@ function genVehicleTarget ()
                 genPointDefense (vec3Prim, countryName.." gnd "..tostring(objectiveCounter), 1)
             end
 
-            genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  true ) --position, sam, ewr, defenses
+            genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  defenseNumberDefault ) --position, sam, ewr, defenses
 
             env.error(debugHeader..primObjective.."@"..objectiveLoc, false)
             if enableDebug == true then
@@ -252,7 +252,7 @@ function genSamTarget ()
                 genPointDefense (vec3Prim, countryName.." gnd "..tostring(objectiveCounter), 1)
             end
 
-            genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  true ) --position, sam, ewr, defenses
+            genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  defenseNumberDefault ) --position, sam, ewr, defenses
 
             env.error(debugHeader..primObjective.."@"..objectiveLoc, false)
             if enableDebug == true then
@@ -263,39 +263,31 @@ function genSamTarget ()
     end
 end
 
-function genSurroundings ( vec3, samQuantity, ewrQuantity, satellitesQuantity, defenses ) --generates SAMs, EWRs and defenses
-
-    for i = 1 , samQuantity, 1 do
+function genSurroundings ( vec3, samAmount, ewrAmount, shoradAmount, defenseAmount ) --generates SAMs, EWRs and defenses
+    for i = 1 , samAmount, 1 do
         genSam ( vec3 , true ) --generates a SAM site with a chance to detect SEAD missiles
     end
 
-    if ewrQuantity ~= 0 then
-        genEwr ( vec3 , ewrQuantity )
+    if ewrAmount ~= 0 then
+        genEwr ( vec3 , ewrAmount )
     end
 
-    if defenses == true then
-        genDefense( vec3 ) --generates the short range defenses of an objective
+    if defenseAmount ~= 0 then
+        genDefense( vec3, defenseAmount ) --generates the short range defenses of an objective
     end
 
-    if satellitesQuantity ~= 0 then
-        genShorad ( vec3 , satellitesQuantity )
+    if shoradAmount ~= 0 then
+        genShorad ( vec3 , shoradAmount )
     end
 end
 
-function genDefense(vec3) -- generates a defense group at point vec3 with set offset
-    local offset = {
-        x = -460,
-        y = 0,
-        z = 0
-    }
-    mist.teleportToPoint {
-        groupName = defenseList[math.random(#defenseList)],
-        point = mist.vec.add(vec3, offset),
-        action = "clone",
-        disperse = false,
-    }
-    objectiveCounter = objectiveCounter + 1
-    env.error(debugHeader.."Spawned defense.", false)
+function genDefense(vec3, amount)
+    local theta = 360 / amount
+    for i = 1 , amount , 1 do
+        local offset = math.random (400, 500)
+        local defensePosition = mist.vec.add(vec3, rotateVector( theta*i+math.random(0,20), offset ))
+        genDefenseSmall(defensePosition)
+    end
 end
 
 function genDefenseSmall(vec3) -- generates a defense group at point vec3 with set offset
@@ -313,7 +305,6 @@ function genDefenseSmall(vec3) -- generates a defense group at point vec3 with s
     }
 
     objectiveCounter = objectiveCounter + 1
-
     env.error(debugHeader.."Spawned small defense.", false)
 end
 
@@ -434,7 +425,6 @@ function genShorad ( vec3 , amount )
     for i = 1 , amount , 1 do
 
         local shoradPosition = mist.vec.add(vec3, rotateVector( theta*i, offset ))
-
         local shoradExternal = shoradList[math.random(#shoradList)]
         mist.teleportToPoint {
             groupName = shoradExternal,
@@ -446,12 +436,10 @@ function genShorad ( vec3 , amount )
         }
 
         objectiveCounter = objectiveCounter + 1
-
         local group = Group.getByName(shoradExternal) 
         local countryId = group:getUnit(1):getCountry()
         local countryName = country.name[countryId]
         local shoradName = countryName.." gnd "..tostring(objectiveCounter)
-
         local shoradExternalGroup = Group.getByName(shoradName)
 
         IADS:addSAMSite(shoradName)
@@ -1011,9 +999,9 @@ do
 
     --start commands submenu
     radioMenuManualStart = missionCommands.addCommand("Apply settings and start", radioSubMenuStartCommands , manualStart)
+
     --target type settings
     radioSubMenuTargetType = missionCommands.addSubMenu ("Set target type:", radioSubMenuStartCommands)
-
     radioMenuTargetRandom = missionCommands.addCommand ("Set target type: Random", radioSubMenuTargetType, setTargetRandom)
     radioMenuTargetBuilding = missionCommands.addCommand ("Set target type: Building", radioSubMenuTargetType, setTargetBuilding)
     radioMenuTargetSpecial = missionCommands.addCommand ("Set target type: Vehicle group", radioSubMenuTargetType, setTargetSpecial)
