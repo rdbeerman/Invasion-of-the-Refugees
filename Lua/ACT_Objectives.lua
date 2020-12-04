@@ -961,17 +961,11 @@ end
 
 -- MAIN SETUP --
 do
-    --[[
-
-        Eventhandler
-
-    ]]
 
     local eventHandler = world.onEvent
     world.onEvent = function(event)
         if event.id == 26 then --player edited a marker
             if string.find (event.text, "waypoint") then
-                notify ("waypoint added", 15)
                 local _wyptNum = tonumber(string.match(event.text, '%d')) 
                 local _pos = vec3toDMS(event.pos)
 
@@ -982,10 +976,6 @@ do
                     ["position"] = _pos,
                     ["idx"] = event.idx
                 }
-                notify (event.idx, 15 )
-                notify (waypointArray[_wyptNum]["text"], 15)
-                notify (waypointArray[_wyptNum]["position"], 15)
-                notify (waypointArray[_wyptNum]["wyptNumber"], 15)  
             end
         end
         if event.id == 27 then --marker removed
