@@ -1,5 +1,5 @@
 -- General Settings --
-enableDebug = true
+enableDebug = false
 enableIadsDebug = false
 debugHeader = "---INVASION mission--- "
 markerScatter = 1000
@@ -12,7 +12,7 @@ compThres = 50
 --static defenses
 ewrNumberDefault = 3
 samNumberDefault = 1
-defenseNumberDefault = 5
+defenseNumberDefault = 4
 shoradNumberDefault = 2
 pointDefenseExists = false
 --cap numbers
@@ -20,10 +20,8 @@ capLimitDefault = 1
 lowIntervalDefault = 500
 highIntervalDefault = 1000
 probabilityDefault = 1
---easy mode factor
-easyModeFactor = 0.5 --50% less enemies
 --hard mode factor
-hardModeFactor = 1.5 --50% more enemies
+hardModeFactor = 1.3 --30% more enemies
 
 -- Set templates --
 -- Import map specific templates
@@ -78,8 +76,8 @@ vec3Sam = {}
 vec3SamType = {}
 isAirfield = false
 heloCounter = 0
-
-settingsArray = {"", "", "", ""}
+waypointArray = {}
+settingsArray = {"", "", ""}
 
 function toggleIadsDebug ( trueOrFalse )
     local iadsDebug = IADS:getDebugSettings()
@@ -170,7 +168,7 @@ function genStructureTarget ()
                 genPointDefense (vec3Prim, countryName.." gnd "..tostring(objectiveCounter), 1)
             end
 
-            genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber , defenseNumberDefault ) --moved defenses to an extra function (postion, sam, ewr, short range defenses)
+            genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber , defenseNumber ) --moved defenses to an extra function (postion, sam, ewr, short range defenses)
 
             env.error(debugHeader..primObjective.."@"..objectiveLoc, false)
             if enableDebug == true then
@@ -210,7 +208,7 @@ function genVehicleTarget ()
                 genPointDefense (vec3Prim, countryName.." gnd "..tostring(objectiveCounter), 1)
             end
 
-            genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  defenseNumberDefault ) --position, sam, ewr, defenses
+            genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  defenseNumber ) --position, sam, ewr, defenses
 
             env.error(debugHeader..primObjective.."@"..objectiveLoc, false)
             if enableDebug == true then
@@ -252,7 +250,7 @@ function genSamTarget ()
                 genPointDefense (vec3Prim, countryName.." gnd "..tostring(objectiveCounter), 1)
             end
 
-            genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  defenseNumberDefault ) --position, sam, ewr, defenses
+            genSurroundings( vec3Prim , samNumber, ewrNumber, shoradNumber ,  defenseNumber ) --position, sam, ewr, defenses
 
             env.error(debugHeader..primObjective.."@"..objectiveLoc, false)
             if enableDebug == true then
@@ -311,7 +309,7 @@ end
 function genEwr( vec3 , amount ) --generate N EWR sites away from the main objective and adds a bit of protection to them
     for i = 1 , amount , 1 do
 
-        if i == 1 then
+        if i == 1 then --first EWR is very close to the objective
             ewrRadius = 1500
             ewrInnerRadius = 1000
         else
@@ -420,10 +418,8 @@ end
 
 function genShorad ( vec3 , amount ) 
     local theta = 360 / amount
-    local offset = 6000
-
     for i = 1 , amount , 1 do
-
+        local offset = math.random (5000, 10000)
         local shoradPosition = mist.vec.add(vec3, rotateVector( theta*i, offset ))
         local shoradExternal = shoradList[math.random(#shoradList)]
         mist.teleportToPoint {
@@ -736,12 +732,6 @@ function notifyObjective()
     end
 end
 
-function newNotifyobjective() --maybe a new better notifyObjective function
-end
-
-function readCustomWPs() --a function that displays custom WPs to everyone. So A marker with the text "WYPT-n" gets read and displayed for everyone. Making it easier to coordinate waypoints.
-end
-
 function notify(message, displayFor)
     trigger.action.outText(message, displayFor)
 end
@@ -751,9 +741,14 @@ function roundNumber(num, idp)                                              -- F
     return math.floor(num * mult + 0.5) / mult
 end
 
+function vec3toDMS(vec3)
+    local _lat, _lon, _alt = coord.LOtoLL(vec3)
+    return mist.tostringLL (_lat, _lon, 1, true)
+end
+
 --[[
 
-    manual start and difficulty selection before the mission starts (first 120 seconds)
+    functions related to the F10 comms menu
 
 ]]
 
@@ -780,15 +775,6 @@ function manualStart() -- problem is here
     notify("Mission started!", 15)
 end
 
---[[
-
-Settings Array:
-[1] target type
-[2] difficulty setting
-[3] CAP state (on or off)
-
-]]
-
 function readSettings ()
     for i = 1, #settingsArray, 1 do
         notify ( settingsArray[i], 15)
@@ -800,7 +786,7 @@ end
 function radioEnableIadsDebug ()
     enableIadsDebug = true
     toggleIadsDebug( enableIadsDebug )
-    radioMenuDisableIadsDebug = missionCommands.addCommand ("Disable IADS debug (full)", radioSubMenuDebugCommands, radioDisableIadsDebug)
+    radioMenuDisableIadsDebug = missionCommands.addCommand ("Disable IADS debug", radioSubMenuDebugCommands, radioDisableIadsDebug)
     missionCommands.removeItem (radioMenuEnableIadsDebug)
     notify ("IADS debug enabled", 15)
 end
@@ -808,7 +794,7 @@ end
 function radioDisableIadsDebug()
     enableIadsDebug = false
     toggleIadsDebug( false )
-    radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS debug (full)", radioSubMenuDebugCommands, radioEnableIadsDebug)
+    radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS debug", radioSubMenuDebugCommands, radioEnableIadsDebug)
     missionCommands.removeItem (radioMenuDisableIadsDebug)
     notify ("IADS debug disabled", 15)
 end
@@ -830,73 +816,63 @@ function radioDisableAirDispatcherDebug()
     missionCommands.removeItem (radioMenuDisableDispatcherDebug)
     notify ("Air dispatcher debug disabled", 15)
 end
-    
---difficulty settings
 
-function setDifficultySam(mode)
-    difficultyNames = {"Easy", "Medium", "Hard"}
-    difficultyFactors = {easyModeFactor, 1 ,hardModeFactor}
+--other comms settings
+
+function setDifficulty(mode)
+    difficultyNames = {"Normal", "Hard"}
+    difficultyFactors = {1 ,hardModeFactor}
     local factor = difficultyFactors[mode]
-
-    notify("selected SAM difficulty: "..difficultyNames[mode], 5)
 
     ewrNumber = math.ceil ( ewrNumberDefault * factor )
     samNumber = math.ceil ( samNumberDefault * factor )
     shoradNumber = math.ceil ( shoradNumberDefault * factor )
-
-    settingsArray[2] = "SAM difficulty: " .. difficultyNames[mode]
-    env.error(debugHeader.."selected SAM difficulty: "..difficultyNames[mode], false)
-end
-
-function setDifficultyCap(mode)
-    difficultyNames = {"Easy", "Medium", "Hard"}
-    difficultyFactors = {easyModeFactor, 1 ,hardModeFactor}
-    local factor = difficultyFactors[mode]
-
-    notify("selected CAP difficulty: "..difficultyNames[mode], 5)
+    defenseNumber = math.ceil ( defenseNumberDefault * factor )
 
     lowInterval = math.ceil ( lowIntervalDefault / factor )
     highInterval = math.ceil ( highIntervalDefault / factor )
-    settingsArray[3] =  "CAP difficulty: " .. difficultyNames[mode]
 
-    env.error(debugHeader.."selected CAP difficulty: "..difficultyNames[mode], false)
+    if mode == 2 then --hard mode
+        addAwacsToIads()
+        addPointDefense()
+        settingsArray[2] = "difficulty: " .. difficultyNames[mode]
+    else --normal mode
+        settingsArray[2] = "difficulty: " .. difficultyNames[mode]
+    end
+
+    env.error(debugHeader.."selected SAM difficulty: "..difficultyNames[mode], false)
 end
 
-function setDisableEnemyCap ()
+function disableEnemyCap ()
     notify("CAP disabled", 5)
     capLimit = 0
-    settingsArray[4] = "CAP disabled"
-    radioMenuEnableCap = missionCommands.addCommand ( "enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
+    settingsArray[3] = "CAP disabled"
+    radioMenuEnableCap = missionCommands.addCommand ( "enable enemy CAP", radioSubMenuStartCommands, enableEnemyCap)
     missionCommands.removeItem (radioMenuDisableCap)
 
     env.error(debugHeader.."Disabled CAP", false)
 end
 
-function setEnableEnemyCap ()
+function enableEnemyCap ()
     notify("CAP enabled", 5)
     capLimit = capLimitDefault
-    settingsArray[4] = "CAP enabled"
-    radioMenuDisableCap = missionCommands.addCommand ( "Disable enemy CAP", radioSubMenuStartCommands, setDisableEnemyCap)
+    settingsArray[3] = "CAP enabled"
+    radioMenuDisableCap = missionCommands.addCommand ( "Disable enemy CAP", radioSubMenuStartCommands, disableEnemyCap)
     missionCommands.removeItem (radioMenuEnableCap)
 
     env.error(debugHeader.."Enabled CAP", false)
 end
 
-function addAwacsToIads ()
-    IADS:addEarlyWarningRadar("AWACS Red #001")
-    notify ("AWACS added to IADS", 5)
-end
-
 function setTargetRandom ()
-    local random = math.random(2, 4)
+    local random = math.random(1, 3)
     notify ("selected random target", 5)
-    if random == 2 then
+    if random == 1 then
         setTargetBuilding()
     end
-    if random == 3 then
+    if random == 2 then
         setTargetSpecial()
     end
-    if random == 4 then
+    if random == 3 then
         setTargetSpecialSam()
     end
 end
@@ -919,9 +895,14 @@ function setTargetSpecialSam ()
     settingsArray[1] = "SAM target"
 end
 
-function setAddPointDefense ()
+function addPointDefense ()
     notify("added point defense to primary target", 5)
-    pointDefenseExists = true --ugly testing solution
+    pointDefenseExists = true
+end
+
+function addAwacsToIads ()
+    IADS:addEarlyWarningRadar("AWACS Red #001")
+    notify ("AWACS added to IADS", 5)
 end
 
 function A2A_DISPATCHER()
@@ -971,69 +952,98 @@ function A2A_DISPATCHER()
     A2ADispatcherRED:SetDefaultLandingAtRunway()
 end
 
+function notifyCustomWaypoints()
+    notify (#waypointArray, 5)
+    for i = 1, #waypointArray do
+        notify ("Waypoint " .. i .. ": " .. waypointArray[i]["position"], 15)
+    end
+end
+
 -- MAIN SETUP --
 do
+    --[[
+
+        Eventhandler
+
+    ]]
+
+    local eventHandler = world.onEvent
+    world.onEvent = function(event)
+        if event.id == 26 then --player edited a marker
+            if string.find (event.text, "waypoint") then
+                notify ("waypoint added", 15)
+                local _wyptNum = tonumber(string.match(event.text, '%d')) 
+                local _pos = vec3toDMS(event.pos)
+
+                waypointArray[_wyptNum] = {
+                    ["text"] = event.text,
+                    ["wyptNumber"] = _wyptNum,
+                    ["vec3"] = event.pos,
+                    ["position"] = _pos,
+                    ["idx"] = event.idx
+                }
+                notify (event.idx, 15 )
+                notify (waypointArray[_wyptNum]["text"], 15)
+                notify (waypointArray[_wyptNum]["position"], 15)
+                notify (waypointArray[_wyptNum]["wyptNumber"], 15)  
+            end
+        end
+        if event.id == 27 then --marker removed
+            for i = 1, #waypointArray do
+                if waypointArray[i]["idx"] == event.idx then
+                    waypointArray[i] = {}
+                end
+            end
+        end
+        return eventHandler(event)
+    end
 
     _SETTINGS:SetPlayerMenuOff()
     notify("Starting init", 5)
 
     --[[
-        adds the F-10 radio commands for the mission
 
-        todo: add a lot of additional options to set every spawn parameter, because why not. Should be nested "guided" menus similar to Lcode in JF
+        adds the F-10 radio commands for the mission
     ]]
+
+
     --submenus
     invasionCommandsRoot = missionCommands.addSubMenu ("Invasion Commands") --invasion commands submenu
     radioSubMenuStartCommands = missionCommands.addSubMenu ("Start Commands", invasionCommandsRoot) --nested submenu for start commands
+    radioSubMenuDebugCommands = missionCommands.addSubMenu ("Debug Commands", invasionCommandsRoot)
 
     --invasion command submenu
     radioMenuReadSettings = missionCommands.addCommand ("Display selected settings", invasionCommandsRoot, readSettings)
     radioMenuObjectiveInfo = missionCommands.addCommand("Objective info", invasionCommandsRoot, notifyObjective)
+    radioMenuWaypointInfo = missionCommands.addCommand("Waypoint info", invasionCommandsRoot, notifyCustomWaypoints)
     radioMenuStartEscortMission = missionCommands.addCommand("Start Escort mission", invasionCommandsRoot, genEscort)
     radioMenuStartHelicopterMission = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
 
     --deubg command submenu
-    radioSubMenuDebugCommands = missionCommands.addSubMenu ("Debug Commands", invasionCommandsRoot)
-    radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS Debug (full)", radioSubMenuDebugCommands, radioEnableIadsDebug)
+    radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS Debug", radioSubMenuDebugCommands, radioEnableIadsDebug)
     radioMenuEnableDispatcherDebug = missionCommands.addCommand ("Enable AA-Dispatcher Debug", radioSubMenuDebugCommands, radioEnableAirDispatcherDebug)
 
     --start commands submenu
     radioMenuManualStart = missionCommands.addCommand("Apply settings and start", radioSubMenuStartCommands , manualStart)
-
     --target type settings
-    radioSubMenuTargetType = missionCommands.addSubMenu ("Set target type:", radioSubMenuStartCommands)
-    radioMenuTargetRandom = missionCommands.addCommand ("Set target type: Random", radioSubMenuTargetType, setTargetRandom)
-    radioMenuTargetBuilding = missionCommands.addCommand ("Set target type: Building", radioSubMenuTargetType, setTargetBuilding)
-    radioMenuTargetSpecial = missionCommands.addCommand ("Set target type: Vehicle group", radioSubMenuTargetType, setTargetSpecial)
-    radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuTargetType, setTargetSpecialSam)
-    radioMenuAddPointDefense = missionCommands.addCommand ("Add point defense to primary objective", radioSubMenuTargetType, setAddPointDefense)
+    radioMenuTargetRandom = missionCommands.addCommand ("Set target type: Random", radioSubMenuStartCommands, setTargetRandom)
+    radioMenuTargetBuilding = missionCommands.addCommand ("Set target type: Building", radioSubMenuStartCommands, setTargetBuilding)
+    radioMenuTargetSpecial = missionCommands.addCommand ("Set target type: Vehicle group", radioSubMenuStartCommands, setTargetSpecial)
+    radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuStartCommands, setTargetSpecialSam)
     --difficulty settings
-    --sam
-    radioSubMenuSamDifficulty = missionCommands.addSubMenu ("Set SAM difficulty:", radioSubMenuStartCommands)
-
-    radioMenuEasyModeSam = missionCommands.addCommand ("Set SAM difficulty: Easy", radioSubMenuSamDifficulty, setDifficultySam, 1)
-    radioMenuNormalModeSam = missionCommands.addCommand ("Set SAM difficulty: Medium", radioSubMenuSamDifficulty, setDifficultySam, 2)
-    radioMenuHardModeSam = missionCommands.addCommand ("Set SAM difficulty: Hard", radioSubMenuSamDifficulty, setDifficultySam, 3)
-    --cap
-    radioSubMenuCapDifficulty = missionCommands.addSubMenu ("Set CAP difficulty:", radioSubMenuStartCommands)
-
-    radioMenuEasyModeCap = missionCommands.addCommand ("Set CAP difficulty: Easy", radioSubMenuCapDifficulty, setDifficultyCap, 1)
-    radioMenuNormalModeCap = missionCommands.addCommand ("Set CAP difficulty: Medium", radioSubMenuCapDifficulty, setDifficultyCap, 2)
-    radioMenuHardModeCap = missionCommands.addCommand ("Set CAP difficulty: Hard", radioSubMenuCapDifficulty, setDifficultyCap, 3)
-    --cap settings
-    radioMenuEnableCap = missionCommands.addCommand ( "Enable enemy CAP", radioSubMenuStartCommands, setEnableEnemyCap)
-    radioMenuAddAwacsToIads = missionCommands.addCommand ( "Add AWACS to IADS", radioSubMenuStartCommands, addAwacsToIads)
+    radioMenuNormalMode = missionCommands.addCommand ("Set difficulty: Normal", radioSubMenuStartCommands, setDifficulty, 1)
+    radioMenuHardMode = missionCommands.addCommand ("Set difficulty: Hard", radioSubMenuStartCommands, setDifficulty, 2)
+    radioMenuEnableCap = missionCommands.addCommand ( "Enable enemy CAP", radioSubMenuStartCommands, enableEnemyCap)
 
     --default settings
     probability = probabilityDefault
-    setEnableEnemyCap()
-    setDifficultySam(1)
-    setDifficultyCap(1)
+    enableEnemyCap()
+    setDifficulty(1)
     setTargetRandom()
-    manualStart()
+    manualStart() --debug
 
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
     notify("init completed", 5)
-    
+
 end
