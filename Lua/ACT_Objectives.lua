@@ -1030,7 +1030,6 @@ do
     enableEnemyCap()
     setDifficulty(1)
     setTargetRandom()
-    manualStart() --debug
 
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
