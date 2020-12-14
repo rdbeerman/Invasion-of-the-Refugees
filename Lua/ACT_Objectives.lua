@@ -648,7 +648,7 @@ function genEscort() -- function for spawning escort group using F10 Menu
     local escortName = escortList[math.random(#escortList)]
     local escort = Group.getByName(escortName)
     trigger.action.activateGroup(escort)
-    notify("A B52H is preparing for takeoff from Bandar Abbas Intl to perform a runway attack on Kerman Airport.", 5)
+    notify("A B52H is preparing for takeoff to perform a runway attack on a enemy Airport.", 5)
 
     env.error(debugHeader.."Spawned escort mission", false)
 end
@@ -1005,7 +1005,7 @@ do
     --invasion command submenu
     radioMenuReadSettings = missionCommands.addCommand ("Display selected settings", invasionCommandsRoot, readSettings)
     radioMenuObjectiveInfo = missionCommands.addCommand("Objective info", invasionCommandsRoot, notifyObjective)
-    radioMenuWaypointInfo = missionCommands.addCommand("Waypoint info", invasionCommandsRoot, notifyCustomWaypoints)
+    --radioMenuWaypointInfo = missionCommands.addCommand("Waypoint info", invasionCommandsRoot, notifyCustomWaypoints)
     radioMenuStartEscortMission = missionCommands.addCommand("Start Escort mission", invasionCommandsRoot, genEscort)
     radioMenuStartHelicopterMission = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
 
