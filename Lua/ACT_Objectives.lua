@@ -77,7 +77,8 @@ vec3SamType = {}
 isAirfield = false
 heloCounter = 0
 waypointArray = {}
-settingsArray = {"", "", ""}
+settingsArray = {"", "", "", ""}
+difficultyFactor = 1
 
 function toggleIadsDebug ( trueOrFalse )
     local iadsDebug = IADS:getDebugSettings()
@@ -759,6 +760,24 @@ function autoStart()
 end
 
 function manualStart() -- problem is here
+
+    ewrNumber = math.ceil ( ewrNumberDefault * difficultyFactor )
+    samNumber = 0
+    shoradNumber = math.ceil ( shoradNumberDefault * difficultyFactor )
+    defenseNumber = math.ceil ( defenseNumberDefault * difficultyFactor )
+
+    lowInterval = math.ceil ( lowIntervalDefault / difficultyFactor )
+    highInterval = math.ceil ( highIntervalDefault / difficultyFactor )
+
+    if enableSams == 1 then --only set samNumber if not disabled
+        samNumber = math.ceil ( samNumberDefault * difficultyFactor )
+    end
+
+    if difficultyFactor == hardModeFactor then --hard mode
+        addAwacsToIads()
+        addPointDefense()
+    end
+
     for i = 1,#airbaseZones,1 do
         genAirbaseSam(airbaseZones[i], true )
     end
@@ -820,25 +839,17 @@ end
 --other comms settings
 
 function setDifficulty(mode)
-    difficultyNames = {"Normal", "Hard"}
-    difficultyFactors = {1 ,hardModeFactor}
-    local factor = difficultyFactors[mode]
-
-    ewrNumber = math.ceil ( ewrNumberDefault * factor )
-    samNumber = math.ceil ( samNumberDefault * factor )
-    shoradNumber = math.ceil ( shoradNumberDefault * factor )
-    defenseNumber = math.ceil ( defenseNumberDefault * factor )
-
-    lowInterval = math.ceil ( lowIntervalDefault / factor )
-    highInterval = math.ceil ( highIntervalDefault / factor )
+    local difficultyNames = {"Normal", "Hard"}
+    local difficultyFactors = {1 ,hardModeFactor}
+    difficultyFactor = difficultyFactors[mode]
 
     if mode == 2 then --hard mode
-        addAwacsToIads()
-        addPointDefense()
         settingsArray[2] = "difficulty: " .. difficultyNames[mode]
     else --normal mode
         settingsArray[2] = "difficulty: " .. difficultyNames[mode]
     end
+
+    notify(difficultyNames[mode] .. " mode selected", 5)
 
     env.error(debugHeader.."selected SAM difficulty: "..difficultyNames[mode], false)
 end
@@ -862,6 +873,30 @@ function enableEnemyCap ()
 
     env.error(debugHeader.."Enabled CAP", false)
 end
+
+function disableEnemySam ()
+    notify("SAM disabled", 5)
+    settingsArray[4] = "SAM disabled"
+    enableSams = 0
+
+    radioMenuEnableSam = missionCommands.addCommand ( "Enable enemy SAM", radioSubMenuStartCommands, enableEnemySam)
+    missionCommands.removeItem (radioMenuDisableSam)
+    
+    env.error(debugHeader.."SAM disabled", false)
+end
+
+
+function enableEnemySam ()
+    notify ("SAM enabled", 5)
+    settingsArray[4] = "SAM enabled"
+    enableSams = 1
+
+    radioMenuDisableSam = missionCommands.addCommand ( "Disable enemy SAM", radioSubMenuStartCommands, disableEnemySam)
+    missionCommands.removeItem (radioMenuEnableSam)
+
+    env.error(debugHeader.."SAM enabled", false)
+end
+
 
 function setTargetRandom ()
     local random = math.random(1, 3)
@@ -1024,10 +1059,12 @@ do
     radioMenuNormalMode = missionCommands.addCommand ("Set difficulty: Normal", radioSubMenuStartCommands, setDifficulty, 1)
     radioMenuHardMode = missionCommands.addCommand ("Set difficulty: Hard", radioSubMenuStartCommands, setDifficulty, 2)
     radioMenuEnableCap = missionCommands.addCommand ( "Enable enemy CAP", radioSubMenuStartCommands, enableEnemyCap)
+    radioMenuEnableSam = missionCommands.addCommand ( "Enable enemy SAM", radioSubMenuStartCommands, enableEnemySam)
 
     --default settings
     probability = probabilityDefault
     enableEnemyCap()
+    enableEnemySam()
     setDifficulty(1)
     setTargetRandom()
 
