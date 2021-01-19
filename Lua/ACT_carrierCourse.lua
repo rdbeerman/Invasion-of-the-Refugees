@@ -2,7 +2,7 @@ cc = {}
 
 cc.carrierName = "CVN-71 Theodore Roosevelt"
 cc.windDirection = 0
-cc.intoWindDistance = 30000 -- Distance from carrier to new wp into wind in meters
+cc.intoWindDistance = 60000 -- Distance from carrier to new wp into wind in meters
 cc.velOverDeck = 15         -- Desired wind velocity over deck in m/s
 cc.velCruise = 15           -- normal cruise speed when not lined up with wind in m/s
 
