@@ -27,6 +27,8 @@ hardModeFactor = 1.3 --30% more enemies
 -- Import map specific templates
 objectiveLocList = act.getZones()
 primObjectiveList = act.getPrimObjectives()
+shipsList = act.getShips()
+shipsZones = act.getShipsZones()
 
 typeStructure = act.getStructures()
 typeSpecial = act.getTypeSpecial()
@@ -138,6 +140,16 @@ function genPrimObjective()
         env.error(debugHeader.."Completed Objective SAM spawning.", false)
         if enableDebug == true then
             notify("SAM target spawning", 5)
+        end
+    end
+
+    if primObjectiveType == 4 then --Ship
+        primObjective = shipsList[math.random(1, #shipsList)]
+        genShip(primObjective)
+
+        env.error(debugHeader.."Completed Objective ship spawning.", false)
+        if enableDebug == true then
+            notify("Ship target spawning", 5)
         end
     end
 end
@@ -261,6 +273,23 @@ function genSamTarget ()
         end
     end
 end
+
+function genShip(shipType)
+    mist.cloneInZone(shipType, shipsZones)    
+    --Set eng distance
+    --Give patrol tasks
+    local group = Group.getByName(shipType)
+    local countryId = group:getUnit(1):getCountry()
+    local countryName = country.name[countryId]
+
+    markObjective("Objective: enemy ship", countryName.." shp "..tostring(primObjectiveCounter), primMarker)
+    mist.flagFunc.group_alive_less_than {
+        groupName = countryName.." shp "..tostring(primObjectiveCounter),
+        flag = primCompletedFlag,
+        percent = compThres,
+    }
+end
+
 
 function genSurroundings ( vec3, samAmount, ewrAmount, shoradAmount, defenseAmount ) --generates SAMs, EWRs and defenses
     for i = 1 , samAmount, 1 do
@@ -930,6 +959,12 @@ function setTargetSpecialSam ()
     settingsArray[1] = "SAM target"
 end
 
+function setTargetShip ()
+    notify("selected building ship", 5)
+    primObjectiveType = 4
+    settingsArray[1] = "Ship target"
+end
+
 function addPointDefense ()
     notify("added point defense to primary target", 5)
     pointDefenseExists = true
@@ -1055,6 +1090,7 @@ do
     radioMenuTargetBuilding = missionCommands.addCommand ("Set target type: Building", radioSubMenuStartCommands, setTargetBuilding)
     radioMenuTargetSpecial = missionCommands.addCommand ("Set target type: Vehicle group", radioSubMenuStartCommands, setTargetSpecial)
     radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuStartCommands, setTargetSpecialSam)
+    radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: Ship", radioSubMenuStartCommands, setTargetShip)
     --difficulty settings
     radioMenuNormalMode = missionCommands.addCommand ("Set difficulty: Normal", radioSubMenuStartCommands, setDifficulty, 1)
     radioMenuHardMode = missionCommands.addCommand ("Set difficulty: Hard", radioSubMenuStartCommands, setDifficulty, 2)

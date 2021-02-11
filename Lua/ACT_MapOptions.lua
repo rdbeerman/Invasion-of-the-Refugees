@@ -9,6 +9,7 @@ act.pointDefenses = {}
 act.capRed = {}
 act.airbaseZones = {}
 act.airbaseEwr = {}
+act.shipsZones = {}
 
 function templateArrayBuilder(type, arrayName, nameString) --1: groups; 2: zones
     local i = 1
@@ -136,8 +137,10 @@ function act.syria()
     templateArrayBuilder(1, act.capRed, "CAP Red-")
     templateArrayBuilder(2, act.airbaseZones, "airbaseZone-")
     templateArrayBuilder(1, act.airbaseEwr, "EWR Base-")
+    templateArrayBuilder(2, act.shipsZones, "shipsZone-")
 
     act.primObjectives = { "airbase-1", "airbase-2", "primObjective-1", "primObjective-2", "primObjective-3", "primObjective-4", "primObjective-5", "primObjective-6", "primObjective-7"}
+    act.ships = {"ship-1", "ship-2", "ship-3"}
 
     act.structures = {"primObjective-1", "primObjective-2", "primObjective-3", "primObjective-4"}
     act.typeSpecial = { "primObjective-5", "primObjective-6", "primObjective-7" }
@@ -223,4 +226,12 @@ end
 
 function act.getSpecialSamNames()
     return act.specialSamNames
+end
+
+function act.getShips()
+    return act.ships
+end
+
+function act.getShipsZones()
+    return act.shipsZones
 end
