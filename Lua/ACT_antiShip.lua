@@ -15,19 +15,19 @@ as = {}
 
 as.debug = false
 as.explosionSize = 500
-as.radarChance = 0.25
+as.radarChance = 0.3
 as.weaponChance = 0.25
-as.engineChance = 0.1
-as.fireChance = 0.3
+as.engineChance = 0.15
+as.fireChance = 0.5
 
-as.secNoLower = 3
-as.secNoUpper = 10
+as.secNoLower = 1
+as.secNoUpper = 6
 
 as.secTimeLower = 10
 as.secTimeLower = 60
 
 as.maxMissiles = 8
-as.cooldown = 80
+as.cooldown = 120
 
 -- Declarations, do not change
 as.counter = 0
@@ -105,10 +105,6 @@ function as.missileIntercept(ship)
   end  
 end
 
-function as.setIntercept()
-  --Get all naval units, set intercept to 50%, test if setting this super low == no missiles
-end
-
 function as.enableRoE(unit)
   local controller = unit:getController()
   controller:setOption(0, 2)
@@ -122,18 +118,20 @@ do -- Sets up event handlers
   local old_onEvent = world.onEvent
     world.onEvent = function(event)
       if (2 == event.id) then
-        local weaponType = event.weapon:getTypeName()                   --Gets weapon type
-        
-        if weaponType == "AGM_84D" or weaponType == "C-802AK" then      --If weapon is harpoon, consider if slammer + target is ship too, add different ifs for mavs
-        as.impact(event.target)
-        
-        elseif weaponType == "AGM_65E" or weaponType == "AGM_65G" or weaponType == "AGM_65K" then --Different functon for mavericks + bombs?
+        if event.target:getGroup():getCategory() == 3 then  
+          local weaponType = event.weapon:getTypeName()                   --Gets weapon type
+          
+          if weaponType == "AGM_84D" or weaponType == "C-802AK" or weaponType == "AGM_84E" then      --If weapon is harpoon, consider if slammer + target is ship too, add different ifs for mavs
           as.impact(event.target)
-        end  
-      
-        if as.debug == true then
-          local shooter = event.initiator:getName()
-          trigger.action.outText("Impact Detected: \n Shooter: "..tostring(shooter).."\n Weapon: "..tostring(weaponType).."\n Target: "..tostring(event.target:getName()), 10 , false)
+          
+          elseif weaponType == "AGM_65E" or weaponType == "AGM_65G" or weaponType == "AGM_65K" or weaponType == "GBU_10" then
+            as.impact(event.target)
+          end  
+        
+          if as.debug == true then
+            local shooter = event.initiator:getName()
+            trigger.action.outText("Impact Detected: \n Shooter: "..tostring(shooter).."\n Weapon: "..tostring(weaponType).."\n Target: "..tostring(event.target:getName()), 10 , false)
+          end
         end
       end
       

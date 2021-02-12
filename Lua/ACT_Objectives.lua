@@ -29,6 +29,7 @@ objectiveLocList = act.getZones()
 primObjectiveList = act.getPrimObjectives()
 shipsList = act.getShips()
 shipsZones = act.getShipsZones()
+shipEngFrac = act.getShipEngFrac()
 
 typeStructure = act.getStructures()
 typeSpecial = act.getTypeSpecial()
@@ -276,11 +277,23 @@ end
 
 function genShip(shipType)
     mist.cloneInZone(shipType, shipsZones)    
-    --Set eng distance
     --Give patrol tasks
     local group = Group.getByName(shipType)
     local countryId = group:getUnit(1):getCountry()
     local countryName = country.name[countryId]
+    local controller = group:getController()
+    
+    controller:setOption(24, shipEngFrac)
+
+    
+    --local path = {} 
+    --path[#path + 1] = mist.ground.buildWP(shipsZones[math.random(1, #shipsZone)], 'Diamond', 10) 
+    --path[#path + 1] = mist.ground.buildWP(shipsZones[math.random(1, #shipsZone)], 'Diamond', 10) 
+    --path[#path + 1] = mist.ground.buildWP(shipsZones[math.random(1, #shipsZone)], 'Diamond', 10) 
+    --mist.goRoute(group, path)
+    
+    --add steerpoints
+    mist.ground.patrol(group)
 
     markObjective("Objective: enemy ship", countryName.." shp "..tostring(primObjectiveCounter), primMarker)
     mist.flagFunc.group_alive_less_than {

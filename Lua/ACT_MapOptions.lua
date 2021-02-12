@@ -141,6 +141,7 @@ function act.syria()
 
     act.primObjectives = { "airbase-1", "airbase-2", "primObjective-1", "primObjective-2", "primObjective-3", "primObjective-4", "primObjective-5", "primObjective-6", "primObjective-7"}
     act.ships = {"ship-1", "ship-2", "ship-3"}
+    act.shipEngFrac = 50
 
     act.structures = {"primObjective-1", "primObjective-2", "primObjective-3", "primObjective-4"}
     act.typeSpecial = { "primObjective-5", "primObjective-6", "primObjective-7" }
@@ -234,4 +235,8 @@ end
 
 function act.getShipsZones()
     return act.shipsZones
+end
+
+function act.getShipEngFrac()
+    return act.shipEngFrac
 end
