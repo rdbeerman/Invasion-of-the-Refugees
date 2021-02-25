@@ -15,7 +15,7 @@ as = {}
 
 as.debug = false
 as.explosionSize = 700
-as.radarChance = 0.3
+as.radarChance = 0.5
 as.weaponChance = 0.25
 as.engineChance = 0.15
 as.fireChance = 0.5
@@ -26,7 +26,7 @@ as.secNoUpper = 6
 as.secTimeLower = 10
 as.secTimeLower = 60
 
-as.maxMissiles = 8
+as.maxMissiles = 12
 as.cooldown = 120
 
 -- Declarations, do not change
@@ -114,7 +114,7 @@ function as.enableRoE(unit)
 end
 
 do -- Sets up event handlers
-  trigger.action.outText("ACT Harpoon Init started", 10 , false)
+  trigger.action.outText("ACT Harpoon Init started", 5 , false)
   local old_onEvent = world.onEvent
     world.onEvent = function(event)
       if (2 == event.id) then
