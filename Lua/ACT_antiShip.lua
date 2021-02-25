@@ -14,7 +14,7 @@ as = {}
 -- Settings
 
 as.debug = false
-as.explosionSize = 500
+as.explosionSize = 700
 as.radarChance = 0.3
 as.weaponChance = 0.25
 as.engineChance = 0.15

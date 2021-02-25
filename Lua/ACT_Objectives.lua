@@ -44,7 +44,6 @@ capRed = act.getRedCap ()
 --helo stuff
 blueGround = act.getBlueGround()
 heloObjectives = act.getHeloObjectives()
-escortList = act.getEscort()
 --airbase stuff
 airbaseZones = act.getAirbaseZones()
 airbaseEWR = act.getAirbaseEwr()
@@ -82,6 +81,7 @@ heloCounter = 0
 waypointArray = {}
 settingsArray = {"", "", "", ""}
 difficultyFactor = 1
+missionData = {}
 
 function toggleIadsDebug ( trueOrFalse )
     local iadsDebug = IADS:getDebugSettings()
@@ -166,6 +166,9 @@ function genStructureTarget ()
             local countryName = country.name[countryId]
 
             vec3Prim = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter)) -- get primObjective location
+            missionData.vec3Prim = vec3Prim
+            missionData.type = "structure"
+            missionData.group = group
 
             mist.flagFunc.group_alive_less_than {
                 groupName = countryName.." gnd "..tostring(objectiveCounter),
@@ -205,6 +208,9 @@ function genVehicleTarget ()
             local countryName = country.name[countryId]
             
             vec3Prim = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter)) -- get primObjective location
+            missionData.vec3Prim = vec3Prim
+            missionData.type = "vehicle"
+            missionData.group = group
 
             mist.flagFunc.group_alive_less_than {
                 groupName = countryName.." gnd "..tostring(objectiveCounter),
@@ -244,6 +250,9 @@ function genSamTarget ()
             local countryName = country.name[countryId]
             
             vec3Prim = mist.getLeadPos(countryName.." gnd "..tostring(objectiveCounter)) -- get primObjective location
+            missionData.vec3Prim = vec3Prim
+            missionData.type = "sam"
+            missionData.group = group
 
             mist.flagFunc.group_alive_less_than {
                 groupName = countryName.." gnd "..tostring(objectiveCounter),
@@ -294,6 +303,9 @@ function genShip(shipType)
     
     --add steerpoints
     mist.ground.patrol(group)
+    missionData.vec3Prim = nil
+    missionData.type = "ship"
+    missionData.group = group
 
     markObjective("Objective: enemy ship", countryName.." shp "..tostring(primObjectiveCounter), primMarker)
     mist.flagFunc.group_alive_less_than {
@@ -302,7 +314,6 @@ function genShip(shipType)
         percent = compThres,
     }
 end
-
 
 function genSurroundings ( vec3, samAmount, ewrAmount, shoradAmount, defenseAmount ) --generates SAMs, EWRs and defenses
     for i = 1 , samAmount, 1 do
@@ -687,15 +698,6 @@ function genHeloObjective() -- function for generating random helo mission using
     --completion (count extractable groups in zone+heloCounter if = remove marker)
 end
 
-function genEscort() -- function for spawning escort group using F10 Menu
-    local escortName = escortList[math.random(#escortList)]
-    local escort = Group.getByName(escortName)
-    trigger.action.activateGroup(escort)
-    notify("A B52H is preparing for takeoff to perform a runway attack on a enemy Airport.", 5)
-
-    env.error(debugHeader.."Spawned escort mission", false)
-end
-
 function primNaming() -- names primObjective based on spawned statics
     for i = 1,6,1 do
         if statics[i] == "Workshop A" then  -- if the statics include a factory building..
@@ -741,7 +743,9 @@ end
 
 function checkPrimCompleted() -- TODO: Add support for statics
     if trigger.misc.getUserFlag(primCompletedFlag) == 1 and primCompletion == false then
-        notify("Primary objective has been completed!", 5)
+        notify("All strike flights, main objective has been destroyed.", 5)
+        STTS.TextToSpeech("All strike flights, main objective has been destroyed.", 300, "AM", "1.0", "SERVER", 2)
+        STTS.TextToSpeech("All strike flights, main objective has been destroyed.", 240, "AM", "1.0", "SERVER", 2)
         trigger.action.removeMark(primMarker)
         primCompletion = true
     end
@@ -752,6 +756,8 @@ function checkSamCompleted()
     for i = 1,samId,1 do
         if trigger.misc.getUserFlag(200+i) == 1 and secCompletion[i] == false then
             notify("SAM has been destroyed!", 5) --add support for naming, problems here
+            STTS.TextToSpeech("Good effect on SAM site.", 300, "AM", "1.0", "SERVER", 2)
+
             trigger.action.removeMark(200+i)
             secCompletion[i] = true
         end
@@ -833,7 +839,9 @@ function manualStart() -- problem is here
     readSettings()
 
     missionCommands.removeItem(radioSubMenuStartCommands)
-    notify("Mission started!", 15)
+    notify("Mission started.", 15)
+    STTS.TextToSpeech("Mission started.", 243, "AM", "1.0", "SERVER", 2)
+
 end
 
 function readSettings ()
@@ -1089,7 +1097,6 @@ do
     radioMenuReadSettings = missionCommands.addCommand ("Display selected settings", invasionCommandsRoot, readSettings)
     radioMenuObjectiveInfo = missionCommands.addCommand("Objective info", invasionCommandsRoot, notifyObjective)
     --radioMenuWaypointInfo = missionCommands.addCommand("Waypoint info", invasionCommandsRoot, notifyCustomWaypoints)
-    radioMenuStartEscortMission = missionCommands.addCommand("Start Escort mission", invasionCommandsRoot, genEscort)
     radioMenuStartHelicopterMission = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
 
     --deubg command submenu

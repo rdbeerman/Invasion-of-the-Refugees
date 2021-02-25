@@ -356,6 +356,7 @@ function csar.eventHandler:onEvent(_event)
             csar.addSpecialParametersToGroup(_spawnedGroup)
 
             trigger.action.outTextForCoalition(_unit:getCoalition(), "MAYDAY MAYDAY! " .. _unit:getTypeName() .. " shot down. Chute Spotted!", 10)
+            STTS.TextToSpeech("MAYDAY MAYDAY! friendly aircraft shot down. Chute spotted!", 243, "AM", "1.0", "SERVER", 2)
 
             local _freq = csar.generateADFFrequency()
 
