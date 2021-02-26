@@ -296,13 +296,13 @@ function genShip(shipType)
 
     
     --local path = {} 
-    --path[#path + 1] = mist.ground.buildWP(shipsZones[math.random(1, #shipsZone)], 'Diamond', 10) 
-    --path[#path + 1] = mist.ground.buildWP(shipsZones[math.random(1, #shipsZone)], 'Diamond', 10) 
-    --path[#path + 1] = mist.ground.buildWP(shipsZones[math.random(1, #shipsZone)], 'Diamond', 10) 
-    --mist.goRoute(group, path)
+    --path[#path + 1] = mist.ground.buildWP(shipsZones[math.random(1, #shipsZone)], nil, 10) 
+    --path[#path + 1] = mist.ground.buildWP(shipsZones[math.random(1, #shipsZone)], nil, 10) 
+    --path[#path + 1] = mist.ground.buildWP(shipsZones[math.random(1, #shipsZone)], nil, 10) 
+    --mist.goRoute(group:getName(), path)
     
     --add steerpoints
-    mist.ground.patrol(group)
+    --mist.ground.patrol(group)
     missionData.vec3Prim = nil
     missionData.type = "ship"
     missionData.group = group

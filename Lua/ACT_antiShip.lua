@@ -20,7 +20,8 @@ as.weaponChance = 0.25
 as.engineChance = 0.15
 as.fireChance = 0.5
 
-as.harmWeaponChance = 0.5
+as.harmWeaponChance = 0.2
+as.harmRadarChange = 0.5
 
 as.secNoLower = 1
 as.secNoUpper = 6
@@ -82,6 +83,14 @@ function as.harm(target)
     controller:setOption(0, 4)
     if as.debug == true then
       trigger.action.outText("Disabled weapon system", 5, false)
+    end
+  end
+
+  if math.random(0, 10) <= as.harmRadarChance * 10 then
+    local controller = target:getController()
+    controller:setOption(9, 1)
+    if as.debug == true then
+      trigger.action.outText("Disabled radar system", 5, false)
     end
   end
 end
