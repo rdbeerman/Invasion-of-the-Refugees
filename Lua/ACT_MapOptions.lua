@@ -147,7 +147,7 @@ function act.syria()
     templateArrayBuilder(1, act.escortRed, "escortRed-")
     templateArrayBuilder(1, act.escortGrey, "escortGrey-")
     templateArrayBuilder(2, act.redTarget, "redTarget-")
-    templateArrayBuilder(1, act.carrierDefense, "carrierDefense-1")
+    templateArrayBuilder(1, act.carrierDefense, "carrierDefense-")
 
     act.primObjectives = { "airbase-1", "airbase-2", "primObjective-1", "primObjective-2", "primObjective-3", "primObjective-4", "primObjective-5", "primObjective-6", "primObjective-7"}
     act.ships = {"ship-1", "ship-2", "ship-3"}
