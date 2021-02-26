@@ -307,6 +307,16 @@ function genShip(shipType)
     missionData.type = "ship"
     missionData.group = group
 
+    local _carrierList = act.getShipCarrier()
+    
+    for i = 1, #_carrierList do
+        if shipType == _carrierList[i] then
+            local _carrierDefenseList = act.getCarrierDefense()
+            local _carrierDefense = Group.getByName(_carrierDefenseList[math.random(1, #_carrierDefenseList)])
+            _carrierDefense:activate()
+        end
+    end
+
     markObjective("Objective: enemy ship", countryName.." shp "..tostring(primObjectiveCounter), primMarker)
     mist.flagFunc.group_alive_less_than {
         groupName = countryName.." shp "..tostring(primObjectiveCounter),
