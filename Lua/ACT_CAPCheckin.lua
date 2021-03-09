@@ -455,7 +455,7 @@ function capc.checkObjectives()
 end
 
 function capc.addRadioMenus(event)
-    if event.id == 20 then
+    if event.id == 15 then
         local _group = event.initiator:getGroup():getName()
         for i = 1, #capc.groups, 1 do
             if capc.groups[i] == _group then
