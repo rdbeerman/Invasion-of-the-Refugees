@@ -9,6 +9,11 @@
       Provides blue CAP tasking such as escort (friendle or hostile), intercepts
   Usage:
   Add all groups capable of checking in so capc.groups
+
+  -- TODO: 
+  -- Briefing on checkin
+  -- cap racetracks in kneeboard map with borders
+  -- Inform border (waterloo red)
   ]]
 
 
