@@ -35,7 +35,6 @@ capc.groups = {
     "F-14B - Pontiac 2 - Naval"
 }
 
-
 capc.escortBlue = act.getEscortBlue() --Gets templates frm ACT MapOptions
 capc.escortRed = act.getEscortRed()
 capc.escortGrey = act.getEscortGrey()
@@ -62,6 +61,7 @@ capc.overlordTimer = 180
 capc.states = {} -- key is groupID, value is state "active", "tasked" or nil 
 capc.objectives = {} -- format: {groupName, category, state}
 capc.counter = 0
+capc.radioList = {}
 
 -- TODO
     --Escort reds chance
@@ -75,7 +75,7 @@ function capc.checkin(_groupID)
 
     timer.scheduleFunction(capc.genTask, _groupID, timer.getTime() + math.random(capc.timeLow, capc.timeHigh))
 
-    STTS.TextToSpeech("Copy check in, start patrol", 240, "AM", "1.0", "SERVER", 2)
+    STTS.TextToSpeech("Copy check in, start patrol at CAP ALPHA, reference kneeboard", 240, "AM", "1.0", "SERVER", 2)
     if capc.debug == true then
         trigger.action.outText(tostring(_groupID).." Checked in", 5, false)
     end
@@ -463,8 +463,9 @@ function capc.addRadioMenus(event)
     if event.id == 15 then
         local _group = event.initiator:getGroup():getName()
         for i = 1, #capc.groups, 1 do
-            if capc.groups[i] == _group then
+            if capc.groups[i] == _group and capc.radioList[_group] == nil then
                 local _groupID = event.initiator:getGroup():getID()
+                capc.radioList[_group] = true
                 capc.radioCheckin = missionCommands.addCommandForGroup(_groupID, "CAP Check in", nil, capc.checkin, _groupID)
             end
         end
