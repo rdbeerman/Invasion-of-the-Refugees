@@ -180,7 +180,7 @@ function capc.escortBlueSpawn(_groupID)
     capc.objectives[capc.counter] = {"escortBlue", group, "active", _groupID}
 
     trigger.action.outText("Uzi 4 taking off from Basel El Assad, performing strike on primatery target.", 5, false)
-    STTS.TextToSpeech("Uzi 4 taking off from Basel El Assad, performing strike on primatery target.", 300, "AM", "1.0", "SERVER", 2)
+    STTS.TextToSpeech("Uzi 4 taking off from Basel El Assad, performing strike on primatery target.", 240, "AM", "1.0", "SERVER", 2)
 
     if capc.debug == true then
         trigger.action.outText("escortBlue Spawned", 5, false)
@@ -398,7 +398,7 @@ function capc.overlordUpdate(_group)
         local _relVec3 = mist.vec.sub(_bulls, _pos)
         local _heading = math.atan2(_relVec3.z, _relVec3.x)
         local _message = "Intercept target in friendly airspace at BRA "..tostring(_heading)..", "..tostring(_distance*0.00539).."miles, flightlevel "..tostring(_altitude)..". ROE is hold fire until visual identification or agressive action."
-        STTS.TextToSpeech(_message, 300, "AM", "1.0", "SERVER", 2)
+        STTS.TextToSpeech(_message, 240, "AM", "1.0", "SERVER", 2)
 
         for i = 1, #capc.groups do
             local _groupID = Group.getByName(capc.groups[i]):getID()
@@ -432,22 +432,22 @@ function capc.checkObjectives()
             capc.objectives[i] = nil
             if _category == "escortBlue" then
                 trigger.action.outText("Uzi 4 is going down!", 10, false)
-                STTS.TextToSpeech("Uzi 4 is going down!", 300, "AM", "1.0", "SERVER", 2)
+                STTS.TextToSpeech("Uzi 4 is going down!", 240, "AM", "1.0", "SERVER", 2)
                 timer.scheduleFunction(capc.genTask, _groupID, timer.getTime() + 5 )
             elseif _category == "escortRed" then
                 trigger.action.outText("Splash bandits, continue patrol", 10, false)
-                STTS.TextToSpeech("Splash bandits, continue patrol", 300, "AM", "1.0", "SERVER", 2)
+                STTS.TextToSpeech("Splash bandits, continue patrol", 240, "AM", "1.0", "SERVER", 2)
                 timer.scheduleFunction(capc.genTask, _groupID, timer.getTime() + 5 )
             elseif _category == "escortGrey" then
                 trigger.action.outText("Splash civilian! hold fire hold fire!", 10, false)
-                STTS.TextToSpeech("Splash civilian! hold fire hold fire!", 300, "AM", "1.0", "SERVER", 2)
+                STTS.TextToSpeech("Splash civilian! hold fire hold fire!", 240, "AM", "1.0", "SERVER", 2)
                 timer.scheduleFunction(capc.genTask, _groupID, timer.getTime() + 5 )
             end
         end
         
         if _state == "completed" and _category == "escortGrey" then
             trigger.action.outText("Escort has been completed, continue patrol", 10, false)
-            STTS.TextToSpeech("Escort has been completed, continue patrol", 300, "AM", "1.0", "SERVER", 2)
+            STTS.TextToSpeech("Escort has been completed, continue patrol", 240, "AM", "1.0", "SERVER", 2)
             timer.scheduleFunction(capc.genTask, _groupID, timer.getTime() + 5 )
         end
 
