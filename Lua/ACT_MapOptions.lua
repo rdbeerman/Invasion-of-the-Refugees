@@ -129,8 +129,9 @@ function act.syria()
     map = "syria"
     
     act.capAirbases = {
+        AIRBASE.Syria.Tabqa,
         AIRBASE.Syria.Palmyra,
-        AIRBASE.Syria.Tabqa
+        AIRBASE.Syria.Khalkhalah
     }
 
     templateArrayBuilder(2, act.zones, "zone-")

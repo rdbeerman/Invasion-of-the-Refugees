@@ -17,7 +17,7 @@ shoradNumberDefault = 2
 pointDefenseExists = false
 --cap numbers
 capLimitDefault = 1
-lowIntervalDefault = 500
+lowIntervalDefault = 600
 highIntervalDefault = 1000
 probabilityDefault = 1
 --hard mode factor
@@ -693,13 +693,13 @@ function genHeloObjective() -- function for generating random helo mission using
         }
         objectiveCounter = objectiveCounter + 1
         
-        mist.teleportToPoint {
-            groupName = blueGround[math.random(#blueGround)],
-            point = mist.vec.add(vec3, offset),
-            action = "clone",
-            disperse = false,
-        }
-        objectiveCounter = objectiveCounter + 1
+        --mist.teleportToPoint {
+        --    groupName = blueGround[math.random(#blueGround)],
+        --    point = mist.vec.add(vec3, offset),
+        --    action = "clone",
+        --    disperse = false,
+        --}
+        --objectiveCounter = objectiveCounter + 1
 
         env.error(debugHeader.."Spawned helo: Attack camp", false)
     end
@@ -1010,11 +1010,11 @@ function A2A_DISPATCHER()
     
     --Define Detecting network
     DetectionSetGroupRED = SET_GROUP:New()
-    DetectionSetGroupRED:FilterPrefixes( { "EWR Base", "AWACS Red #001"} )
+    DetectionSetGroupRED:FilterPrefixes( { "EWR Base", "AWACS Red 1", "AWACS Red 2", "AWACS Red 3"} )
     DetectionSetGroupRED:FilterStart()
 
     IADS:addMooseSetGroup(DetectionSetGroupRED)
-    DetectionRED = DETECTION_AREAS:New( DetectionSetGroupRED, 5000 )
+    DetectionRED = DETECTION_AREAS:New( DetectionSetGroupRED, 30000 )
 
     --Init Dispatcher
     A2ADispatcherRED = AI_A2A_DISPATCHER:New( DetectionRED, 30000 )
@@ -1023,13 +1023,19 @@ function A2A_DISPATCHER()
     BorderRED = ZONE_POLYGON:New( "BORDER Red", GROUP:FindByName( "BORDER Red" ) )
     A2ADispatcherRED:SetBorderZone( BorderRED )
 
+    -- Define CAP Zones
+    CAPZoneNorth = ZONE_POLYGON:New( "CAP Zone North", GROUP:FindByName( "CAP Zone North" ) )
+    CAPZoneMiddle = ZONE_POLYGON:New( "CAP Zone Middle", GROUP:FindByName( "CAP Zone Middle" ) )
+    CAPZoneSouth = ZONE_POLYGON:New( "CAP Zone South", GROUP:FindByName( "CAP Zone South" ) )
+
     --Define EngageRadius
-    A2ADispatcherRED:SetEngageRadius( 180000 )
+    A2ADispatcherRED:SetEngageRadius( 130000 )
 
     --Define Squadrons
 
     A2ADispatcherRED:SetSquadron( "CAP_RED_1", act.capAirbases[1], capRed )
     A2ADispatcherRED:SetSquadron( "CAP_RED_2", act.capAirbases[2], capRed )
+    A2ADispatcherRED:SetSquadron( "CAP_RED_3", act.capAirbases[3], capRed )
 
     --Define Squadron properties
     A2ADispatcherRED:SetSquadronOverhead( "CAP_RED_1", 1 )
@@ -1038,12 +1044,18 @@ function A2A_DISPATCHER()
     A2ADispatcherRED:SetSquadronOverhead( "CAP_RED_2", 1 )
     A2ADispatcherRED:SetSquadronGrouping( "CAP_RED_2", 2 )
 
+    A2ADispatcherRED:SetSquadronOverhead( "CAP_RED_3", 1 )
+    A2ADispatcherRED:SetSquadronGrouping( "CAP_RED_3", 2 )
+
     --Define CAP Squadron execution
-    A2ADispatcherRED:SetSquadronCap( "CAP_RED_1", BorderRED,  6000, 8000, 600, 900, 600, 900, "BARO")
+    A2ADispatcherRED:SetSquadronCap( "CAP_RED_1", CAPZoneNorth,  6000, 8000, 600, 900, 600, 900, "BARO")
     A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_1", capLimit, lowInterval, highInterval, probability) --old settings were 450, 550
 
-    A2ADispatcherRED:SetSquadronCap( "CAP_RED_2", BorderRED,  3000, 9000, 400, 800, 600, 900, "BARO")
+    A2ADispatcherRED:SetSquadronCap( "CAP_RED_2", CAPZoneMiddle,  3000, 9000, 400, 800, 600, 900, "BARO")
     A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_2", capLimit, lowInterval, highInterval, probability) --old settings were 450, 550
+
+    A2ADispatcherRED:SetSquadronCap( "CAP_RED_3", CAPZoneSouth,  3000, 9000, 400, 800, 600, 900, "BARO")
+    A2ADispatcherRED:SetSquadronCapInterval( "CAP_RED_3", capLimit, lowInterval, highInterval, probability) --old settings were 450, 550
 
     --Debug
     A2ADispatcherRED:SetTacticalDisplay( enableDebug )
