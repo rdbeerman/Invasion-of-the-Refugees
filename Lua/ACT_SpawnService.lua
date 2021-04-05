@@ -1,20 +1,50 @@
 
-Spawn_AWACS_RED = SPAWN:New("AWACS Red #001")
-Spawn_TANKER1 = SPAWN:New("TANKER Blue #001")
-Spawn_TANKER2 = SPAWN:New("TANKER Blue #002")
-Spawn_TANKER3 = SPAWN:New("TANKER Blue #003")
-Spawn_AWACS_BLUE = SPAWN:New("AWACS Blue #001")
+Spawn_AWACS_RED = SPAWN:New("AWACS Red 1")
+Spawn_AWACS_RED2 = SPAWN:New("AWACS Red 2")
+Spawn_AWACS_RED3 = SPAWN:New("AWACS Red 3")
+
+Spawn_TANKERSLOW = SPAWN:New("KC-135 Slow")
+Spawn_TANKERFAST = SPAWN:New("KC-135 Fast")
+Spawn_TANKERMPRS = SPAWN:New("KC-135 MPRS")
+
+Spawn_AWACS_BLUE = SPAWN:New("AWACS Blue")
 
 
 Spawn_AWACS_RED:Spawn()
-Spawn_TANKER1:Spawn()
-Spawn_TANKER2:Spawn()
-Spawn_TANKER3:Spawn()
+Spawn_AWACS_RED2:Spawn()
+Spawn_AWACS_RED3:Spawn()
+
+Spawn_TANKERSLOW:Spawn()
+Spawn_TANKERFAST:Spawn()
+Spawn_TANKERMPRS:Spawn()
+
 Spawn_AWACS_BLUE:Spawn()
 
 
 Spawn_AWACS_RED:InitCleanUp( 20 )
-Spawn_TANKER1:InitCleanUp( 60 )
-Spawn_TANKER2:InitCleanUp( 60 )
-Spawn_TANKER3:InitCleanUp( 60 )
+Spawn_AWACS_RED2:InitCleanUp( 20 )
+Spawn_AWACS_RED3:InitCleanUp( 20 )
+
+Spawn_TANKERSLOW:InitCleanUp( 60 )
+Spawn_TANKERFAST:InitCleanUp( 60 )
+Spawn_TANKERMPRS:InitCleanUp( 60 )
+
 Spawn_AWACS_BLUE:InitCleanUp( 60 )
+
+-- Add wpt markers
+
+function moveTanker(name, startPoint, endPoint)
+    if name == "drogue" then
+        Spawn_TANKERMPRS:TaskOrbit(startPoint, altitude, speed, endPoint)
+    else if name == "boom"
+        Spawn_TANKERFAST:TaskOrbit(startPoint, altitude, speed, endPoint)
+    end
+end
+
+function tankerEventHandler(event)
+    --recognize 
+end
+
+do
+
+end

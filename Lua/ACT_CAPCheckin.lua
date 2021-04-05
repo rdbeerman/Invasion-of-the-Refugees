@@ -75,7 +75,7 @@ function capc.checkin(_groupID)
 
     timer.scheduleFunction(capc.genTask, _groupID, timer.getTime() + math.random(capc.timeLow, capc.timeHigh))
 
-    STTS.TextToSpeech("Copy check in, start patrol at CAP ALPHA, reference kneeboard", 240, "AM", "1.0", "SERVER", 2)
+    STTS.TextToSpeech("Copy check in, start patrol at CAP ALPHA, reference kneeboard.", 240, "AM", "1.0", "SERVER", 2)
     if capc.debug == true then
         trigger.action.outText(tostring(_groupID).." Checked in", 5, false)
     end
@@ -86,7 +86,7 @@ function capc.checkout(_groupID)
     capc.radioCheckin = missionCommands.addCommandForGroup(_groupID, "CAP Check in", nil, capc.checkin , _groupID)
     
     capc.states[_groupID] = nil
-    STTS.TextToSpeech("Copy check out, continue patrol", 240, "AM", "1.0", "SERVER", 2)
+    STTS.TextToSpeech("Copy check out.", 240, "AM", "1.0", "SERVER", 2)
 
     if capc.debug == true then
         trigger.action.outText(tostring(_groupID).." Checked out", 5, false)
@@ -94,13 +94,13 @@ function capc.checkout(_groupID)
 end
 
 function capc.genTask(_groupID)
-    local x = math.random(3, 3)
+    local x = math.random(1, 2)
     if x == 1 then
         capc.escortBlueSpawn(_groupID)
     elseif x == 2 then
         capc.escortRedSpawn(_groupID) -- Changed to red for now because escort doesn't work yet.
-    elseif x ==3 then
-        capc.escortRedSpawn(_groupID)
+    elseif x == 3 then
+        capc.escortGreySpawn(_groupID)
     end
 end
 
@@ -233,16 +233,24 @@ function capc.escortGreySpawn(_groupID)
 
     local group = Group.getByName(tostring("capc-"..capc.counter))
 
-    capc.objectives[capc.counter] = {"escortGrey", group, "active", _groupID}
+    capc.objectives[capc.counter] = {"escortGrey", group, "active", _groupID, false}
 
     if capc.debug == true then
         trigger.action.outText("escortGrey Spawned", 5, false)
         env.info(dump(mist.getGroupRoute(group:getName())))
     end
 
-    --mist.getUnitsInMovingZones(table unitNameTable ,table zoneUnitNames ,number radius , string zoneType )
-    -- if blue cap flight within range, call intercept script
-    -- completion = intercepted + distance away from targetvec2
+    local unitList = mist.getUnitsInMovingZones( mist.makeUnitTable({"[blue][plane]"}) ,{group:getUnit(1):getName()} , 1000 , "sphere" )
+    for i = 1, #unitList, 1 do
+        local groupEscortID = unitList[i]:getGroup():getID()
+        if capc.states[groupEscortID] == "active" or capc.states[groupEscortID] == "tasked" then
+            local escort = unitList[i]:getGroup():getName()
+            
+            esc.debug = false
+            esc.timeReq = 5
+            esc.start({escort , group })
+        end
+    end
 end
 
 function capc.escortRedSpawn(_groupID)
@@ -397,7 +405,7 @@ function capc.overlordUpdate(_group)
         local _altitude = (_pos.y * 3.28 )/1000 
         local _relVec3 = mist.vec.sub(_bulls, _pos)
         local _heading = math.atan2(_relVec3.z, _relVec3.x)
-        local _message = "Intercept target in friendly airspace at BRA "..tostring(_heading)..", "..tostring(_distance*0.00539).."miles, flightlevel "..tostring(_altitude)..". ROE is hold fire until visual identification or agressive action."
+        local _message = "Intercept target in friendly airspace at BRA "..tostring(_heading)..", "..tostring(_distance*0.00539).."miles, flightlevel "..tostring(_altitude)..". ROE is hold fire until visual identification or agressive action, tune 121.5 to attampt radio contact."
         STTS.TextToSpeech(_message, 240, "AM", "1.0", "SERVER", 2)
 
         for i = 1, #capc.groups do
@@ -445,6 +453,28 @@ function capc.checkObjectives()
             end
         end
         
+        --check if grey == intercepter + outside of zone
+        if _category == "escortGrey" then
+            local _pos = _group:getUnit(1):getPoint()
+            local _zone = trigger.misc.getZone(capc.blueZone)
+            local _distance = mist.utils.get2DDist(_zone.point, _pos)
+            
+            if _distance <= _zone.radius then
+                _table[5] = true
+                capc.objectives[i] = _table
+            end
+            
+            if _table[5] == true then
+                if _distance >= _zone.radius then
+                    esc.complete(_group:getName())
+                end
+            end
+        end    
+
+
+
+        --check if red/blue is rtb'd
+
         if _state == "completed" and _category == "escortGrey" then
             trigger.action.outText("Escort has been completed, continue patrol", 10, false)
             STTS.TextToSpeech("Escort has been completed, continue patrol", 240, "AM", "1.0", "SERVER", 2)
