@@ -150,14 +150,14 @@ function act.syria()
     templateArrayBuilder(2, act.redTarget, "redTarget-")
     templateArrayBuilder(1, act.carrierDefense, "carrierDefense-")
 
-    act.primObjectives = { "airbase-1", "airbase-2", "primObjective-1", "primObjective-2", "primObjective-3", "primObjective-4", "primObjective-5", "primObjective-6", "primObjective-7"}
+    act.primObjectives = { "airbase-1", "airbase-2", "primObjective-1", "primObjective-2", "primObjective-3", "primObjective-4", "primObjective-5", "primObjective-6", "primObjective-7", "primObjective-8"}
     act.ships = {"ship-1", "ship-2", "ship-3"}
     act.shipCarrier = {"ship-4"}
     act.shipEngFrac = 50
 
     act.structures = {"primObjective-1", "primObjective-2", "primObjective-3", "primObjective-4"}
     act.typeSpecial = { "primObjective-5", "primObjective-6", "primObjective-7" }
-    act.typeSpecialSam = { "primObjective-8" }
+    act.typeSpecialSam = { "primObjective-SA10" }
 
     act.specialNames = {"SCUD Site", "Artillery Battery", "Smerch Battery"}
     act.specialSamNames = {"SA-10 site"}
