@@ -31,20 +31,27 @@ Spawn_TANKERMPRS:InitCleanUp( 60 )
 
 Spawn_AWACS_BLUE:InitCleanUp( 60 )
 
--- Add wpt markers
-
-function moveTanker(name, startPoint, endPoint)
-    if name == "drogue" then
-        Spawn_TANKERMPRS:TaskOrbit(startPoint, altitude, speed, endPoint)
-    else if name == "boom"
-        Spawn_TANKERFAST:TaskOrbit(startPoint, altitude, speed, endPoint)
+function moveEventHandler(event)
+    if event.id == 26 and event.text == 'awacs' then
+        local _group = Spawn_AWACS_BLUE:GetFirstAliveGroup()
+        
+        local _orbitTask = { 
+            id = 'Orbit', 
+            params = { 
+              pattern = AI.Task.OrbitPattern,
+              point = event.pos,
+              point2 = event.pos,
+              speed = _group:getVelocity(),
+              altitude = _group:getHeight()
+            } 
+           }
+        
+        local controller = _group:getController()
+        controller:pushTask(_orbitTask)
+        trigger.action.outText("Awacs tasked" , 10 , false)
     end
 end
 
-function tankerEventHandler(event)
-    --recognize 
-end
-
 do
-
+    mist.addEventHandler(moveEventHandler)
 end
