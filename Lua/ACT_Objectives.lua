@@ -78,7 +78,6 @@ vec3Sam = {}
 vec3SamType = {}
 isAirfield = false
 heloCounter = 0
-waypointArray = {}
 settingsArray = {"", "", "", ""}
 difficultyFactor = 1
 missionData = {}
@@ -152,6 +151,10 @@ function genPrimObjective()
         if enableDebug == true then
             notify("Ship target spawning", 5)
         end
+    end
+
+    if primObjectiveType == 5 then --MapObject
+        notify("not implemented", 5)
     end
 end
 
@@ -938,9 +941,6 @@ function disableEnemySam ()
     notify("SAM disabled", 5)
     settingsArray[4] = "SAM disabled"
     enableSams = 0
-
-    radioMenuEnableSam = missionCommands.addCommand ( "Enable enemy SAM", radioSubMenuStartCommands, enableEnemySam)
-    missionCommands.removeItem (radioMenuDisableSam)
     
     env.error(debugHeader.."SAM disabled", false)
 end
@@ -951,12 +951,10 @@ function enableEnemySam ()
     settingsArray[4] = "SAM enabled"
     enableSams = 1
 
-    radioMenuDisableSam = missionCommands.addCommand ( "Disable enemy SAM", radioSubMenuStartCommands, disableEnemySam)
-    missionCommands.removeItem (radioMenuEnableSam)
-
     env.error(debugHeader.."SAM enabled", false)
 end
 
+--target types
 
 function setTargetRandom ()
     local random = math.random(1, 3)
@@ -965,7 +963,7 @@ function setTargetRandom ()
         setTargetBuilding()
     end
     if random == 2 then
-        setTargetSpecial()
+        setTargetSearchAndDestroy()
     end
     if random == 3 then
         setTargetSpecialSam()
@@ -975,26 +973,44 @@ end
 function setTargetBuilding ()
     notify("selected building target", 5)
     primObjectiveType = 1
+    markerScatter = 0
+    enableEnemySam()
     settingsArray[1] = "Building target"
 end
 
-function setTargetSpecial ()
-    notify("selected vehicles target", 5)
+function setTargetMapObject ()
+    notify("selected MapObject target - not functional right now", 5)
+    primObjectiveType = 5
+    markerScatter = 0
+    enableEnemySam()
+    settingsArray[1] = "MapObject target"
+end
+
+function setTargetSearchAndDestroy ()
+    notify("selected search and destroy target", 5)
     primObjectiveType = 2
-    settingsArray[1] = "Vehicle target"
+    markerScatter = 30000
+    disableEnemySam()
+    settingsArray[1] = "search and destroy target"
 end
 
 function setTargetSpecialSam ()
     notify("selected SAM target", 5)
     primObjectiveType = 3
+    markerScatter = 1000
+    enableEnemySam()
     settingsArray[1] = "SAM target"
 end
 
 function setTargetShip ()
     notify("selected building ship", 5)
     primObjectiveType = 4
+    markerScatter = 1000
+    enableEnemySam() --no idea if necessary, but just to be safe
     settingsArray[1] = "Ship target"
 end
+
+--more Options
 
 function addPointDefense ()
     notify("added point defense to primary target", 5)
@@ -1061,45 +1077,12 @@ function A2A_DISPATCHER()
     A2ADispatcherRED:SetTacticalDisplay( enableDebug )
 
     --Define Defaults
-    --A2ADispatcherRED:SetDefaultTakeOffFromRunway()
+    A2ADispatcherRED:SetDefaultTakeOffFromRunway() --not sure if it will crash horribly 
     A2ADispatcherRED:SetDefaultLandingAtRunway()
-end
-
-function notifyCustomWaypoints()
-    notify (#waypointArray, 5)
-    for i = 1, #waypointArray do
-        notify ("Waypoint " .. i .. ": " .. waypointArray[i]["position"], 15)
-    end
 end
 
 -- MAIN SETUP --
 do
-
-    local eventHandler = world.onEvent
-    world.onEvent = function(event)
-        if event.id == 26 then --player edited a marker
-            if string.find (event.text, "waypoint") then
-                local _wyptNum = tonumber(string.match(event.text, '%d')) 
-                local _pos = vec3toDMS(event.pos)
-
-                waypointArray[_wyptNum] = {
-                    ["text"] = event.text,
-                    ["wyptNumber"] = _wyptNum,
-                    ["vec3"] = event.pos,
-                    ["position"] = _pos,
-                    ["idx"] = event.idx
-                }
-            end
-        end
-        if event.id == 27 then --marker removed
-            for i = 1, #waypointArray do
-                if waypointArray[i]["idx"] == event.idx then
-                    waypointArray[i] = {}
-                end
-            end
-        end
-        return eventHandler(event)
-    end
 
     _SETTINGS:SetPlayerMenuOff()
     notify("Starting init", 5)
@@ -1118,7 +1101,6 @@ do
     --invasion command submenu
     radioMenuReadSettings = missionCommands.addCommand ("Display selected settings", invasionCommandsRoot, readSettings)
     radioMenuObjectiveInfo = missionCommands.addCommand("Objective info", invasionCommandsRoot, notifyObjective)
-    --radioMenuWaypointInfo = missionCommands.addCommand("Waypoint info", invasionCommandsRoot, notifyCustomWaypoints)
     radioMenuStartHelicopterMission = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
 
     --deubg command submenu
@@ -1130,24 +1112,23 @@ do
     --target type settings
     radioMenuTargetRandom = missionCommands.addCommand ("Set target type: Random", radioSubMenuStartCommands, setTargetRandom)
     radioMenuTargetBuilding = missionCommands.addCommand ("Set target type: Building", radioSubMenuStartCommands, setTargetBuilding)
-    radioMenuTargetSpecial = missionCommands.addCommand ("Set target type: Vehicle group", radioSubMenuStartCommands, setTargetSpecial)
+    radioMenuTargetMapObject = missionCommands.addCommand ("Set target type: MapObject", radioSubMenuStartCommands, setTargetMapObject)
+    radioMenuTargetSpecial = missionCommands.addCommand ("Set target type: Search and Destroy", radioSubMenuStartCommands, setTargetSearchAndDestroy)
     radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuStartCommands, setTargetSpecialSam)
-    radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: Ship", radioSubMenuStartCommands, setTargetShip)
+    radioMenuTargetSpecialShip = missionCommands.addCommand ("Set target type: Ship", radioSubMenuStartCommands, setTargetShip)
     --difficulty settings
     radioMenuNormalMode = missionCommands.addCommand ("Set difficulty: Normal", radioSubMenuStartCommands, setDifficulty, 1)
     radioMenuHardMode = missionCommands.addCommand ("Set difficulty: Hard", radioSubMenuStartCommands, setDifficulty, 2)
     radioMenuEnableCap = missionCommands.addCommand ( "Enable enemy CAP", radioSubMenuStartCommands, enableEnemyCap)
-    radioMenuEnableSam = missionCommands.addCommand ( "Enable enemy SAM", radioSubMenuStartCommands, enableEnemySam)
 
     --default settings
     probability = probabilityDefault
     enableEnemyCap()
-    enableEnemySam()
     setDifficulty(1)
     setTargetRandom()
 
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
-    notify("init completed", 5)
+    notify("init completed test markus", 5)
 
 end
