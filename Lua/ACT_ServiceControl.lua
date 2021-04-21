@@ -29,6 +29,37 @@ src.zone = trigger.misc.getZone(src.zoneName)
 src.units = {src.awacs, src.tanker1, src.tanker2}
 src.states = {false, false, false}
 
+function src.taskOrbit(args)
+    local _orbitTask = { 
+        id = 'Orbit', 
+        params = { 
+        pattern = "Circle",
+        point = mist.utils.makeVec2(args[2]),
+        point2 = mist.utils.makeVec2(args[2]),
+        speed = args[3],
+        altitude = args[4]
+        } 
+    }
+
+    local _controller = args[1]:getGroup():getController()
+    _controller:setTask(_orbitTask)
+end
+
+function src.taskRacetrack(_args)
+    local _orbitTask = { 
+        id = 'Orbit', 
+        params = { 
+        pattern = "Race-Track",
+        point = mist.utils.makeVec2(args[2]),
+        point2 = mist.utils.makeVec2(src.raceTrackPoint),
+        speed = _speed,
+        altitude = _altitude
+        } 
+    }
+
+    local _controller = _args[2]:getGroup():getController()
+    _controller:setTask(_orbitTask)
+end
 
 function src.mysplit (inputstr, sep)
     if sep == nil then
@@ -95,19 +126,21 @@ function src.EventHandler(event)
                 local _altitude = _command[3] * 0.3048
             end
 
-            local _orbitTask = { 
-                id = 'Orbit', 
-                params = { 
-                pattern = "Circle",
-                point = mist.utils.makeVec2(event.pos),
-                point2 = mist.utils.makeVec2(event.pos),
-                speed = _speed,
-                altitude = _altitude
-                } 
-            }
+            local path = {}
+            path[1] = mist.fixedWing.buildWP(mist.utils.makeVec3GL(src.awacs:getPoint()), TurningPoint, _altitude, _speed, 'agl')
+            path[2] = mist.fixedWing.buildWP(mist.utils.makeVec3GL(event.pos), TurningPoint, _altitude, _speed, 'agl')
             
-            local _controller = src.awacs:getController()
-            _controller:setTask(_orbitTask)
+            mist.goRoute(src.awacsName, path)
+            
+            local _controller = src.awacs:getGroup():getController()
+            local args = {}
+            args[1] = src.awacs
+            args[2] = event.pos
+            args[3] = _speed
+            args[4] = _altitude
+
+            timer.scheduleFunction(src.taskOrbit, args, timer.getTime() + 5 )
+
             trigger.action.outText("AWACS tasked" , 10 , false)
             STTS.TextToSpeech("Overlord moving towards new position", 243, "AM", "1.0", "SERVER", 2)
         end
@@ -127,20 +160,34 @@ function src.EventHandler(event)
                 local _altitude = _command[3] * 0.3048
             end
 
-            local _orbitTask = { 
-                id = 'Orbit', 
-                params = { 
-                pattern = "Circle",
-                point = mist.utils.makeVec2(event.pos),
-                point2 = mist.utils.makeVec2(event.pos),
-                speed = _speed,
-                altitude = _altitude
-                } 
-            }
+            local path = {}
+            path[1] = mist.fixedWing.buildWP(mist.utils.makeVec3GL(src.tanker1:getPoint()), TurningPoint, _altitude, _speed, 'agl')
+            path[2] = mist.fixedWing.buildWP(mist.utils.makeVec3GL(event.pos), TurningPoint, _altitude, _speed, 'agl')
             
-            local _controller = src.tanker1:getController()
-            _controller:setTask(_orbitTask)
-            trigger.action.outText("Texaco 1 tasked" , 10 , false)
+            mist.goRoute(src.tanker1Name, path)
+            
+            local _controller = src.tanker1:getGroup():getController()
+            local args = {}
+            args[1] = src.tanker1
+            args[2] = event.pos
+            args[3] = _speed
+            args[4] = _altitude
+
+            if string.find (event.text, "racetrack") then
+                if src.raceTrackPoint ~= nil then   -- check if racetrack2 exists, if not instruct to place one
+                    timer.scheduleFunction(src.taskRacetrack, args, timer.getTime() + 5 )
+
+                    trigger.action.outText("Texaco 1 tasked racetrack" , 10 , false)
+                else
+                    trigger.action.outText("Place racetrack end point first" , 5 , false)
+                end
+            else
+                timer.scheduleFunction(src.taskOrbit, args, timer.getTime() + 5 )
+
+                trigger.action.outText("Texaco 1 tasked" , 10 , false)
+            end
+            
+            
             STTS.TextToSpeech("Texaco 1 moving towards new position", 243, "AM", "1.0", "SERVER", 2)
         end
         --Tanker 2
@@ -159,27 +206,43 @@ function src.EventHandler(event)
                 local _altitude = _command[3] * 0.3048
             end
 
-            local _orbitTask = { 
-                id = 'Orbit', 
-                params = { 
-                pattern = "Circle",
-                point = mist.utils.makeVec2(event.pos),
-                point2 = mist.utils.makeVec2(event.pos),
-                speed = _speed,
-                altitude = _altitude
-                } 
-            }
+            local path = {}
+            path[1] = mist.fixedWing.buildWP(mist.utils.makeVec3GL(src.tanker2:getPoint()), TurningPoint, _altitude, _speed, 'agl')
+            path[2] = mist.fixedWing.buildWP(mist.utils.makeVec3GL(event.pos), TurningPoint, _altitude, _speed, 'agl')
             
-            local _controller = src.tanker2:getController()
-            _controller:setTask(_orbitTask)
-            trigger.action.outText("Arco 1 tasked" , 10 , false)
+            mist.goRoute(src.tanker2Name, path)
+            
+            local _controller = src.tanker1:getGroup():getController()
+            local args = {}
+            args[1] = src.tanker2
+            args[2] = event.pos
+            args[3] = _speed
+            args[4] = _altitude
+
+            if string.find (event.text, "racetrack") then
+                if src.raceTrackPoint ~= nil then   -- check if racetrack2 exists, if not instruct to place one
+                    timer.scheduleFunction(src.taskRacetrack, args, timer.getTime() + 5 )
+
+                    trigger.action.outText("Arco 1 tasked racetrack" , 10 , false)
+                else
+                    trigger.action.outText("Place racetrack end point first" , 5 , false)
+                end
+            else
+                timer.scheduleFunction(src.taskOrbit, args, timer.getTime() + 5 )
+
+                trigger.action.outText("Arco 1 tasked" , 10 , false)
+            end
+            
+            
             STTS.TextToSpeech("Arco 1 moving towards new position", 243, "AM", "1.0", "SERVER", 2)
+        end
+        --Racetrack point 2
+        if string.find(event.text, "racetrack") then
+            src.raceTrackPoint = event.pos
+            trigger.action.outText("Racetrack endpoint added" , 10 , false)
         end
     end
 end
-
---set vunerable & visible if outside of zone
-
 
 do
     mist.addEventHandler(src.EventHandler)

@@ -17,7 +17,7 @@ shoradNumberDefault = 2
 pointDefenseExists = false
 --cap numbers
 capLimitDefault = 1
-lowIntervalDefault = 600
+lowIntervalDefault = 800
 highIntervalDefault = 1000
 probabilityDefault = 1
 --hard mode factor
@@ -27,6 +27,8 @@ hardModeFactor = 1.3 --30% more enemies
 -- Import map specific templates
 objectiveLocList = act.getZones()
 primObjectiveList = act.getPrimObjectives()
+mapObject = act.getMapObjects()
+
 shipsList = act.getShips()
 shipsZones = act.getShipsZones()
 shipEngFrac = act.getShipEngFrac()
@@ -154,6 +156,11 @@ function genPrimObjective()
     end
 
     if primObjectiveType == 5 then --MapObject
+        primObjective = mapObject[math.random(1, #mapObject)]
+        --activate relevant units
+        --pick nearby support zone
+        --listen to object being destroyed
+        
         notify("not implemented", 5)
     end
 end
@@ -978,14 +985,6 @@ function setTargetBuilding ()
     settingsArray[1] = "Building target"
 end
 
-function setTargetMapObject ()
-    notify("selected MapObject target - not functional right now", 5)
-    primObjectiveType = 5
-    markerScatter = 0
-    enableEnemySam()
-    settingsArray[1] = "MapObject target"
-end
-
 function setTargetSearchAndDestroy ()
     notify("selected search and destroy target", 5)
     primObjectiveType = 2
@@ -1010,6 +1009,21 @@ function setTargetShip ()
     settingsArray[1] = "Ship target"
 end
 
+function setTargetMapObject ()
+    notify("selected MapObject target - not functional right now", 5)
+    primObjectiveType = 5
+    markerScatter = 0
+    enableEnemySam()
+    settingsArray[1] = "MapObject target"
+end
+
+function setTargetCustom ()
+    notify("selected MapObject target - not functional right now", 5)
+    primObjectiveType = 5
+    markerScatter = 0
+    enableEnemySam()
+    settingsArray[1] = "Custom target"
+end
 --more Options
 
 function addPointDefense ()
@@ -1077,7 +1091,7 @@ function A2A_DISPATCHER()
     A2ADispatcherRED:SetTacticalDisplay( enableDebug )
 
     --Define Defaults
-    A2ADispatcherRED:SetDefaultTakeOffFromRunway() --not sure if it will crash horribly 
+    A2ADispatcherRED:SetSquadronTakeoffInAir()
     A2ADispatcherRED:SetDefaultLandingAtRunway()
 end
 
@@ -1116,6 +1130,7 @@ do
     radioMenuTargetSpecial = missionCommands.addCommand ("Set target type: Search and Destroy", radioSubMenuStartCommands, setTargetSearchAndDestroy)
     radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuStartCommands, setTargetSpecialSam)
     radioMenuTargetSpecialShip = missionCommands.addCommand ("Set target type: Ship", radioSubMenuStartCommands, setTargetShip)
+    radioMenuTargetSpecialShip = missionCommands.addCommand ("Set target type: Custom", radioSubMenuStartCommands, setTargetCustom)
     --difficulty settings
     radioMenuNormalMode = missionCommands.addCommand ("Set difficulty: Normal", radioSubMenuStartCommands, setDifficulty, 1)
     radioMenuHardMode = missionCommands.addCommand ("Set difficulty: Hard", radioSubMenuStartCommands, setDifficulty, 2)

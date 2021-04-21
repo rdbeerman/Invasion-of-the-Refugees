@@ -15,6 +15,7 @@ act.escortRed = {}
 act.escortGrey = {}
 act.redTarget = {}
 act.carrierDefense = {}
+act.mapObjectives = {}
 
 function templateArrayBuilder(type, arrayName, nameString) --1: groups; 2: zones
     local i = 1
@@ -149,6 +150,7 @@ function act.syria()
     templateArrayBuilder(1, act.escortGrey, "escortGrey-")
     templateArrayBuilder(2, act.redTarget, "redTarget-")
     templateArrayBuilder(1, act.carrierDefense, "carrierDefense-")
+    templateArrayBuilder(2, act.mapObjectives, "precisionZone-")    
 
     act.primObjectives = { "airbase-1", "airbase-2", "primObjective-1", "primObjective-2", "primObjective-3", "primObjective-4", "primObjective-5", "primObjective-6", "primObjective-7", "primObjective-8"}
     act.ships = {"ship-1", "ship-2", "ship-3"}
@@ -164,6 +166,8 @@ function act.syria()
 
     act.blueground = { "blueGround-1" }
     act.heloObjectives = { "heloObjective-1", "heloObjective-2", "heloObjective-3" }
+
+    act.mapObjectives = {}
 end
 
 function act.getZones()
@@ -268,4 +272,8 @@ end
 
 function act.getShipEngFrac()
     return act.shipEngFrac
+end
+
+function act.getMapObjects()
+    return act.mapObjectives
 end
