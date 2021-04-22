@@ -1,12 +1,28 @@
+--[[
+    convoy
+    a plugin for IOTR that enables moving targets
+
+    todo V1:
+    add checkpoints
+    send convoys through the checkpoints
+
+    todo v2:
+    give tasks to the convoys, enable them to have a purposes
+    convoys that set up sam sites for examples
+    transport convoys
+
+]]
+
 convoy = {}
 
 convoy.activeGroups = {}
+convoy.targetZone = "targetZone"
 convoy.templates = { "convoyTemplate-1", "convoyTemplate-2", "convoyTemplate-3", }
 convoy.spawnZones = { "spawnZone-1", "spawnZone-2", "spawnZone-3", "spawnZone-4", "spawnZone-5", "spawnZone-6", }
-convoy.targetZone = "targetZone"
-convoy.checkpoints = { "checkpoint-1" }
+convoy.checkpoints = { "checkpoint-1", "checkpoint-2", "checkpoint-3" }
 
 convoy.name = "convoy"
+convoy.marks = {}
 convoy.spawnCounter = 1
 convoy.updateRate = 10
 convoy.speed = 10
@@ -23,6 +39,10 @@ end
 
 function convoy.setTargetZone(zone)
     convoy.targetZone = zone
+end
+
+function convoy.setCheckpoints(table)
+    convoy.checkpoints = table
 end
 
 function convoy.setSpawnZoneTable(table)
@@ -52,14 +72,18 @@ function convoy.getDistance(startVec3, endVec3)
     return _distance
 end
 
-function convoy.start(targetZone)
+function convoy.markCheckpoints()
+
+end
+
+function convoy.start()
     local _spawnZones = convoy.spawnZones
     local _attempts = 10
     local _spawnPointFound = false
     local _convoyName = false
 
     local _startVec3 = false
-    local _targetVec3 = mist.utils.zoneToVec3(targetZone)
+    local _targetVec3 = mist.utils.zoneToVec3(convoy.targetZone)
 
     while _spawnPointFound == false do
         if #_spawnZones == 0 then
@@ -134,9 +158,14 @@ function convoy.spawnConvoy(spawnVec3, targetVec3) --spawn a template in a spawn
         _groupData.units[unitId].y = _roadVec2.y + 20 * unitId
     end
 
+    --get closest checkpoint
+    local _closestCheckIndex = convoy.getNearestCheckpoint (_roadVec2)
+    local _cpVec2 = Group.getByName ( convoy.checkpoints[_closestCheckIndex] ):getUnit(1):getPoint()
+
     _groupData.route = { --creates the route to follow
-        [1] = mist.ground.buildWP (_roadVec2, 'on_road'), --not tested
-        [2] = mist.ground.buildWP (targetVec3, 'on_road', 10),
+        [1] = mist.ground.buildWP (_roadVec2, 'on_road'),
+        [2] = mist.ground.buildWP (_cpVec2, 'on_road'),
+        [3] = mist.ground.buildWP (targetVec3, 'on_road', 10),
     }
 
     mist.dynAdd(_groupData)
@@ -152,8 +181,46 @@ function convoy.spawnConvoy(spawnVec3, targetVec3) --spawn a template in a spawn
     return _groupData.name, _roadVec2, targetVec3
 end
 
-function spawnCheckpoint (vec3) --this would be great
+function convoy.getNearestCheckpoint (startVec2)
+    local _index = 0
+    local _distance = 9999999
 
+    for i = 1, #convoy.checkpoints, 1 do
+        local _dist = mist.utils.get2DDist(startVec2, Group.getByName ( convoy.checkpoints[i] ):getUnit(1):getPoint() )
+        if _dist <= _distance then
+            _index = i
+            _distance = _dist
+        end
+    end
+    simple.notify("closest checkpoint: " .. _index, 5)
+    return _index
+end
+
+function convoy.markPath(startVec3, endVec3) --pure debugging
+    local route =  land.findPathOnRoads("road" , startVec3.x , startVec3.z ,endVec3.x , endVec3.z )
+    simple.dumpTable (route)
+    for i=1, #route, 1 do
+        local iVec3 = mist.utils.makeVec3(route[i])
+        simple.smokeVec3 (iVec3)
+        trigger.action.markToAll(i, tostring(i), iVec3)
+    end
+end
+
+function convoy.getCheckpointPosition (startVec2, endVec2) --very slow, produces noticeable lagg
+    local _route = land.findPathOnRoads("road" , startVec2.x , startVec2.y ,endVec2.x , endVec2.y )
+    local x = 1 
+
+    for i = #_route, 1, -10 do
+        x = x + 1
+        local _distance = mist.utils.get2DDist(_route[i], endVec2)
+        if _distance >= 5000 then
+            local _iVec3 = mist.utils.makeVec3(_route[i])
+            simple.smokeVec3 (_iVec3)
+            trigger.action.markToAll(i, tostring(i), _iVec3)
+            simple.notify("counter: " .. x, 5)
+            break
+        end
+    end
 end
 
 function convoy.logic(groupName) --probably not useful right now
@@ -176,18 +243,12 @@ function convoy.logic(groupName) --probably not useful right now
     mist.scheduleFunction(convoy.logic, { groupName }, timer.getTime() + convoy.updateRate)
 end
 
-function convoy.events (event) --maybe? not used right now
-    if event.id == 8 then --S_EVENT_DEAD https://wiki.hoggitworld.com/view/DCS_event_dead
-        for k, v in pairs (convoy.activeGroups) do
-        end
-    end
-end
-
 do
     --setup
-    convoy.start("targetZone")
+    convoy.start()
+    convoy.start()
+    convoy.start()
 
     --don't change
-    --mist.addEventHandler(convoy.events)
     trigger.action.outText("convoy.lua started", 10)
 end
