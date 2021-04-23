@@ -47,7 +47,7 @@ function moveEventHandler(event)
            }
         
         local controller = _group:getController()
-        controller:pushTask(_orbitTask)
+        controller:setTask(_orbitTask)
         trigger.action.outText("Awacs tasked" , 10 , false)
     end
 end
