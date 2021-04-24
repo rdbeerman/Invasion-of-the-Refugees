@@ -88,7 +88,7 @@ end
 convoy = {}
 
 convoy.activeGroups = {}
-convoy.targetZone = "targetZone"
+convoy.targetZone = {"targetZone"}
 convoy.templates = { "convoyTemplate-1" }
 convoy.spawnZones = { "spawnZone-1" }
 convoy.checkpoints = { "checkpoint-1" }
@@ -122,7 +122,7 @@ end
 
 function convoy.placeMarks()
     --mark Target
-    trigger.action.markToAll(convoy.markerCounter, convoy.targetZone, mist.utils.zoneToVec3(convoy.targetZone), true)
+    trigger.action.markToAll(convoy.markerCounter, convoy.targetZone[1], mist.utils.zoneToVec3(convoy.targetZone[1]), true)
     convoy.markerCounter = convoy.markerCounter + 1
     --mark checkpoints
     for i = 1, #convoy.checkpoints, 1 do 
@@ -139,7 +139,7 @@ function convoy.start()
     local _convoyGroupName = false
 
     local _startVec3 = false
-    local _targetVec3 = mist.utils.zoneToVec3(convoy.targetZone)
+    local _targetVec3 = mist.utils.zoneToVec3(convoy.targetZone[1])
 
     while _spawnPointFound == false do --searches for a point within one of the zones that is within the desired range
         if #_spawnZones == 0 then
@@ -305,14 +305,22 @@ end
 
 do
     --setup
+
+    --[[
     local _vars = {
         speed = 15,
-        minDist = 250000,
-        maxDist = 300000,
+        minDist = 40000,
+        maxDist = 60000,
     }
 
     convoy.setup("convoyName", "targetZone", { "convoyTemplate-1", "convoyTemplate-2", "convoyTemplate-3" }, { "spawnZone-1", "spawnZone-2", "spawnZone-3", "spawnZone-4", "spawnZone-5", "spawnZone-6" }, { "checkpoint-1", "checkpoint-2", "checkpoint-3" }, _vars)
     convoy.start()
+
+    for i = 1, 0, 1 do
+        convoy.start()
+    end
+    ]]
+
 
     --don't change
     simple.notify("convoy.lua started", 10)

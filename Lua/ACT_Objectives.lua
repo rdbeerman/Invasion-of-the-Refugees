@@ -49,6 +49,10 @@ heloObjectives = act.getHeloObjectives()
 --airbase stuff
 airbaseZones = act.getAirbaseZones()
 airbaseEWR = act.getAirbaseEwr()
+--convoy stuff
+convoyRedList = act.getConvoyRed()
+checkpointsBlue = act.getCheckpointsBlue()
+convoyRedAttackZone = act.getConvoyRedAttackZone()
 
 --custom names & statics
 -- Set objective Names for typeStructure --
@@ -163,6 +167,18 @@ function genPrimObjective()
         
         notify("not implemented", 5)
     end
+
+    if primObjectiveType == 6 then --convoy
+
+        convoySetup(1)
+
+
+        notify("convoy target spawning", 5)
+    end
+end
+
+function genConvoyTarget ()
+
 end
 
 function genStructureTarget ()
@@ -1002,11 +1018,19 @@ function setTargetSpecialSam ()
 end
 
 function setTargetShip ()
-    notify("selected building ship", 5)
+    notify("selected ship target", 5)
     primObjectiveType = 4
     markerScatter = 1000
     enableEnemySam() --no idea if necessary, but just to be safe
     settingsArray[1] = "Ship target"
+end
+
+function setTargetConvoy ()
+    notify("selected convoy target", 5)
+    primObjectiveType = 6 --needs to be done
+    markerScatter = 0
+    enableEnemySam()
+    settingsArray[1] = "Convoy target"
 end
 
 function setTargetMapObject ()
@@ -1095,6 +1119,19 @@ function A2A_DISPATCHER()
     A2ADispatcherRED:SetDefaultLandingAtRunway()
 end
 
+function convoySetup(number)
+    local _vars = {
+        speed = 15, --m/s
+        minDist = 100000, --m
+        maxDist = 150000, --m
+    }
+
+    convoy.setup("convoyName", convoyRedAttackZone , convoyRedList, objectiveLocList, checkpointsBlue, _vars)
+
+    local convoyGroupName = convoy.start()
+    return convoyGroupName
+end
+
 -- MAIN SETUP --
 do
 
@@ -1131,6 +1168,7 @@ do
     radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuStartCommands, setTargetSpecialSam)
     radioMenuTargetSpecialShip = missionCommands.addCommand ("Set target type: Ship", radioSubMenuStartCommands, setTargetShip)
     radioMenuTargetSpecialShip = missionCommands.addCommand ("Set target type: Custom", radioSubMenuStartCommands, setTargetCustom)
+    radioMenuTargetConvoy = missionCommands.addCommand ("Set target type: Convoy", radioSubMenuStartCommands, setTargetConvoy)
     --difficulty settings
     radioMenuNormalMode = missionCommands.addCommand ("Set difficulty: Normal", radioSubMenuStartCommands, setDifficulty, 1)
     radioMenuHardMode = missionCommands.addCommand ("Set difficulty: Hard", radioSubMenuStartCommands, setDifficulty, 2)
@@ -1141,6 +1179,10 @@ do
     enableEnemyCap()
     setDifficulty(1)
     setTargetRandom()
+
+    --testing
+    setTargetConvoy()
+    manualStart()
 
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
