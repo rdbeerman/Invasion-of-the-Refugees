@@ -1126,7 +1126,7 @@ function convoySetup(number)
         maxDist = 150000, --m
     }
 
-    convoy.setup("convoyName", convoyRedAttackZone , convoyRedList, objectiveLocList, checkpointsBlue, _vars)
+    convoy.setup("convoy", convoyRedAttackZone , convoyRedList, objectiveLocList, checkpointsBlue, _vars)
 
     local convoyGroupName = convoy.start()
     return convoyGroupName
@@ -1181,8 +1181,6 @@ do
     setTargetRandom()
 
     --testing
-    setTargetConvoy()
-    manualStart()
 
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
