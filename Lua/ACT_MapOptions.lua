@@ -158,7 +158,7 @@ function act.syria()
     --convoy stuff
     templateArrayBuilder(1, act.convoyRed, "Convoy-")
     templateArrayBuilder(1, act.checkpointBlue, "Checkpoint-")
-    act.convoyRedAttackZone = {"redConvoyAttackZone-1"}
+    act.convoyRedAttackZone = {"convoyRedEndZone-1"}
 
     act.primObjectives = { "airbase-1", "airbase-2", "primObjective-1", "primObjective-2", "primObjective-3", "primObjective-4", "primObjective-5", "primObjective-6", "primObjective-7", "primObjective-8"}
     act.ships = {"ship-1", "ship-2", "ship-3"}

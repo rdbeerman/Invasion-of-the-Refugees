@@ -129,9 +129,9 @@ function genPrimObjective()
         end
     end
 
-    if primObjectiveType == 2 then --vehicle
+    if primObjectiveType == 2 then --vehicle / search and destroy
         primObjective = typeSpecial[math.random(#typeSpecial)]
-        genVehicleTarget ()
+        genSearchAndDestroyTarget ()
 
         env.error(debugHeader.."Completed Objective vehicles spawning.", false)
         if enableDebug == true then
@@ -172,13 +172,8 @@ function genPrimObjective()
 
         convoySetup(1)
 
-
         notify("convoy target spawning", 5)
     end
-end
-
-function genConvoyTarget ()
-
 end
 
 function genStructureTarget ()
@@ -223,7 +218,7 @@ function genStructureTarget ()
 
 end
 
-function genVehicleTarget ()
+function genSearchAndDestroyTarget () --search and destroy
     for i = 1,#typeSpecial,1 do -- check if generated objective is a special objective with custom name
         if primObjective == typeSpecial[i] then
             primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false) -- spawn objective
@@ -248,7 +243,10 @@ function genVehicleTarget ()
 
             primName = specialNames[i] -- get objective name by using index in specialNames
             local markerName = "Objective: "..specialNames[i]
-            markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
+            
+            --markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
+
+            markSearchArea (countryName.." gnd "..tostring(objectiveCounter))
 
             if pointDefenseExists == true then
                 genPointDefense (vec3Prim, countryName.." gnd "..tostring(objectiveCounter), 1)
@@ -756,6 +754,43 @@ function markObjective(markerName, groupName, markerFlag) -- marks objective on 
     trigger.action.markToAll(markerFlag, markerName, vec3, true)
 end
 
+function markSearchArea(groupName)
+    local _grpVec3 = Group.getByName(groupName):getUnit(1):getPoint()
+    local _offsetX1 = math.random(0 - markerScatter, 0)
+    local _offsetX2 = _offsetX1 + 2 * markerScatter
+    local _offsetZ1 = math.random(0 - markerScatter, 0)
+    local _offsetZ2 = _offsetZ1 + 2 * markerScatter
+
+    local _nw = {
+        x = _grpVec3.x + _offsetX2,
+        y = _grpVec3.y,
+        z = _grpVec3.z + _offsetZ1,
+    }
+    local _ne = {
+        x = _grpVec3.x + _offsetX2,
+        y = _grpVec3.y,
+        z = _grpVec3.z + _offsetZ2,
+    }
+    local _se = {
+        x = _grpVec3.x + _offsetX1,
+        y = _grpVec3.y,
+        z = _grpVec3.z + _offsetZ2,
+    }
+    local _sw = {
+        x = _grpVec3.x + _offsetX1,
+        y = _grpVec3.y,
+        z = _grpVec3.z + _offsetZ1,
+    }
+    trigger.action.markToAll(301, "Search area: NW", _nw, false)
+    trigger.action.markToAll(302, "Search area: NE", _ne, false)
+    trigger.action.markToAll(303, "Search area: SE", _se, false)
+    trigger.action.markToAll(304, "Search area: SW", _sw, false)
+
+    local _outString = "" --for new notifyObjective
+
+    return _outString
+end
+
 function notifyCoords(vec3, axis)
     local lat, lon, alt = coord.LOtoLL(vec3)
 
@@ -801,7 +836,7 @@ function checkSamCompleted()
     timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
 end
 
-function notifyObjective()
+function notifyObjective()  --needs changing for new objective types
     if primCompletion == false then
         local message = "The primary objective is a "..primName.." that has been located in the area near: \n"
         message = message..notifyCoords(vec3Prim, 1).." N, "..notifyCoords(vec3Prim, 2).." E, "..notifyCoords(vec3Prim, 3).." ft.\n"
@@ -863,7 +898,7 @@ function manualStart() -- problem is here
     end
 
     for i = 1,#airbaseZones,1 do
-        genAirbaseSam(airbaseZones[i], true )
+        genAirbaseSam(airbaseZones[i], false ) --airbase sam markers are mainly confusing
     end
     
     genPrimObjective()
@@ -1004,7 +1039,7 @@ end
 function setTargetSearchAndDestroy ()
     notify("selected search and destroy target", 5)
     primObjectiveType = 2
-    markerScatter = 30000
+    markerScatter = 15000
     disableEnemySam()
     settingsArray[1] = "search and destroy target"
 end
@@ -1012,8 +1047,8 @@ end
 function setTargetSpecialSam ()
     notify("selected SAM target", 5)
     primObjectiveType = 3
-    markerScatter = 1000
-    enableEnemySam()
+    markerScatter = 0
+    disableEnemySam() --sa10 is enough trouble as it is
     settingsArray[1] = "SAM target"
 end
 
@@ -1115,8 +1150,8 @@ function A2A_DISPATCHER()
     A2ADispatcherRED:SetTacticalDisplay( enableDebug )
 
     --Define Defaults
-    A2ADispatcherRED:SetSquadronTakeoffInAir()
-    A2ADispatcherRED:SetDefaultLandingAtRunway()
+    --A2ADispatcherRED:SetSquadronTakeoffInAir() --commented out for now
+    --A2ADispatcherRED:SetDefaultLandingAtRunway()
 end
 
 function convoySetup(number)
@@ -1181,9 +1216,12 @@ do
     setTargetRandom()
 
     --testing
+    setTargetSearchAndDestroy()
+    --setTargetConvoy()
+    manualStart()
 
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
-    notify("init completed test markus", 5)
+    notify("init completed", 5)
 
 end
