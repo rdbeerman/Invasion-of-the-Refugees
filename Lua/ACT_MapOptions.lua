@@ -18,7 +18,7 @@ act.carrierDefense = {}
 act.mapObjectives = {}
 
 act.convoyRed = {}
-act.checkpointBlue = {}
+act.convoyCpBlue = {}
 
 function templateArrayBuilder(type, arrayName, nameString) --1: groups; 2: zones
     local i = 1
@@ -157,8 +157,8 @@ function act.syria()
 
     --convoy stuff
     templateArrayBuilder(1, act.convoyRed, "Convoy-")
-    templateArrayBuilder(1, act.checkpointBlue, "Checkpoint-")
-    act.convoyRedAttackZone = {"convoyRedEndZone-1"}
+    templateArrayBuilder(1, act.convoyCpBlue, "Checkpoint-")
+    act.convoyRedEndZone = {"convoyRedEndZone-1"}
 
     act.primObjectives = { "airbase-1", "airbase-2", "primObjective-1", "primObjective-2", "primObjective-3", "primObjective-4", "primObjective-5", "primObjective-6", "primObjective-7", "primObjective-8"}
     act.ships = {"ship-1", "ship-2", "ship-3"}
@@ -179,15 +179,15 @@ function act.syria()
 end
 
 function act.getCheckpointsBlue()
-    return act.checkpointBlue
+    return act.convoyCpBlue
 end
 
 function act.getConvoyRed()
     return act.convoyRed
 end
 
-function act.getConvoyRedAttackZone()
-    return act.convoyRedAttackZone
+function act.getconvoyRedEndZone()
+    return act.convoyRedEndZone
 end
 
 function act.getZones()

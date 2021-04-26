@@ -97,8 +97,8 @@ convoy.name = "convoy"
 
 convoy.updateRate = 10
 convoy.speed = 10
-convoy.minDistance = 70000
-convoy.maxDistance = 100000
+convoy.minDistance = 80000
+convoy.maxDistance = 120000
 
 convoy.spawnCounter = 1
 convoy.markerCounter = 900
@@ -114,6 +114,10 @@ function convoy.setup(name, targetZone, templateTable, spawnZoneTable, checkPoin
     if vars.maxDist then convoy.maxDistance = vars.maxDist end
     if vars.updateRate then convoy.updateRate = vars.updateRate end
     convoy.placeMarks()
+end
+
+function convoy.notify(targetName)
+    local _string = ""
 end
 
 function convoy.getActiveConvoys()
@@ -134,7 +138,7 @@ end
 
 function convoy.start()
     local _spawnZones = convoy.spawnZones
-    local _attempts = 10
+    local _attempts = 5
     local _spawnPointFound = false
     local _convoyGroupName = false
 

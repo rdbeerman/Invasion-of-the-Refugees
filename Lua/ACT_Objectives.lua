@@ -52,7 +52,7 @@ airbaseEWR = act.getAirbaseEwr()
 --convoy stuff
 convoyRedList = act.getConvoyRed()
 checkpointsBlue = act.getCheckpointsBlue()
-convoyRedAttackZone = act.getConvoyRedAttackZone()
+convoyRedAttackZone = act.getconvoyRedEndZone()
 
 --custom names & statics
 -- Set objective Names for typeStructure --
@@ -787,7 +787,6 @@ function markSearchArea(groupName)
     trigger.action.markToAll(304, "Search area: SW", _sw, false)
 
     local _outString = "" --for new notifyObjective
-
     return _outString
 end
 
@@ -1015,16 +1014,13 @@ end
 --target types
 
 function setTargetRandom ()
-    local random = math.random(1, 3)
+    local random = math.random(1, 2)
     notify ("selected random target", 5)
     if random == 1 then
         setTargetBuilding()
     end
     if random == 2 then
         setTargetSearchAndDestroy()
-    end
-    if random == 3 then
-        setTargetSpecialSam()
     end
 end
 
@@ -1182,7 +1178,7 @@ do
     --submenus
     invasionCommandsRoot = missionCommands.addSubMenu ("Invasion Commands") --invasion commands submenu
     radioSubMenuStartCommands = missionCommands.addSubMenu ("Start Commands", invasionCommandsRoot) --nested submenu for start commands
-    radioSubMenuDebugCommands = missionCommands.addSubMenu ("Debug Commands", invasionCommandsRoot)
+    --radioSubMenuDebugCommands = missionCommands.addSubMenu ("Debug Commands", invasionCommandsRoot)
 
     --invasion command submenu
     radioMenuReadSettings = missionCommands.addCommand ("Display selected settings", invasionCommandsRoot, readSettings)
@@ -1190,8 +1186,8 @@ do
     radioMenuStartHelicopterMission = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
 
     --deubg command submenu
-    radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS Debug", radioSubMenuDebugCommands, radioEnableIadsDebug)
-    radioMenuEnableDispatcherDebug = missionCommands.addCommand ("Enable AA-Dispatcher Debug", radioSubMenuDebugCommands, radioEnableAirDispatcherDebug)
+    --radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS Debug", radioSubMenuDebugCommands, radioEnableIadsDebug)
+    --radioMenuEnableDispatcherDebug = missionCommands.addCommand ("Enable AA-Dispatcher Debug", radioSubMenuDebugCommands, radioEnableAirDispatcherDebug)
 
     --start commands submenu
     radioMenuManualStart = missionCommands.addCommand("Apply settings and start", radioSubMenuStartCommands , manualStart)
@@ -1200,7 +1196,7 @@ do
     radioMenuTargetBuilding = missionCommands.addCommand ("Set target type: Building", radioSubMenuStartCommands, setTargetBuilding)
     radioMenuTargetMapObject = missionCommands.addCommand ("Set target type: MapObject", radioSubMenuStartCommands, setTargetMapObject)
     radioMenuTargetSpecial = missionCommands.addCommand ("Set target type: Search and Destroy", radioSubMenuStartCommands, setTargetSearchAndDestroy)
-    radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuStartCommands, setTargetSpecialSam)
+    --radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuStartCommands, setTargetSpecialSam)
     radioMenuTargetSpecialShip = missionCommands.addCommand ("Set target type: Ship", radioSubMenuStartCommands, setTargetShip)
     radioMenuTargetSpecialShip = missionCommands.addCommand ("Set target type: Custom", radioSubMenuStartCommands, setTargetCustom)
     radioMenuTargetConvoy = missionCommands.addCommand ("Set target type: Convoy", radioSubMenuStartCommands, setTargetConvoy)
@@ -1216,10 +1212,7 @@ do
     setTargetRandom()
 
     --testing
-    setTargetSearchAndDestroy()
-    --setTargetConvoy()
-    manualStart()
-
+    
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
     notify("init completed", 5)
