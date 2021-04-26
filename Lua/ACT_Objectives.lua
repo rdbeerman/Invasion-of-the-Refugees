@@ -49,6 +49,10 @@ heloObjectives = act.getHeloObjectives()
 --airbase stuff
 airbaseZones = act.getAirbaseZones()
 airbaseEWR = act.getAirbaseEwr()
+--convoy stuff
+convoyRedList = act.getConvoyRed()
+checkpointsBlue = act.getCheckpointsBlue()
+convoyRedAttackZone = act.getconvoyRedEndZone()
 
 --custom names & statics
 -- Set objective Names for typeStructure --
@@ -125,9 +129,9 @@ function genPrimObjective()
         end
     end
 
-    if primObjectiveType == 2 then --vehicle
+    if primObjectiveType == 2 then --vehicle / search and destroy
         primObjective = typeSpecial[math.random(#typeSpecial)]
-        genVehicleTarget ()
+        genSearchAndDestroyTarget ()
 
         env.error(debugHeader.."Completed Objective vehicles spawning.", false)
         if enableDebug == true then
@@ -162,6 +166,13 @@ function genPrimObjective()
         --listen to object being destroyed
         
         notify("not implemented", 5)
+    end
+
+    if primObjectiveType == 6 then --convoy
+
+        convoySetup(1)
+
+        notify("convoy target spawning", 5)
     end
 end
 
@@ -207,7 +218,7 @@ function genStructureTarget ()
 
 end
 
-function genVehicleTarget ()
+function genSearchAndDestroyTarget () --search and destroy
     for i = 1,#typeSpecial,1 do -- check if generated objective is a special objective with custom name
         if primObjective == typeSpecial[i] then
             primObjectiveID = mist.cloneInZone(primObjective, objectiveLoc, false) -- spawn objective
@@ -232,7 +243,10 @@ function genVehicleTarget ()
 
             primName = specialNames[i] -- get objective name by using index in specialNames
             local markerName = "Objective: "..specialNames[i]
-            markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
+            
+            --markObjective(markerName , countryName.." gnd "..tostring(objectiveCounter), primMarker)
+
+            markSearchArea (countryName.." gnd "..tostring(objectiveCounter))
 
             if pointDefenseExists == true then
                 genPointDefense (vec3Prim, countryName.." gnd "..tostring(objectiveCounter), 1)
@@ -740,6 +754,42 @@ function markObjective(markerName, groupName, markerFlag) -- marks objective on 
     trigger.action.markToAll(markerFlag, markerName, vec3, true)
 end
 
+function markSearchArea(groupName)
+    local _grpVec3 = Group.getByName(groupName):getUnit(1):getPoint()
+    local _offsetX1 = math.random(0 - markerScatter, 0)
+    local _offsetX2 = _offsetX1 + 2 * markerScatter
+    local _offsetZ1 = math.random(0 - markerScatter, 0)
+    local _offsetZ2 = _offsetZ1 + 2 * markerScatter
+
+    local _nw = {
+        x = _grpVec3.x + _offsetX2,
+        y = _grpVec3.y,
+        z = _grpVec3.z + _offsetZ1,
+    }
+    local _ne = {
+        x = _grpVec3.x + _offsetX2,
+        y = _grpVec3.y,
+        z = _grpVec3.z + _offsetZ2,
+    }
+    local _se = {
+        x = _grpVec3.x + _offsetX1,
+        y = _grpVec3.y,
+        z = _grpVec3.z + _offsetZ2,
+    }
+    local _sw = {
+        x = _grpVec3.x + _offsetX1,
+        y = _grpVec3.y,
+        z = _grpVec3.z + _offsetZ1,
+    }
+    trigger.action.markToAll(301, "Search area: NW", _nw, false)
+    trigger.action.markToAll(302, "Search area: NE", _ne, false)
+    trigger.action.markToAll(303, "Search area: SE", _se, false)
+    trigger.action.markToAll(304, "Search area: SW", _sw, false)
+
+    local _outString = "" --for new notifyObjective
+    return _outString
+end
+
 function notifyCoords(vec3, axis)
     local lat, lon, alt = coord.LOtoLL(vec3)
 
@@ -785,7 +835,7 @@ function checkSamCompleted()
     timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
 end
 
-function notifyObjective()
+function notifyObjective()  --needs changing for new objective types
     if primCompletion == false then
         local message = "The primary objective is a "..primName.." that has been located in the area near: \n"
         message = message..notifyCoords(vec3Prim, 1).." N, "..notifyCoords(vec3Prim, 2).." E, "..notifyCoords(vec3Prim, 3).." ft.\n"
@@ -847,7 +897,7 @@ function manualStart() -- problem is here
     end
 
     for i = 1,#airbaseZones,1 do
-        genAirbaseSam(airbaseZones[i], true )
+        genAirbaseSam(airbaseZones[i], false ) --airbase sam markers are mainly confusing
     end
     
     genPrimObjective()
@@ -964,16 +1014,13 @@ end
 --target types
 
 function setTargetRandom ()
-    local random = math.random(1, 3)
+    local random = math.random(1, 2)
     notify ("selected random target", 5)
     if random == 1 then
         setTargetBuilding()
     end
     if random == 2 then
         setTargetSearchAndDestroy()
-    end
-    if random == 3 then
-        setTargetSpecialSam()
     end
 end
 
@@ -988,7 +1035,7 @@ end
 function setTargetSearchAndDestroy ()
     notify("selected search and destroy target", 5)
     primObjectiveType = 2
-    markerScatter = 30000
+    markerScatter = 15000
     disableEnemySam()
     settingsArray[1] = "search and destroy target"
 end
@@ -996,17 +1043,25 @@ end
 function setTargetSpecialSam ()
     notify("selected SAM target", 5)
     primObjectiveType = 3
-    markerScatter = 1000
-    enableEnemySam()
+    markerScatter = 0
+    disableEnemySam() --sa10 is enough trouble as it is
     settingsArray[1] = "SAM target"
 end
 
 function setTargetShip ()
-    notify("selected building ship", 5)
+    notify("selected ship target", 5)
     primObjectiveType = 4
     markerScatter = 1000
     enableEnemySam() --no idea if necessary, but just to be safe
     settingsArray[1] = "Ship target"
+end
+
+function setTargetConvoy ()
+    notify("selected convoy target", 5)
+    primObjectiveType = 6 --needs to be done
+    markerScatter = 0
+    enableEnemySam()
+    settingsArray[1] = "Convoy target"
 end
 
 function setTargetMapObject ()
@@ -1091,8 +1146,21 @@ function A2A_DISPATCHER()
     A2ADispatcherRED:SetTacticalDisplay( enableDebug )
 
     --Define Defaults
-    A2ADispatcherRED:SetSquadronTakeoffInAir()
-    A2ADispatcherRED:SetDefaultLandingAtRunway()
+    --A2ADispatcherRED:SetSquadronTakeoffInAir() --commented out for now
+    --A2ADispatcherRED:SetDefaultLandingAtRunway()
+end
+
+function convoySetup(number)
+    local _vars = {
+        speed = 15, --m/s
+        minDist = 100000, --m
+        maxDist = 150000, --m
+    }
+
+    convoy.setup("convoy", convoyRedAttackZone , convoyRedList, objectiveLocList, checkpointsBlue, _vars)
+
+    local convoyGroupName = convoy.start()
+    return convoyGroupName
 end
 
 -- MAIN SETUP --
@@ -1110,7 +1178,7 @@ do
     --submenus
     invasionCommandsRoot = missionCommands.addSubMenu ("Invasion Commands") --invasion commands submenu
     radioSubMenuStartCommands = missionCommands.addSubMenu ("Start Commands", invasionCommandsRoot) --nested submenu for start commands
-    radioSubMenuDebugCommands = missionCommands.addSubMenu ("Debug Commands", invasionCommandsRoot)
+    --radioSubMenuDebugCommands = missionCommands.addSubMenu ("Debug Commands", invasionCommandsRoot)
 
     --invasion command submenu
     radioMenuReadSettings = missionCommands.addCommand ("Display selected settings", invasionCommandsRoot, readSettings)
@@ -1118,8 +1186,8 @@ do
     radioMenuStartHelicopterMission = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
 
     --deubg command submenu
-    radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS Debug", radioSubMenuDebugCommands, radioEnableIadsDebug)
-    radioMenuEnableDispatcherDebug = missionCommands.addCommand ("Enable AA-Dispatcher Debug", radioSubMenuDebugCommands, radioEnableAirDispatcherDebug)
+    --radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS Debug", radioSubMenuDebugCommands, radioEnableIadsDebug)
+    --radioMenuEnableDispatcherDebug = missionCommands.addCommand ("Enable AA-Dispatcher Debug", radioSubMenuDebugCommands, radioEnableAirDispatcherDebug)
 
     --start commands submenu
     radioMenuManualStart = missionCommands.addCommand("Apply settings and start", radioSubMenuStartCommands , manualStart)
@@ -1128,9 +1196,10 @@ do
     radioMenuTargetBuilding = missionCommands.addCommand ("Set target type: Building", radioSubMenuStartCommands, setTargetBuilding)
     radioMenuTargetMapObject = missionCommands.addCommand ("Set target type: MapObject", radioSubMenuStartCommands, setTargetMapObject)
     radioMenuTargetSpecial = missionCommands.addCommand ("Set target type: Search and Destroy", radioSubMenuStartCommands, setTargetSearchAndDestroy)
-    radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuStartCommands, setTargetSpecialSam)
+    --radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuStartCommands, setTargetSpecialSam)
     radioMenuTargetSpecialShip = missionCommands.addCommand ("Set target type: Ship", radioSubMenuStartCommands, setTargetShip)
     radioMenuTargetSpecialShip = missionCommands.addCommand ("Set target type: Custom", radioSubMenuStartCommands, setTargetCustom)
+    radioMenuTargetConvoy = missionCommands.addCommand ("Set target type: Convoy", radioSubMenuStartCommands, setTargetConvoy)
     --difficulty settings
     radioMenuNormalMode = missionCommands.addCommand ("Set difficulty: Normal", radioSubMenuStartCommands, setDifficulty, 1)
     radioMenuHardMode = missionCommands.addCommand ("Set difficulty: Hard", radioSubMenuStartCommands, setDifficulty, 2)
@@ -1142,8 +1211,10 @@ do
     setDifficulty(1)
     setTargetRandom()
 
+    --testing
+    
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
-    notify("init completed test markus", 5)
+    notify("init completed", 5)
 
 end
