@@ -17,7 +17,7 @@ shoradNumberDefault = 2
 pointDefenseExists = false
 --cap numbers
 capLimitDefault = 1
-lowIntervalDefault = 800
+lowIntervalDefault = 900
 highIntervalDefault = 1000
 probabilityDefault = 1
 --hard mode factor
@@ -27,7 +27,10 @@ hardModeFactor = 1.3 --30% more enemies
 -- Import map specific templates
 objectiveLocList = act.getZones()
 primObjectiveList = act.getPrimObjectives()
-mapObject = act.getMapObjects()
+precisionObjectives = act.getPrecisionObjectives()
+precisionSAMzones = act.getPrecisionSAMzones()
+precisionGroups = act.getPrecisionGroups()
+precisionNames = act.getPrecisionNames()
 
 shipsList = act.getShips()
 shipsZones = act.getShipsZones()
@@ -116,7 +119,7 @@ function genPrimObjective()
     objectiveLoc = objectiveLocList[math.random(#objectiveLocList)]
 
     if primObjectiveType == 0 then --if no prim objective has been specified, randomize it
-        primObjectiveType = math.random(1, 3)
+        primObjectiveType = math.random(1, 5)
     end
 
     if primObjectiveType == 1 then --structure
@@ -149,7 +152,44 @@ function genPrimObjective()
         end
     end
 
-    if primObjectiveType == 4 then --Ship
+    if primObjectiveType == 4 then --convoy
+
+        _convoyName = convoySetup(1)
+        env.error(debugHeader.."Spawned convoy: ".._convoyName, false)
+        vec3Prim = Group.getByName(_convoyName):getUnit(1):getPoint()
+        
+        --TODO: rework notification for this objectiveType
+        notify("convoy target spawning", 5)
+    end
+
+    if primObjectiveType == 5 then --Precision Strike
+        local i = math.random(1, #precisionObjectives)
+        primObjective = precisionObjectives[i]
+        vec3Prim = mist.utils.makeVec3GL(mist.utils.zoneToVec3(primObjective))
+        
+        env.error(debugHeader.."Spawning Objective Precision no: "..i , false)
+        mist.flagFunc.mapobjs_dead_zones{  
+            zones = {primObjective},  
+            flag = primCompletedFlag, 
+            req_num = 1 
+          }  
+
+        local _group = Group.getByName(precisionGroups[i])
+        _group:activate()
+        env.error(debugHeader.."Group activated" , false)
+
+        local _zoneName = precisionSAMzones[i]
+        local _vec3SAM = mist.utils.zoneToVec3(_zoneName)
+        genSam(_vec3SAM, true, trigger.misc.getZone(_zoneName).radius, 0)
+        
+        primName = precisionNames[i]
+        local _markerName = "Objective: "..primName
+        markObjectiveZone(_markerName , primObjective, primMarker, 0)
+
+        notify("Precision strike spawning", 5)
+    end
+
+    if primObjectiveType == 6 then --Ship
         primObjective = shipsList[math.random(1, #shipsList)]
         genShip(primObjective)
 
@@ -157,22 +197,6 @@ function genPrimObjective()
         if enableDebug == true then
             notify("Ship target spawning", 5)
         end
-    end
-
-    if primObjectiveType == 5 then --MapObject
-        primObjective = mapObject[math.random(1, #mapObject)]
-        --activate relevant units
-        --pick nearby support zone
-        --listen to object being destroyed
-        
-        notify("not implemented", 5)
-    end
-
-    if primObjectiveType == 6 then --convoy
-
-        convoySetup(1)
-
-        notify("convoy target spawning", 5)
     end
 end
 
@@ -370,7 +394,7 @@ end
 function genDefense(vec3, amount)
     local theta = 360 / amount
     for i = 1 , amount , 1 do
-        local offset = math.random (400, 500)
+        local offset = math.random (600, 800)
         local defensePosition = mist.vec.add(vec3, rotateVector( theta*i+math.random(0,20), offset ))
         genDefenseSmall(defensePosition)
     end
@@ -430,7 +454,13 @@ function genEwr( vec3 , amount ) --generate N EWR sites away from the main objec
     end
 end
 
-function genSam(vec3, mark ) -- generates SAM site in random location around point vec3, boolean mark sets f10 marker
+function genSam(vec3, mark, _radius, _innerRadius) -- generates SAM site in random location around point vec3, boolean mark sets f10 marker
+    if _radius == nil then
+        _radius = 10000
+    end
+    if _innerRadius == nil then
+        _innerRadius = 8000
+    end
     sam = samList[math.random(#samList)]
     samId = samId + 1
     mist.teleportToPoint {
@@ -438,8 +468,8 @@ function genSam(vec3, mark ) -- generates SAM site in random location around poi
         point = vec3,
         action = "clone",
         disperse = false,
-        radius = 10000,
-        innerRadius = 8000
+        radius = _radius,
+        innerRadius = _innerRadius
     }
     
     local group = Group.getByName(sam)
@@ -447,10 +477,8 @@ function genSam(vec3, mark ) -- generates SAM site in random location around poi
     local countryName = country.name[countryId]    
     objectiveCounter = objectiveCounter + 1
     local samGroupName = countryName.." gnd "..tostring(objectiveCounter)
-
     IADS:addSAMSite( samGroupName ) --group name
     improveSamAuto ( samGroupName )
-
     if mark == true then
         markObjective("SAM Site: " .. getSamType ( samGroupName ), samGroupName, 200 + samId)
         mist.flagFunc.group_alive_less_than {
@@ -597,6 +625,8 @@ function getSamType (groupName)
         samType = "SA-11"
     elseif string.find(unitType, "SNR") then --SA-2
         samType = "SA-2"
+    elseif string.find(unitType, "S-125") then --SA-2
+        samType = "SA-3"
     elseif string.find(unitType, "S-300PS") then --SA-10
         samType = "SA-10"
     elseif string.find(unitType, "Tor") then --SA-15
@@ -639,7 +669,7 @@ end
 
 function genStatics(vec3, amount) -- generates statics around point vec3
     local vec2 = mist.utils.makeVec2(vec3) 
-    for amount = 1, 3, 1 do
+    for amount = 1, amount, 1 do
         local building = staticList[math.random(#staticList)]
         statics[#statics+1] = building
         if enableDebug == true then
@@ -754,6 +784,16 @@ function markObjective(markerName, groupName, markerFlag) -- marks objective on 
     trigger.action.markToAll(markerFlag, markerName, vec3, true)
 end
 
+function markObjectiveZone(markerName, zoneName, markerFlag, scatter) -- marks objective on F10 map, each markerFlag must be unique
+    local vec3Random = {
+        x = math.random(-scatter,scatter),
+        y = math.random(-scatter,scatter),
+        z = math.random(-scatter,scatter)
+    }
+    local vec3 = mist.vec.add(mist.utils.zoneToVec3(zoneName), vec3Random)
+    trigger.action.markToAll(markerFlag, markerName, vec3, true)
+end
+
 function markSearchArea(groupName)
     local _grpVec3 = Group.getByName(groupName):getUnit(1):getPoint()
     local _offsetX1 = math.random(0 - markerScatter, 0)
@@ -837,7 +877,11 @@ end
 
 function notifyObjective()  --needs changing for new objective types
     if primCompletion == false then
-        local message = "The primary objective is a "..primName.." that has been located in the area near: \n"
+        if primObjectiveType == 5 then         
+            message = "The primary objective is a "..primName.." at: \n"
+        else 
+            message = "The primary objective is a "..primName.." that has been located in the area near: \n"
+        end
         message = message..notifyCoords(vec3Prim, 1).." N, "..notifyCoords(vec3Prim, 2).." E, "..notifyCoords(vec3Prim, 3).." ft.\n"
         message = message.."\n Beware, SAM sites have been spotted near: \n"
 
@@ -847,7 +891,7 @@ function notifyObjective()  --needs changing for new objective types
         
         notify(message, 45)
     else
-        notify("Primary objective has been completed, RTB.", 45)
+        notify("Primary objective has been completed, RTB.", 60)
     end
 end
 
@@ -878,7 +922,6 @@ function autoStart()
 end
 
 function manualStart() -- problem is here
-
     ewrNumber = math.ceil ( ewrNumberDefault * difficultyFactor )
     samNumber = 0
     shoradNumber = math.ceil ( shoradNumberDefault * difficultyFactor )
@@ -900,18 +943,26 @@ function manualStart() -- problem is here
         genAirbaseSam(airbaseZones[i], false ) --airbase sam markers are mainly confusing
     end
     
+    env.error(debugHeader.."1" , false)
     genPrimObjective()
+    env.error(debugHeader.."2" , false)
     timer.scheduleFunction(checkPrimCompleted, {}, timer.getTime() + 1)
+    env.error(debugHeader.."3" , false)
     timer.scheduleFunction(checkSamCompleted, {}, timer.getTime() + 1)
+    env.error(debugHeader.."4" , false)
     IADS:getSAMSites():setAutonomousBehaviour(SkynetIADSAbstractRadarElement.AUTONOMOUS_STATE_DCS_AI)
+    env.error(debugHeader.."5" , false)
     IADS:activate()
+    env.error(debugHeader.."6" , false)
     A2A_DISPATCHER()
+    env.error(debugHeader.."7" , false)
     readSettings()
+    env.error(debugHeader.."8" , false)
 
     missionCommands.removeItem(radioSubMenuStartCommands)
     notify("Mission started.", 15)
     STTS.TextToSpeech("Mission started.", 243, "AM", "1.0", "SERVER", 2)
-
+    env.error(debugHeader.."Mission started" , false)
 end
 
 function readSettings ()
@@ -1050,7 +1101,7 @@ end
 
 function setTargetShip ()
     notify("selected ship target", 5)
-    primObjectiveType = 4
+    primObjectiveType = 6
     markerScatter = 1000
     enableEnemySam() --no idea if necessary, but just to be safe
     settingsArray[1] = "Ship target"
@@ -1058,26 +1109,18 @@ end
 
 function setTargetConvoy ()
     notify("selected convoy target", 5)
-    primObjectiveType = 6 --needs to be done
+    primObjectiveType = 4 --needs to be done
     markerScatter = 0
     enableEnemySam()
     settingsArray[1] = "Convoy target"
 end
 
-function setTargetMapObject ()
-    notify("selected MapObject target - not functional right now", 5)
+function setPrecisionStrike ()
+    notify("selected Precision Strike", 5)
     primObjectiveType = 5
     markerScatter = 0
     enableEnemySam()
-    settingsArray[1] = "MapObject target"
-end
-
-function setTargetCustom ()
-    notify("selected MapObject target - not functional right now", 5)
-    primObjectiveType = 5
-    markerScatter = 0
-    enableEnemySam()
-    settingsArray[1] = "Custom target"
+    settingsArray[1] = "Precision Strike"
 end
 --more Options
 
@@ -1146,8 +1189,8 @@ function A2A_DISPATCHER()
     A2ADispatcherRED:SetTacticalDisplay( enableDebug )
 
     --Define Defaults
-    --A2ADispatcherRED:SetSquadronTakeoffInAir() --commented out for now
-    --A2ADispatcherRED:SetDefaultLandingAtRunway()
+    --A2ADispatcherRED:SetDefaultTakeOffFromRunway() --commented out for now
+    A2ADispatcherRED:SetDefaultLandingAtRunway()
 end
 
 function convoySetup(number)
@@ -1168,6 +1211,7 @@ do
 
     _SETTINGS:SetPlayerMenuOff()
     notify("Starting init", 5)
+    env.error("--- IOTR Init Starting" , false)
 
     --[[
 
@@ -1194,11 +1238,10 @@ do
     --target type settings
     radioMenuTargetRandom = missionCommands.addCommand ("Set target type: Random", radioSubMenuStartCommands, setTargetRandom)
     radioMenuTargetBuilding = missionCommands.addCommand ("Set target type: Building", radioSubMenuStartCommands, setTargetBuilding)
-    radioMenuTargetMapObject = missionCommands.addCommand ("Set target type: MapObject", radioSubMenuStartCommands, setTargetMapObject)
+    radioMenuTargetMapObject = missionCommands.addCommand ("Set target type: Precision Strike", radioSubMenuStartCommands, setPrecisionStrike)
     radioMenuTargetSpecial = missionCommands.addCommand ("Set target type: Search and Destroy", radioSubMenuStartCommands, setTargetSearchAndDestroy)
     --radioMenuTargetSpecialSam = missionCommands.addCommand ("Set target type: SAM", radioSubMenuStartCommands, setTargetSpecialSam)
     radioMenuTargetSpecialShip = missionCommands.addCommand ("Set target type: Ship", radioSubMenuStartCommands, setTargetShip)
-    radioMenuTargetSpecialShip = missionCommands.addCommand ("Set target type: Custom", radioSubMenuStartCommands, setTargetCustom)
     radioMenuTargetConvoy = missionCommands.addCommand ("Set target type: Convoy", radioSubMenuStartCommands, setTargetConvoy)
     --difficulty settings
     radioMenuNormalMode = missionCommands.addCommand ("Set difficulty: Normal", radioSubMenuStartCommands, setDifficulty, 1)
@@ -1215,6 +1258,6 @@ do
     
     timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
 
-    notify("init completed", 5)
-
+    notify("IOTR init completed", 5)
+    env.error("--- IOTR Init completed" , false)
 end

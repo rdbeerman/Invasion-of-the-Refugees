@@ -15,7 +15,9 @@ act.escortRed = {}
 act.escortGrey = {}
 act.redTarget = {}
 act.carrierDefense = {}
-act.mapObjectives = {}
+act.precisionObjectives = {}
+act.precisionSAMzones = {}
+act.precisionGroups = {}
 
 act.convoyRed = {}
 act.convoyCpBlue = {}
@@ -153,7 +155,9 @@ function act.syria()
     templateArrayBuilder(1, act.escortGrey, "escortGrey-")
     templateArrayBuilder(2, act.redTarget, "redTarget-")
     templateArrayBuilder(1, act.carrierDefense, "carrierDefense-")
-    templateArrayBuilder(2, act.mapObjectives, "precisionZone-")    
+    templateArrayBuilder(2, act.precisionObjectives, "precisionZone-") 
+    templateArrayBuilder(2, act.precisionSAMzones, "precisionSAM-")
+    templateArrayBuilder(1, act.precisionGroups, "precisionGroup-")   
 
     --convoy stuff
     templateArrayBuilder(1, act.convoyRed, "Convoy-")
@@ -175,7 +179,7 @@ function act.syria()
     act.blueground = { "blueGround-1" }
     act.heloObjectives = { "heloObjective-1", "heloObjective-2", "heloObjective-3" }
 
-    act.mapObjectives = {}
+    act.precisionNames = {"Military Base", "Palace", "Headquarters", "Bridge", "Military Research Base", "Military Base", "Harbour", "Hydroelectric powerplant", "Hydroelectric powerplant", "Hydroelectric powerplant", "Bridge", "Harbour", "Bridge", "Bridge", "Palace", "Headquarters", "Headquarters", "Powerplant", "Heliport", "Heliport"}
 end
 
 function act.getCheckpointsBlue()
@@ -294,6 +298,18 @@ function act.getShipEngFrac()
     return act.shipEngFrac
 end
 
-function act.getMapObjects()
-    return act.mapObjectives
+function act.getPrecisionObjectives()
+    return act.precisionObjectives
+end
+
+function act.getPrecisionSAMzones()
+    return act.precisionSAMzones
+end
+
+function act.getPrecisionGroups()
+    return act.precisionGroups
+end
+
+function act.getPrecisionNames()
+    return act.precisionNames
 end
