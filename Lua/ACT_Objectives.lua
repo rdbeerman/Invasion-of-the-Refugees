@@ -74,7 +74,9 @@ staticList = {"Workshop A", "Farm A", "Farm B", "Comms tower M", "Chemical tank 
 -- Do not change --
 
 primCompletedFlag = 99
+restartFlag = 97
 primMarker = 98
+carrierMarkerId = 1100
 secCompletion = {}
 primObjectiveCounter = 0
 primObjectiveType = 0 --used for setting it manually
@@ -154,9 +156,15 @@ function genPrimObjective()
 
     if primObjectiveType == 4 then --convoy
 
-        _convoyName = convoySetup(1)
+        local _convoyName = convoySetup(1)
         env.error(debugHeader.."Spawned convoy: ".._convoyName, false)
         vec3Prim = Group.getByName(_convoyName):getUnit(1):getPoint()
+
+        mist.flagFunc.group_alive_less_than {
+            groupName = _convoyName,
+            flag = primCompletedFlag,
+            percent = compThres,
+        }
         
         --TODO: rework notification for this objectiveType
         notify("convoy target spawning", 5)
@@ -826,8 +834,19 @@ function markSearchArea(groupName)
     trigger.action.markToAll(303, "Search area: SE", _se, false)
     trigger.action.markToAll(304, "Search area: SW", _sw, false)
 
+    trigger.action.quadToAll(-1 , 1200 , _nw , _ne , _se , _sw , {1, 1, 0, 1} , {1, 1, 0, 0.3} , 2 , true, "search area")
+    trigger.action.textToAll(-1 , 1201 , _nw , {1, 1, 0, 1} , {0, 0, 0, 0} , 20 , true , "SEARCH AREA" )
+
     local _outString = "" --for new notifyObjective
     return _outString
+end
+
+function drawArrow()
+    local _start = mist.utils.zoneToVec3("redTarget-1")
+    local _end = mist.utils.zoneToVec3("zone-2")
+
+    trigger.action.arrowToAll(-1 , 1202 , _end , _start , {0, 0, 1, 1} , {0, 0, 1, 0.8} , 1 , true, "arrow")
+    notify("didn't crash", 60)
 end
 
 function notifyCoords(vec3, axis)
@@ -892,6 +911,17 @@ function notifyObjective()  --needs changing for new objective types
         notify(message, 45)
     else
         notify("Primary objective has been completed, RTB.", 60)
+    end
+end
+
+function markCarrierPos() --using the same id again doesn't work for some reason
+    notify("pos started", 5)
+    if Group.getByName ("CVN-71 Theodore Roosevelt") then
+        trigger.action.removeMark(carrierMarkerId)
+        carrierMarkerId = carrierMarkerId + 1
+        trigger.action.markToAll(carrierMarkerId, "CVN-71 Theodore Roosevelt", Group.getByName ("CVN-71 Theodore Roosevelt"):getUnit(1):getPoint(), false)
+        mist.scheduleFunction(markCarrierPos , {} ,timer.getTime() + 120 )
+        notify("pos updated", 5)
     end
 end
 
@@ -960,6 +990,7 @@ function manualStart() -- problem is here
     env.error(debugHeader.."8" , false)
 
     missionCommands.removeItem(radioSubMenuStartCommands)
+    radioMenuReadSettings = missionCommands.addCommand ("Display selected settings", invasionCommandsRoot, readSettings)
     notify("Mission started.", 15)
     STTS.TextToSpeech("Mission started.", 243, "AM", "1.0", "SERVER", 2)
     env.error(debugHeader.."Mission started" , false)
@@ -969,42 +1000,6 @@ function readSettings ()
     for i = 1, #settingsArray, 1 do
         notify ( settingsArray[i], 15)
     end
-end
-
---debug radio settings
-
-function radioEnableIadsDebug ()
-    enableIadsDebug = true
-    toggleIadsDebug( enableIadsDebug )
-    radioMenuDisableIadsDebug = missionCommands.addCommand ("Disable IADS debug", radioSubMenuDebugCommands, radioDisableIadsDebug)
-    missionCommands.removeItem (radioMenuEnableIadsDebug)
-    notify ("IADS debug enabled", 15)
-end
-
-function radioDisableIadsDebug()
-    enableIadsDebug = false
-    toggleIadsDebug( false )
-    radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS debug", radioSubMenuDebugCommands, radioEnableIadsDebug)
-    missionCommands.removeItem (radioMenuDisableIadsDebug)
-    notify ("IADS debug disabled", 15)
-end
-
-function radioEnableAirDispatcherDebug()
-    enableDebug = true
-    A2ADispatcherRED:SetTacticalDisplay( enableDebug )
-
-    radioMenuDisableDispatcherDebug = missionCommands.addCommand ("Disable AA-Dispatcher debug", radioSubMenuDebugCommands, radioDisableAirDispatcherDebug)
-    missionCommands.removeItem (radioMenuEnableDispatcherDebug)
-    notify ("Air dispatcher debug enabled", 15)
-end
-
-function radioDisableAirDispatcherDebug()
-    enableDebug = false
-    A2ADispatcherRED:SetTacticalDisplay( enableDebug )
-
-    radioMenuEnableDispatcherDebug = missionCommands.addCommand ("Enable AA-Dispatcher debug", radioSubMenuDebugCommands, radioEnableAirDispatcherDebug)
-    missionCommands.removeItem (radioMenuDisableDispatcherDebug)
-    notify ("Air dispatcher debug disabled", 15)
 end
 
 --other comms settings
@@ -1063,6 +1058,55 @@ function enableEnemySam ()
 end
 
 --target types
+
+function setTarget(type)
+    if type == "random" then
+
+    end
+
+    if type == "building" then
+        notify("selected building target", 5)
+        primObjectiveType = 1
+        markerScatter = 0
+        enableEnemySam()
+        settingsArray[1] = "Building target"
+        
+    elseif type == "search" then
+        notify("selected search and destroy target", 5)
+        primObjectiveType = 2
+        markerScatter = 15000
+        disableEnemySam()
+        settingsArray[1] = "search and destroy target"
+        
+    elseif type == "sam" then
+        notify("selected SAM target", 5)
+        primObjectiveType = 3
+        markerScatter = 0
+        disableEnemySam() --sa10 is enough trouble as it is
+        settingsArray[1] = "SAM target"
+
+    elseif type == "ship" then
+        notify("selected ship target", 5)
+        primObjectiveType = 6
+        markerScatter = 1000
+        enableEnemySam() --no idea if necessary, but just to be safe
+        settingsArray[1] = "Ship target"
+
+    elseif type == "convoy" then
+        notify("selected convoy target", 5)
+        primObjectiveType = 4 --needs to be done
+        markerScatter = 0
+        enableEnemySam()
+        settingsArray[1] = "Convoy target"
+
+    elseif type == "mapObjective" then
+        notify("selected Precision Strike", 5)
+        primObjectiveType = 5
+        markerScatter = 0
+        enableEnemySam()
+        settingsArray[1] = "Precision Strike"
+    end
+end
 
 function setTargetRandom ()
     local random = math.random(1, 2)
@@ -1206,6 +1250,11 @@ function convoySetup(number)
     return convoyGroupName
 end
 
+function restartMission ()
+    trigger.action.setUserFlag(restartFlag, 1)
+    notify("THE SERVER IS RESTARTING IN 3 MINUTES", 179)
+end
+
 -- MAIN SETUP --
 do
 
@@ -1220,18 +1269,17 @@ do
 
 
     --submenus
+    radioSubMenuStartCommands = missionCommands.addSubMenu ("Start Commands") --nested submenu for start commands
     invasionCommandsRoot = missionCommands.addSubMenu ("Invasion Commands") --invasion commands submenu
-    radioSubMenuStartCommands = missionCommands.addSubMenu ("Start Commands", invasionCommandsRoot) --nested submenu for start commands
-    --radioSubMenuDebugCommands = missionCommands.addSubMenu ("Debug Commands", invasionCommandsRoot)
 
     --invasion command submenu
-    radioMenuReadSettings = missionCommands.addCommand ("Display selected settings", invasionCommandsRoot, readSettings)
     radioMenuObjectiveInfo = missionCommands.addCommand("Objective info", invasionCommandsRoot, notifyObjective)
     radioMenuStartHelicopterMission = missionCommands.addCommand("Start Helicopter mission", invasionCommandsRoot, genHeloObjective)
 
-    --deubg command submenu
-    --radioMenuEnableIadsDebug = missionCommands.addCommand ("Enable IADS Debug", radioSubMenuDebugCommands, radioEnableIadsDebug)
-    --radioMenuEnableDispatcherDebug = missionCommands.addCommand ("Enable AA-Dispatcher Debug", radioSubMenuDebugCommands, radioEnableAirDispatcherDebug)
+    radioMenuRestart1 = missionCommands.addSubMenu ("restart Mission", invasionCommandsRoot)
+    radioMenuRestart2 = missionCommands.addSubMenu ("are you sure?", radioMenuRestart1)
+    radioMenuRestart3 = missionCommands.addSubMenu ("are you really sure?", radioMenuRestart2)
+    radioMenuRestart4 = missionCommands.addCommand ("restart!", radioMenuRestart3, restartMission)
 
     --start commands submenu
     radioMenuManualStart = missionCommands.addCommand("Apply settings and start", radioSubMenuStartCommands , manualStart)
@@ -1249,15 +1297,24 @@ do
     radioMenuEnableCap = missionCommands.addCommand ( "Enable enemy CAP", radioSubMenuStartCommands, enableEnemyCap)
 
     --default settings
+    trigger.action.markToAll(carrierMarkerId, "CVN-71 Theodore Roosevelt", Group.getByName ("CVN-71 Theodore Roosevelt"):getUnit(1):getPoint(), false)
+    mist.scheduleFunction(markCarrierPos, {}, timer.getTime() + 15)
     probability = probabilityDefault
     enableEnemyCap()
     setDifficulty(1)
     setTargetRandom()
 
     --testing
+    setTargetSearchAndDestroy()
     
-    timer.scheduleFunction(autoStart, {}, timer.getTime() + 600) --autostart of the mission after 10 minutes, if no manual start was selected
+    manualStart()
 
+    --drawArrow()
+    
+
+    --endtesting
+    
+    timer.scheduleFunction(autoStart, {}, timer.getTime() + 900) --autostart of the mission after 10 minutes, if no manual start was selected
     notify("IOTR init completed", 5)
     env.error("--- IOTR Init completed" , false)
 end

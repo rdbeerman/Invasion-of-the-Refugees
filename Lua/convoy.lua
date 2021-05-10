@@ -245,7 +245,9 @@ function convoy.spawnConvoy(spawnVec3, targetVec3) --spawn a template in a spawn
         alive = true,
     }
 
-    trigger.action.markToAll(convoy.markerCounter, _groupData.name, mist.utils.makeVec3(_roadVec2), true)
+    local _markPos = mist.utils.makeVec3(_roadVec2)
+
+    trigger.action.markToAll(convoy.markerCounter, _groupData.name, _markPos, true)
     convoy.markerCounter = convoy.markerCounter + 1
 
     --mist.scheduleFunction(convoy.logic, { _groupData.name }, timer.getTime() + convoy.updateRate) --not useful right now
