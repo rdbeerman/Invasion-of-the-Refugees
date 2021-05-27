@@ -93,6 +93,10 @@ settingsArray = {"", "", "", ""}
 difficultyFactor = 1
 missionData = {}
 
+--Colors: (RGB/A)
+objColor = {1, 0, 0, 0.9}
+objColorfill = {1, 0, 0, 0.3}
+
 function toggleIadsDebug ( trueOrFalse )
     local iadsDebug = IADS:getDebugSettings()
     iadsDebug.IADSStatus = trueOrFalse
@@ -156,7 +160,7 @@ function genPrimObjective()
 
     if primObjectiveType == 4 then --convoy
 
-        local _convoyName = convoySetup(1)
+        local _convoyName = convoySetup(2) --needs testing if more than 1
         env.error(debugHeader.."Spawned convoy: ".._convoyName, false)
         vec3Prim = Group.getByName(_convoyName):getUnit(1):getPoint()
 
@@ -790,6 +794,8 @@ function markObjective(markerName, groupName, markerFlag) -- marks objective on 
     }
     local vec3 = mist.vec.add(mist.getLeadPos(groupName), vec3Random)
     trigger.action.markToAll(markerFlag, markerName, vec3, true)
+    trigger.action.circleToAll(-1 , 1202 , vec3 , 1000 , objColor , objColorfill , 2 , true)
+    trigger.action.textToAll(-1 , 1203 , vec3 , objColor , {0, 0, 0, 0} , 20 , true , markerName )
 end
 
 function markObjectiveZone(markerName, zoneName, markerFlag, scatter) -- marks objective on F10 map, each markerFlag must be unique
@@ -800,6 +806,18 @@ function markObjectiveZone(markerName, zoneName, markerFlag, scatter) -- marks o
     }
     local vec3 = mist.vec.add(mist.utils.zoneToVec3(zoneName), vec3Random)
     trigger.action.markToAll(markerFlag, markerName, vec3, true)
+    trigger.action.circleToAll(-1 , 1202 , vec3 , 1000 , objColor , objColorfill , 2 , true)
+    trigger.action.textToAll(-1 , 1203 , vec3 , objColor , objColorfill , 20 , true , markerName )
+end
+
+function markHomeplate()
+    local _vec3 = mist.utils.zoneToVec3("redTarget-1")
+    trigger.action.circleToAll(-1 , 1200 , _vec3 , 1000 , {0, 0, 1, 1} , {0, 0, 1, 0.3} , 2 , true)
+    trigger.action.textToAll(-1 , 1201 , _vec3 , {0, 0, 1, 1} , {0, 0, 0, 0} , 20 , true , "home plate" )
+end
+
+function markTankerTrack()
+
 end
 
 function markSearchArea(groupName)
@@ -834,19 +852,11 @@ function markSearchArea(groupName)
     trigger.action.markToAll(303, "Search area: SE", _se, false)
     trigger.action.markToAll(304, "Search area: SW", _sw, false)
 
-    trigger.action.quadToAll(-1 , 1200 , _nw , _ne , _se , _sw , {1, 1, 0, 1} , {1, 1, 0, 0.3} , 2 , true, "search area")
-    trigger.action.textToAll(-1 , 1201 , _nw , {1, 1, 0, 1} , {0, 0, 0, 0} , 20 , true , "SEARCH AREA" )
+    trigger.action.quadToAll(-1 , 1202 , _nw , _ne , _se , _sw , objColor , objColorfill , 2 , true, "search area")
+    trigger.action.textToAll(-1 , 1203 , _nw , objColor , {0, 0, 0, 0} , 20 , true , "SEARCH AREA" )
 
     local _outString = "" --for new notifyObjective
     return _outString
-end
-
-function drawArrow()
-    local _start = mist.utils.zoneToVec3("redTarget-1")
-    local _end = mist.utils.zoneToVec3("zone-2")
-
-    trigger.action.arrowToAll(-1 , 1202 , _end , _start , {0, 0, 1, 1} , {0, 0, 1, 0.8} , 1 , true, "arrow")
-    notify("didn't crash", 60)
 end
 
 function notifyCoords(vec3, axis)
@@ -920,7 +930,7 @@ function markCarrierPos() --using the same id again doesn't work for some reason
         trigger.action.removeMark(carrierMarkerId)
         carrierMarkerId = carrierMarkerId + 1
         trigger.action.markToAll(carrierMarkerId, "CVN-71 Theodore Roosevelt", Group.getByName ("CVN-71 Theodore Roosevelt"):getUnit(1):getPoint(), false)
-        mist.scheduleFunction(markCarrierPos , {} ,timer.getTime() + 120 )
+        mist.scheduleFunction(markCarrierPos , {} ,timer.getTime() + 300 )
         notify("pos updated", 5)
     end
 end
@@ -1096,7 +1106,7 @@ function setTarget(type)
         notify("selected convoy target", 5)
         primObjectiveType = 4 --needs to be done
         markerScatter = 0
-        enableEnemySam()
+        disableEnemySam()
         settingsArray[1] = "Convoy target"
 
     elseif type == "mapObjective" then
@@ -1243,10 +1253,14 @@ function convoySetup(number)
         minDist = 100000, --m
         maxDist = 150000, --m
     }
+    local convoyGroupName = nil
 
     convoy.setup("convoy", convoyRedAttackZone , convoyRedList, objectiveLocList, checkpointsBlue, _vars)
 
-    local convoyGroupName = convoy.start()
+    --convoy.setup("convoy", convoyRedAttackZone , convoyRedList, objectiveLocList, checkpointsBlue, _vars)
+    for i = 1, number, 1 do
+        convoyGroupName = convoy.start()
+    end
     return convoyGroupName
 end
 
@@ -1298,19 +1312,12 @@ do
 
     --default settings
     trigger.action.markToAll(carrierMarkerId, "CVN-71 Theodore Roosevelt", Group.getByName ("CVN-71 Theodore Roosevelt"):getUnit(1):getPoint(), false)
+    --markHomeplate() --looks kinda bad
     mist.scheduleFunction(markCarrierPos, {}, timer.getTime() + 15)
     probability = probabilityDefault
     enableEnemyCap()
     setDifficulty(1)
     setTargetRandom()
-
-    --testing
-    setTargetSearchAndDestroy()
-    
-    manualStart()
-
-    --drawArrow()
-    
 
     --endtesting
     

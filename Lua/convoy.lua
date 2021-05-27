@@ -41,6 +41,16 @@ function simple.getAltitudeAgl (vec3) --returns the altitude AGL of a given vec3
     return output
 end
 
+function simple.getAngle (vec3From, vec3To)
+    local _angleR = math.atan2 (vec3To.z - vec3From.z, vec3To.x - vec3From.x)-- - math.atan2 (vec3To.z, vec3To.x)
+    if _angleR < 0 then
+        _angleR = _angleR + 2 * math.pi
+    end
+    local _angleD = math.deg (_angleR)
+    simple.debugOutput("Angle(r): " .. _angleR .. "; angle(d): " .. _angleD)
+    return _angleR
+end
+
 local function dump(table) --https://stackoverflow.com/questions/9168058/how-to-dump-a-table-to-console
 	if type(table) == 'table' then
 	   local s = '{ \n'
@@ -116,10 +126,6 @@ function convoy.setup(name, targetZone, templateTable, spawnZoneTable, checkPoin
     convoy.placeMarks()
 end
 
-function convoy.notify(targetName)
-    local _string = ""
-end
-
 function convoy.getActiveConvoys()
     return convoy.activeGroups
 end
@@ -134,6 +140,24 @@ function convoy.placeMarks()
         trigger.action.markToAll(convoy.markerCounter, convoy.checkpoints[i], _vec3, true)
         convoy.markerCounter = convoy.markerCounter + 1
     end
+end
+
+function convoy.markConvoy()
+    local _startPos = mist.utils.makeVec3GL (convoy.activeGroups[#convoy.activeGroups].startVec2)
+    local _endPos = convoy.activeGroups[#convoy.activeGroups].endVec3
+    local _angle = simple.getAngle(_startPos, _endPos)
+    local _offset = mist.vec.rotateVec2({x = math.random(15000, 30000), y = 0}, _angle + 3) --close enough to pi
+    local _startPosFalse = mist.vec.add(_startPos , mist.utils.makeVec3GL(_offset))
+    local _endPosFalse = mist.vec.add(_endPos , mist.utils.makeVec3GL( mist.vec.rotateVec2({x = 20000, y = 0}, _angle +3 ) ))
+
+    convoy.activeGroups[#convoy.activeGroups].startVec3false = _startPosFalse
+
+    trigger.action.arrowToAll(-1 , convoy.markerCounter , _endPosFalse , _startPosFalse , {1, 0, 0, 0} , {1, 0, 0, 0.3} , 1 , true, "convoy")
+    convoy.markerCounter = convoy.markerCounter + 1
+    trigger.action.textToAll(-1 , convoy.markerCounter , _startPosFalse , {1, 0, 0, 0.9}  , {0, 0, 0, 0} , 20 , true , "convoy" )
+    convoy.markerCounter = convoy.markerCounter + 1
+    trigger.action.markToAll(convoy.markerCounter, convoy.activeGroups[#convoy.activeGroups].groupName, _startPosFalse, true)
+    convoy.markerCounter = convoy.markerCounter + 1
 end
 
 function convoy.start()
@@ -240,15 +264,13 @@ function convoy.spawnConvoy(spawnVec3, targetVec3) --spawn a template in a spawn
     convoy.activeGroups[#convoy.activeGroups+1] = { --might become useful
         groupName = _groupData.name,
         startVec2 = _roadVec2,
+        startVec3false = nil,
         cpVec2 = _cpVec2,
         endVec3 = targetVec3,
         alive = true,
     }
 
-    local _markPos = mist.utils.makeVec3(_roadVec2)
-
-    trigger.action.markToAll(convoy.markerCounter, _groupData.name, _markPos, true)
-    convoy.markerCounter = convoy.markerCounter + 1
+    convoy.markConvoy()
 
     --mist.scheduleFunction(convoy.logic, { _groupData.name }, timer.getTime() + convoy.updateRate) --not useful right now
     return _groupData.name
@@ -282,7 +304,7 @@ end
 
 --unused debug functions
 
-function convoy.markPath(startVec3, endVec3) --pure debugging
+function convoy.markPathDebug(startVec3, endVec3) --pure debugging
     local route =  land.findPathOnRoads("road" , startVec3.x , startVec3.z ,endVec3.x , endVec3.z )
     simple.dumpTable (route)
     for i=1, #route, 1 do
@@ -292,7 +314,7 @@ function convoy.markPath(startVec3, endVec3) --pure debugging
     end
 end
 
-function convoy.getCheckpointPosition (startVec2, endVec2) --very slow, produces noticeable lagg
+function convoy.genCheckpointPosition (startVec2, endVec2) --very slow, produces noticeable lagg
     local _route = land.findPathOnRoads("road" , startVec2.x , startVec2.y ,endVec2.x , endVec2.y )
     local x = 1 
     for i = #_route, 1, -10 do
@@ -311,22 +333,6 @@ end
 
 do
     --setup
-
-    --[[
-    local _vars = {
-        speed = 15,
-        minDist = 40000,
-        maxDist = 60000,
-    }
-
-    convoy.setup("convoyName", "targetZone", { "convoyTemplate-1", "convoyTemplate-2", "convoyTemplate-3" }, { "spawnZone-1", "spawnZone-2", "spawnZone-3", "spawnZone-4", "spawnZone-5", "spawnZone-6" }, { "checkpoint-1", "checkpoint-2", "checkpoint-3" }, _vars)
-    convoy.start()
-
-    for i = 1, 0, 1 do
-        convoy.start()
-    end
-    ]]
-
 
     --don't change
     simple.notify("convoy.lua started", 10)
