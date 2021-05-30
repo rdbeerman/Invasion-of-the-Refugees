@@ -925,13 +925,11 @@ function notifyObjective()  --needs changing for new objective types
 end
 
 function markCarrierPos() --using the same id again doesn't work for some reason
-    notify("pos started", 5)
     if Group.getByName ("CVN-71 Theodore Roosevelt") then
         trigger.action.removeMark(carrierMarkerId)
         carrierMarkerId = carrierMarkerId + 1
         trigger.action.markToAll(carrierMarkerId, "CVN-71 Theodore Roosevelt", Group.getByName ("CVN-71 Theodore Roosevelt"):getUnit(1):getPoint(), false)
         mist.scheduleFunction(markCarrierPos , {} ,timer.getTime() + 300 )
-        notify("pos updated", 5)
     end
 end
 
