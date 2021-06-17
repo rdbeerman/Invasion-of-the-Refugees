@@ -20,8 +20,9 @@ capLimitDefault = 1
 lowIntervalDefault = 900
 highIntervalDefault = 1000
 probabilityDefault = 1
+capSpawnLimit = nil
 --hard mode factor
-hardModeFactor = 1.3 --30% more enemies
+hardModeFactor = 1.2 --20% more enemies
 
 -- Set templates --
 -- Import map specific templates
@@ -855,6 +856,8 @@ function markSearchArea(groupName)
     trigger.action.quadToAll(-1 , 1202 , _nw , _ne , _se , _sw , objColor , objColorfill , 2 , true, "search area")
     trigger.action.textToAll(-1 , 1203 , _nw , objColor , {0, 0, 0, 0} , 20 , true , "SEARCH AREA" )
 
+    vec3Prim = _nw --quick and easy fix to make it less trivial to find
+
     local _outString = "" --for new notifyObjective
     return _outString
 end
@@ -1019,8 +1022,10 @@ function setDifficulty(mode)
 
     if mode == 2 then --hard mode
         settingsArray[2] = "difficulty: " .. difficultyNames[mode]
+        capSpawnLimit = nil
     else --normal mode
         settingsArray[2] = "difficulty: " .. difficultyNames[mode]
+        capSpawnLimit = 4
     end
 
     notify(difficultyNames[mode] .. " mode selected", 5)
@@ -1213,9 +1218,9 @@ function A2A_DISPATCHER()
 
     --Define Squadrons
 
-    A2ADispatcherRED:SetSquadron( "CAP_RED_1", act.capAirbases[1], capRed )
-    A2ADispatcherRED:SetSquadron( "CAP_RED_2", act.capAirbases[2], capRed )
-    A2ADispatcherRED:SetSquadron( "CAP_RED_3", act.capAirbases[3], capRed )
+    A2ADispatcherRED:SetSquadron( "CAP_RED_1", act.capAirbases[1], capRed, capSpawnLimit )
+    A2ADispatcherRED:SetSquadron( "CAP_RED_2", act.capAirbases[2], capRed, capSpawnLimit )
+    A2ADispatcherRED:SetSquadron( "CAP_RED_3", act.capAirbases[3], capRed, capSpawnLimit )
 
     --Define Squadron properties
     A2ADispatcherRED:SetSquadronOverhead( "CAP_RED_1", 1 )
@@ -1248,8 +1253,8 @@ end
 function convoySetup(number)
     local _vars = {
         speed = 15, --m/s
-        minDist = 100000, --m
-        maxDist = 150000, --m
+        minDist = 50000, --m
+        maxDist = 75000, --m
     }
     local convoyGroupName = nil
 
