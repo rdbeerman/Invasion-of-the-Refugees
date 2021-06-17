@@ -22,6 +22,7 @@ highIntervalDefault = 1000
 probabilityDefault = 1
 capSpawnLimit = nil
 --hard mode factor
+hardModeFactor = 1.2 --20% more enemies
 
 -- Set templates --
 -- Import map specific templates
